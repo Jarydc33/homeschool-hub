@@ -8,6 +8,7 @@ cffi==2.1.1
 charset-normalizer==3.5.2
 click==8.5.0
 cryptography==50.0.2
+dotenv==0.9.9
 extra-streamlit-components==0.1.81
 h11==0.16.0
 idna==3.20
@@ -22,11 +23,14 @@ packaging==26.3
 pandas==3.1.0
 pillow==13.0.0
 protobuf==7.36.2
+psycopg==3.3.6
+psycopg-binary==3.3.6
 pyarrow==26.0.0
 pycparser==3.12
 pydeck==0.9.3
 PyJWT==2.15.1
 python-dateutil==3.0.0
+python-dotenv==1.2.4
 python-multipart==0.0.32
 PyYAML==6.0.3
 referencing==0.37.0
