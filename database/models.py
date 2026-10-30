@@ -31,6 +31,26 @@ class AssignmentType(str, Enum):
     ONE_TIME = "One Time"
     RECURRING = "Recurring"
 
+class RecurrencePattern(Enum):
+
+    DAILY = "Daily"
+
+    WEEKLY = "Weekly"
+
+    MONTHLY = "Monthly"
+
+    WEEKDAYS = "Weekdays"
+
+    EVERY_MONDAY = "Every Monday"
+
+    EVERY_TUESDAY = "Every Tuesday"
+
+    EVERY_WEDNESDAY = "Every Wednesday"
+
+    EVERY_THURSDAY = "Every Thursday"
+
+    EVERY_FRIDAY = "Every Friday"
+
 class Family(Base):
     __tablename__ = "families"
 
@@ -231,6 +251,11 @@ class Assignment(Base):
         back_populates="assignment"
     )
 
+    active = Column(
+        Boolean,
+        default=True
+    )
+
 class StudentAssignment(Base):
     __tablename__ = "student_assignments"
 
@@ -265,3 +290,40 @@ class StudentAssignment(Base):
         back_populates="student_assignments"
     )
 
+class BannerMessage(Base):
+    __tablename__ = "banner_messages"
+
+    id = Column(
+        Integer,
+        primary_key=True
+    )
+
+    title = Column(
+        String,
+        nullable=False
+    )
+
+    message = Column(
+        Text,
+        nullable=False
+    )
+
+    start_date = Column(
+        Date,
+        nullable=False
+    )
+
+    end_date = Column(
+        Date,
+        nullable=False
+    )
+
+    active = Column(
+        Boolean,
+        default=True
+    )
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow
+    )

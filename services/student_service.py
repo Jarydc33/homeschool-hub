@@ -132,6 +132,22 @@ class StudentService:
             db.close()
 
     @staticmethod
+    def get_active_students():
+
+        db = SessionLocal()
+
+        try:
+
+            return (
+                db.query(Student)
+                .filter(Student.active.is_(True))
+                .all()
+            )
+
+        finally:
+            db.close()
+
+    @staticmethod
     def get_students_by_family(family_id):
         """
         Returns all students for a family.
