@@ -15,6 +15,9 @@ from services.startup_service import (
 )
 
 from scripts.seed_data import seed_database
+from services.auth_service import (
+    AuthService
+)
 
 # --------------------------------------------------
 # Startup
@@ -24,6 +27,32 @@ initialize_database()
 
 if database_is_empty():
     seed_database()
+
+current_user = (
+    AuthService.get_current_user()
+)
+
+if not AuthService.is_authenticated():
+
+    st.warning(
+        "Please login."
+    )
+
+    st.stop()
+
+if (
+    AuthService.is_authenticated()
+    and
+    not AuthService.is_parent()
+):
+
+    st.info(
+        "Redirecting to Student Dashboard..."
+    )
+
+    st.switch_page(
+        "pages/5_🎓_Student_Dashboard.py"
+    )
 
 active_banners = (
     BannerService.get_active_banners()
@@ -53,6 +82,26 @@ with st.sidebar:
     st.divider()
 
     st.caption("Version 0.1 MVP")
+    if current_user:
+
+        st.success(
+            f"👤 {current_user.email}"
+        )
+
+        st.caption(
+            f"Role: {current_user.role}"
+        )
+
+        if st.button("Logout"):
+
+            AuthService.logout()
+
+            st.rerun()
+
+        st.divider()
+
+    st.caption(DEV_MODE)
+    
 
 # --------------------------------------------------
 # Dashboard Header
@@ -353,3 +402,4 @@ st.subheader(
 st.info(
     "Activity tracking coming soon."
 )
+

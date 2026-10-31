@@ -5,25 +5,70 @@ from datetime import date
 import streamlit as st
 
 from services.student_service import StudentService
-
+from services.auth_service import (
+    AuthService
+)
 
 st.title("🎓 Student View")
 
 # ------------------------------------------------------------------
 # Student Selection
 # ------------------------------------------------------------------
+if not AuthService.is_authenticated():
 
-students = StudentService.get_all_students()
+    st.warning(
+        "Please login."
+    )
 
-if not students:
-    st.warning("No students found.")
     st.stop()
+    
+if AuthService.is_student():
 
-selected_student = st.selectbox(
-    "Select Student",
-    students,
-    format_func=lambda x: x.name
+    student_id = (
+        AuthService
+        .get_current_student()
+    )
+
+    selected_student = (
+        StudentService.get_student_by_id(
+            student_id
+        )
+    )
+
+    st.caption(
+        "Student Mode"
+    )
+
+else:
+
+    students = (
+        StudentService.get_all_students()
+    )
+
+    if not students:
+
+        st.warning(
+            "No students found."
+        )
+
+        st.stop()
+
+    selected_student = st.selectbox(
+        "Select Student",
+        students,
+        format_func=lambda x: x.name
+    )
+
+    st.caption(
+        "Parent Mode"
+    )
+
+student_assignments = (
+    StudentService.get_student_assignments(
+        selected_student.id
+    )
 )
+
 
 student_assignments = (
     StudentService.get_student_assignments(

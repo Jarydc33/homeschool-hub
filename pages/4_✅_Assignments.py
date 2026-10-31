@@ -8,7 +8,17 @@ from database.models import (
     AssignmentType,
     RecurrencePattern
 )
+from services.auth_service import (
+    AuthService
+)
 
+if not AuthService.is_parent():
+
+    st.error(
+        "Access denied."
+    )
+
+    st.stop()
 # ==================================================
 # DIALOGS
 # ==================================================

@@ -1,7 +1,17 @@
 import streamlit as st
 
 from services.subject_service import SubjectService
+from services.auth_service import (
+    AuthService
+)
 
+if not AuthService.is_parent():
+
+    st.error(
+        "Access denied."
+    )
+
+    st.stop()
 
 # ==================================================
 # DIALOGS

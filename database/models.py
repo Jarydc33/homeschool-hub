@@ -19,6 +19,7 @@ from database.db import Base
 class UserRole(str, Enum):
     PARENT = "Parent"
     STUDENT = "Student"
+    ADMIN = "Admin"
 
 
 class AssignmentStatus(str, Enum):
@@ -96,6 +97,12 @@ class User(Base):
         ForeignKey("families.id")
     )
 
+    student_id = Column(
+        Integer,
+        ForeignKey("students.id"),
+        nullable=True
+    )
+
     email = Column(
         String,
         unique=True,
@@ -122,6 +129,10 @@ class User(Base):
     family = relationship(
         "Family",
         back_populates="users"
+    )
+
+    student = relationship(
+        "Student"
     )
 
 class Student(Base):
@@ -327,3 +338,13 @@ class BannerMessage(Base):
         DateTime,
         default=datetime.utcnow
     )
+
+class CurrentSession:
+
+    user_id = None
+
+    family_id = None
+
+    role = None
+
+    student_id = None
