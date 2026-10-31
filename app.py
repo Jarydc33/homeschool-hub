@@ -99,8 +99,6 @@ with st.sidebar:
             st.rerun()
 
         st.divider()
-
-    st.caption(DEV_MODE)
     
 
 # --------------------------------------------------
