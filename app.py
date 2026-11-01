@@ -3,24 +3,19 @@ from services.auth_service import (
 )
 import streamlit as st
 
-if not AuthService.is_authenticated():
+if AuthService.is_authenticated():
 
-    st.switch_page(
-        "pages/0_🏡_Landing_Page.py"
-    )
+    if AuthService.is_student():
 
-elif AuthService.is_student():
+        st.switch_page(
+            "pages/5_🎓_Student_Dashboard.py"
+        )
 
-    st.switch_page(
-        "pages/5_🎓_Student_Dashboard.py"
-    )
+    else:
 
-elif AuthService.is_parent():
-
-    st.switch_page(
-        "pages/1_🏡_Parent_Dashboard.py"
-    )
-
+        st.switch_page(
+            "pages/1_🏡_Parent_Dashboard.py"
+        )
 else:
     st.switch_page(
         "pages/0_🏡_Landing_Page.py"

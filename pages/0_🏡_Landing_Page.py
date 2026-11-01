@@ -17,7 +17,7 @@ if AuthService.is_authenticated():
     else:
 
         st.switch_page(
-            "pages/🏡_Parent_Dashboard.py"
+            "pages/1_🏡_Parent_Dashboard.py"
         )
 
 # --------------------------------------------------
