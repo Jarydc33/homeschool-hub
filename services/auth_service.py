@@ -3,8 +3,19 @@ import streamlit as st
 from services.user_service import UserService
 from database.models import UserRole
 
+from services.auth_provider import AuthProvider
+from services.session_service import (
+    SessionService
+)
 
 class AuthService:
+
+    @staticmethod
+    def set_current_user(user_id):
+
+        st.session_state[
+            "current_user_id"
+        ] = user_id
 
     @staticmethod
     def get_current_user():
@@ -15,14 +26,38 @@ class AuthService:
             )
         )
 
-        if not user_id:
+        if user_id:
+
+            return (
+                UserService.get_user_by_id(
+                    user_id
+                )
+            )
+
+        auth_user = (
+            AuthProvider.get_current_auth_user()
+        )
+
+        if not auth_user:
             return None
 
-        return (
-            UserService.get_user_by_id(
-                user_id
+        email = (
+            auth_user.user.email
+        )
+
+        user = (
+            UserService.get_user_by_email(
+                email
             )
         )
+
+        if user:
+
+            AuthService.set_current_user(
+                user.id
+            )
+
+        return user
 
     @staticmethod
     def is_authenticated():
@@ -93,12 +128,5 @@ class AuthService:
             "current_user_id",
             None
         )
-    @staticmethod
-    def set_current_user(user_id):
-        """
-        Developer shortcut for logging in as a user.
-        """
 
-        st.session_state[
-            "current_user_id"
-        ] = user_id
+        AuthProvider.logout()

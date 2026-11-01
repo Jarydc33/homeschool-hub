@@ -4,6 +4,7 @@ from services.user_service import UserService
 from services.auth_service import AuthService
 from services.auth_provider import AuthProvider
 from config import DEV_MODE
+from services.session_service import SessionService
 
 if DEV_MODE:
 

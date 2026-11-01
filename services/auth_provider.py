@@ -2,6 +2,9 @@ from services.supabase_service import (
     SupabaseService
 )
 
+from services.session_service import (
+    SessionService
+)
 
 class AuthProvider:
 
@@ -15,7 +18,7 @@ class AuthProvider:
             SupabaseService.get_client()
         )
 
-        return (
+        result = (
             supabase.auth.sign_in_with_password(
                 {
                     "email": email,
@@ -23,6 +26,15 @@ class AuthProvider:
                 }
             )
         )
+
+        if result.session:
+
+            SessionService.save_session(
+                result.session.access_token,
+                None
+            )
+
+        return result
 
     @staticmethod
     def register(
@@ -42,3 +54,44 @@ class AuthProvider:
                 }
             )
         )
+
+    @staticmethod
+    def get_current_auth_user():
+
+        session = (
+            SessionService.get_session()
+        )
+
+        if not session:
+            return None
+
+        access_token = (
+            session.get(
+                "access_token"
+            )
+        )
+
+        if not access_token:
+            return None
+
+        supabase = (
+            SupabaseService.get_client()
+        )
+
+        try:
+
+            user = (
+                supabase.auth.get_user(
+                    access_token
+                )
+            )
+
+            return user
+
+        except Exception:
+
+            return None
+
+    @staticmethod
+    def logout():
+        SessionService.clear_session()

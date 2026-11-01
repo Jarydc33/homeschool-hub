@@ -55,6 +55,7 @@ starlette==1.10.0
 storage3==2.33.0
 streamlit==1.66.1
 streamlit-authenticator==0.4.2
+streamlit-local-storage==0.0.25
 StrEnum==0.4.15
 supabase==2.33.0
 supabase-auth==2.33.0
