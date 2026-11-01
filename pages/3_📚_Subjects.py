@@ -5,13 +5,9 @@ from services.auth_service import (
     AuthService
 )
 
-if not AuthService.is_parent():
+from services.navigation_service import NavigationService
 
-    st.error(
-        "Access denied."
-    )
-
-    st.stop()
+NavigationService.require_parent()
 
 # ==================================================
 # DIALOGS

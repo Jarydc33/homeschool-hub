@@ -9,18 +9,17 @@ from services.auth_service import (
     AuthService
 )
 
+from services.navigation_service import (
+    NavigationService
+)
+
+NavigationService.require_authentication()
+
 st.title("🎓 Student View")
 
 # ------------------------------------------------------------------
 # Student Selection
 # ------------------------------------------------------------------
-if not AuthService.is_authenticated():
-
-    st.warning(
-        "Please login."
-    )
-
-    st.stop()
     
 if AuthService.is_student():
 
@@ -35,7 +34,7 @@ if AuthService.is_student():
         )
     )
 
-    st.caption(
+    st.info(
         "Student Mode"
     )
 
@@ -59,16 +58,9 @@ else:
         format_func=lambda x: x.name
     )
 
-    st.caption(
-        "Parent Mode"
+    st.info(
+        "Parent Viewing Student Dashboard"
     )
-
-student_assignments = (
-    StudentService.get_student_assignments(
-        selected_student.id
-    )
-)
-
 
 student_assignments = (
     StudentService.get_student_assignments(

@@ -23,3 +23,22 @@ class AuthProvider:
                 }
             )
         )
+
+    @staticmethod
+    def register(
+        email,
+        password
+    ):
+
+        supabase = (
+            SupabaseService.get_client()
+        )
+
+        return (
+            supabase.auth.sign_up(
+                {
+                    "email": email,
+                    "password": password
+                }
+            )
+        )

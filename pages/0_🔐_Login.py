@@ -31,6 +31,18 @@ if DEV_MODE:
             AuthService.set_current_user(3)
             st.rerun()
 
+if AuthService.is_authenticated():
+
+    if AuthService.is_parent():
+
+        st.switch_page("app.py")
+
+    else:
+
+        st.switch_page(
+            "pages/5_🎓_Student_Dashboard.py"
+        )
+
 
 st.title("🔐 Login")
 

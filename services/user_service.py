@@ -60,8 +60,7 @@ class UserService:
     @staticmethod
     def create_parent_user(
         family_id,
-        email,
-        password_hash
+        email
     ):
 
         db = SessionLocal()
@@ -71,7 +70,6 @@ class UserService:
             user = User(
                 family_id=family_id,
                 email=email,
-                password_hash=password_hash,
                 role="Parent"
             )
 
