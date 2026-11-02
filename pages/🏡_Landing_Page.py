@@ -136,7 +136,7 @@ with col1:
     ):
 
         st.switch_page(
-            "pages/0_🔐_Login.py"
+            "pages/🔐_Login.py"
         )
 
 with col2:
@@ -147,7 +147,7 @@ with col2:
     ):
 
         st.switch_page(
-            "pages/0_📝_Register.py"
+            "pages/📝_Register.py"
         )
 
 st.divider()
