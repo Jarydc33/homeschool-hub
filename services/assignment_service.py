@@ -9,6 +9,7 @@ from database.models import (
     RecurrencePattern
 )
 
+from services.auth_service import AuthService
 
 class AssignmentService:
 
@@ -93,8 +94,54 @@ class AssignmentService:
             db.close()
 
     @staticmethod
+    def get_assignments_by_family(
+        family_id
+    ):
+
+        db = SessionLocal()
+
+        try:
+
+            return (
+                db.query(Assignment)
+                .options(
+                    joinedload(
+                        Assignment.subject
+                    ),
+
+                    joinedload(
+                        Assignment.student_assignments
+                    ).joinedload(
+                        StudentAssignment.student
+                    )
+                )
+                .filter(
+                    Assignment.family_id == family_id
+                )
+                .filter(
+                    Assignment.active.is_(True)
+                )
+                .all()
+            )
+
+        finally:
+            db.close()
+
+    @staticmethod
+    def get_current_family_assignments():
+
+        family_id = (
+            AuthService.get_current_family()
+        )
+
+        return (
+            AssignmentService.get_assignments_by_family(
+                family_id
+            )
+        )
+
+    @staticmethod
     def create_assignment(
-        family_id,
         subject_id,
         title,
         student_ids,
@@ -109,7 +156,7 @@ class AssignmentService:
         try:
 
             assignment = Assignment(
-                family_id=family_id,
+                family_id=AuthService.get_current_family(),
                 subject_id=subject_id,
                 title=title,
                 description=description,

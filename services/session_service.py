@@ -82,18 +82,3 @@ class SessionService:
             "access_token": access_token,
             "refresh_token": refresh_token
         }
-
-    @staticmethod
-    def clear_session():
-
-        storage = (
-            SessionService.get_storage()
-        )
-
-        storage.deleteItem(
-            SessionService.ACCESS_TOKEN_KEY
-        )
-
-        #storage.deleteItem(
-        #    SessionService.REFRESH_TOKEN_KEY
-        #)

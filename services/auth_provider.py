@@ -91,7 +91,3 @@ class AuthProvider:
         except Exception:
 
             return None
-
-    @staticmethod
-    def logout():
-        SessionService.clear_session()

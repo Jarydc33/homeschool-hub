@@ -12,7 +12,11 @@ from services.auth_service import (
 from services.navigation_service import (
     NavigationService
 )
+from components.navigation import (
+    NavigationComponent
+)
 
+NavigationComponent.render()
 NavigationService.require_authentication()
 
 st.title("🎓 Student View")
@@ -41,7 +45,7 @@ if AuthService.is_student():
 else:
 
     students = (
-        StudentService.get_all_students()
+        StudentService.get_current_family_students()
     )
 
     if not students:

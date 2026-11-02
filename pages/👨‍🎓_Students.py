@@ -6,7 +6,11 @@ from services.auth_service import (
 )
 
 from services.navigation_service import NavigationService
+from components.navigation import (
+    NavigationComponent
+)
 
+NavigationComponent.render()
 NavigationService.require_parent()
 
 # ==================================================
@@ -88,7 +92,7 @@ def archive_student_dialog(student):
             type="primary",
             use_container_width=True
         ):
-
+            #Potentially change this so a user cant archive another families student?
             StudentService.archive_student(
                 student.id
             )
@@ -110,7 +114,7 @@ st.write(
     "Manage students within your homeschool."
 )
 
-students = StudentService.get_active_students()
+students = StudentService.get_current_family_students()
 
 # ==================================================
 # ACTIVE STUDENTS
@@ -205,7 +209,6 @@ with st.form(
     if submitted:
 
         StudentService.create_student(
-            family_id=1,
             name=name,
             grade_level=grade_level,
             birth_year=birth_year

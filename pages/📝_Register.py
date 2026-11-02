@@ -4,7 +4,11 @@ from services.family_service import FamilyService
 from services.user_service import UserService
 from services.auth_service import AuthService
 from services.auth_provider import AuthProvider
+from components.navigation import (
+    NavigationComponent
+)
 
+NavigationComponent.render()
 if AuthService.is_parent():
 
     st.switch_page("app.py")
@@ -82,7 +86,7 @@ with st.form(
 
                 auth_result = (
                     AuthProvider.register(
-                        email=email,
+                        email=email.strip().lower(),
                         password=password
                     )
                 )

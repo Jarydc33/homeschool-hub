@@ -1,0 +1,134 @@
+import streamlit as st
+from services.session_service import SessionService
+from services.auth_service import (
+    AuthService
+)
+
+
+class NavigationComponent:
+
+    @staticmethod
+    def render():
+
+        with st.sidebar:
+
+            st.title("🏡 Homeschool Hub")
+
+            current_user = (
+                AuthService.get_current_user()
+            )
+
+            if current_user:
+
+                st.success(
+                    f"👤 {current_user.email}"
+                )
+
+                st.caption(
+                    current_user.role
+                )
+
+                st.divider()
+
+                # -----------------
+                # Parent Navigation
+                # -----------------
+
+                if AuthService.is_parent():
+
+                    st.page_link(
+                        "pages/🏡_Parent_Dashboard.py",
+                        label="Dashboard",
+                        icon="🏡"
+                    )
+
+                    st.page_link(
+                        "pages/👨‍🎓_Students.py",
+                        label="Students",
+                        icon="👨‍🎓"
+                    )
+
+                    st.page_link(
+                        "pages/📚_Subjects.py",
+                        label="Subjects",
+                        icon="📚"
+                    )
+
+                    st.page_link(
+                        "pages/✅_Assignments.py",
+                        label="Assignments",
+                        icon="✅"
+                    )
+
+                    st.page_link(
+                        "pages/📢_Announcements.py",
+                        label="Announcements",
+                        icon="📢"
+                    )
+
+                    st.page_link(
+                        "pages/🎓_Student_Dashboard.py",
+                        label="Student Dashboard",
+                        icon="🎓"
+                    )
+
+                # -----------------
+                # Student Navigation
+                # -----------------
+
+                elif AuthService.is_student():
+
+                    st.page_link(
+                        "pages/🎓_Student_Dashboard.py",
+                        label="Dashboard",
+                        icon="🎓"
+                    )
+
+                st.divider()
+
+                if st.button("Logout"):
+
+                    storage = (
+                        SessionService.get_storage()
+                    )
+
+                    storage.deleteAll()
+                    st.success("Logged out.")
+                    st.session_state.pop(
+                        "current_user_id",
+                        None
+                    )
+                    st.session_state["logged_out"]=True
+
+                st.caption("Version 0.4.0")
+            else:
+
+                st.page_link(
+                    "pages/🏡_Landing_Page.py",
+                    label="Home",
+                    icon="🏡"
+                )
+
+                st.page_link(
+                    "pages/🔐_Login.py",
+                    label="Login",
+                    icon="🔐"
+                )
+
+                st.page_link(
+                    "pages/📝_Register.py",
+                    label="Register",
+                    icon="📝"
+                )
+        if st.session_state.get("logged_out"):
+
+            st.success("You have been successfully logged out.")
+            st.caption(
+                "Select any navigation link to continue."
+            )
+            st.session_state.pop(
+                "logged_out",
+                None
+            )
+
+            st.stop()

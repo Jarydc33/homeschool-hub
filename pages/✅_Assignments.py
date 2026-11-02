@@ -13,7 +13,11 @@ from services.auth_service import (
 )
 
 from services.navigation_service import NavigationService
+from components.navigation import (
+    NavigationComponent
+)
 
+NavigationComponent.render()
 NavigationService.require_parent()
 
 # ==================================================
@@ -201,11 +205,11 @@ def archive_assignment_dialog(assignment):
 st.title("✅ Assignments")
 
 students = (
-    StudentService.get_active_students()
+    StudentService.get_current_family_students()
 )
 
 subjects = (
-    SubjectService.get_active_subjects()
+    SubjectService.get_current_family_subjects()
 )
 
 # ==================================================
@@ -283,7 +287,6 @@ with st.form(
     if submitted:
 
         AssignmentService.create_assignment(
-            family_id=1,
             subject_id=subject.id,
             title=title,
             student_ids=[
@@ -311,7 +314,7 @@ st.divider()
 st.subheader("Current Assignments")
 
 assignments = (
-    AssignmentService.get_active_assignments()
+    AssignmentService.get_current_family_assignments()
 )
 
 if assignments:

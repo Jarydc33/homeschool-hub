@@ -3,7 +3,11 @@ import streamlit as st
 from services.banner_service import BannerService
 
 from services.navigation_service import NavigationService
+from components.navigation import (
+    NavigationComponent
+)
 
+NavigationComponent.render()
 NavigationService.require_parent()
 
 # ==================================================

@@ -124,9 +124,4 @@ class AuthService:
     @staticmethod
     def logout():
 
-        st.session_state.pop(
-            "current_user_id",
-            None
-        )
-
-        AuthProvider.logout()
+        pass

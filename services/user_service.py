@@ -13,7 +13,7 @@ class UserService:
             return (
                 db.query(User)
                 .filter(
-                    User.email == email
+                    User.email == email.strip().lower()
                 )
                 .first()
             )
@@ -62,7 +62,7 @@ class UserService:
         family_id,
         email
     ):
-
+        email = email.strip().lower()
         db = SessionLocal()
 
         try:
@@ -99,7 +99,7 @@ class UserService:
             user = User(
                 family_id=family_id,
                 student_id=student_id,
-                email=email,
+                email=email.strip().lower(),
                 password_hash=password_hash,
                 role="Student"
             )

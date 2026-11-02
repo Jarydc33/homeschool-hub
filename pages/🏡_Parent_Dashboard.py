@@ -26,6 +26,11 @@ from services.dashboard_service import (
 from services.navigation_service import (
     NavigationService
 )
+from components.navigation import (
+    NavigationComponent
+)
+
+NavigationComponent.render()
 
 # --------------------------------------------------
 # Startup
@@ -58,54 +63,6 @@ st.set_page_config(
     page_icon="🏡",
     layout="wide"
 )
-
-# --------------------------------------------------
-# Sidebar
-# --------------------------------------------------
-
-with st.sidebar:
-
-    st.title("🏡 Homeschool Hub")
-
-    st.caption(
-        "Family Homeschool Management"
-    )
-
-    st.divider()
-
-    st.caption("Version 1.0")
-    if current_user:
-
-        st.success(
-            f"👤 {current_user.email}"
-        )
-
-        st.caption(
-            f"Role: {current_user.role}"
-        )
-
-        st.divider()
-
-        if AuthService.is_parent():
-
-            st.caption(
-                "Parent Access"
-            )
-
-        elif AuthService.is_student():
-
-            st.caption(
-                "Student Access"
-            )
-
-        if st.button("Logout"):
-
-            AuthService.logout()
-
-            st.rerun()
-
-        st.divider()
-    
 
 # --------------------------------------------------
 # Dashboard Header

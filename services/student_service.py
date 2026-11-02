@@ -2,25 +2,10 @@ from database.db import SessionLocal
 from database.models import Student, StudentAssignment, Assignment, AssignmentStatus
 from sqlalchemy.orm import joinedload
 from datetime import datetime
+from services.auth_service import AuthService
 
 
 class StudentService:
-
-    @staticmethod
-    def get_active_students():
-
-        db = SessionLocal()
-
-        try:
-
-            return (
-                db.query(Student)
-                .filter(Student.active == True)
-                .all()
-            )
-
-        finally:
-            db.close()
 
     @staticmethod
     def update_assignment_status(
@@ -97,21 +82,6 @@ class StudentService:
             db.close()
 
     @staticmethod
-    def get_all_students():
-        """
-        Returns all students.
-        """
-
-        db = SessionLocal()
-
-        try:
-            students = db.query(Student).all()
-            return students
-
-        finally:
-            db.close()
-
-    @staticmethod
     def get_student_by_id(student_id):
         """
         Returns a single student.
@@ -132,20 +102,17 @@ class StudentService:
             db.close()
 
     @staticmethod
-    def get_active_students():
+    def get_current_family_students():
 
-        db = SessionLocal()
+        family_id = (
+            AuthService.get_current_family()
+        )
 
-        try:
-
-            return (
-                db.query(Student)
-                .filter(Student.active.is_(True))
-                .all()
+        return (
+            StudentService.get_students_by_family(
+                family_id
             )
-
-        finally:
-            db.close()
+        )
 
     @staticmethod
     def get_students_by_family(family_id):
@@ -159,6 +126,9 @@ class StudentService:
             students = (
                 db.query(Student)
                 .filter(Student.family_id == family_id)
+                .filter(
+                    Student.active.is_(True)
+                )
                 .all()
             )
 
@@ -169,7 +139,6 @@ class StudentService:
 
     @staticmethod
     def create_student(
-        family_id,
         name,
         grade_level=None,
         birth_year=None
@@ -183,7 +152,7 @@ class StudentService:
         try:
 
             student = Student(
-                family_id=family_id,
+                family_id=AuthService.get_current_family(),
                 name=name,
                 grade_level=grade_level,
                 birth_year=birth_year

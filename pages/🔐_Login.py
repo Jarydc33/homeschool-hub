@@ -4,7 +4,11 @@ from services.user_service import UserService
 from services.auth_service import AuthService
 from services.auth_provider import AuthProvider
 from config import DEV_MODE
-from services.session_service import SessionService
+from components.navigation import (
+    NavigationComponent
+)
+
+NavigationComponent.render()
 
 if DEV_MODE:
 
@@ -41,7 +45,7 @@ if AuthService.is_authenticated():
     else:
 
         st.switch_page(
-            "pages/5_🎓_Student_Dashboard.py"
+            "pages/🎓_Student_Dashboard.py"
         )
 
 
@@ -69,14 +73,14 @@ if st.button(
 
         result = (
             AuthProvider.login(
-                email,
+                email.strip().lower(),
                 password
             )
         )
 
         user = (
             UserService.get_user_by_email(
-                email
+                email.strip().lower()
             )
         )
 

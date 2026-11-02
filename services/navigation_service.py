@@ -15,7 +15,7 @@ class NavigationService:
             )
 
             st.switch_page(
-                "pages/0_🔐_Login.py"
+                "pages/🔐_Login.py"
             )
 
             st.stop()
@@ -31,7 +31,7 @@ class NavigationService:
         if AuthService.is_student():
 
             st.switch_page(
-                "pages/5_🎓_Student_Dashboard.py"
+                "pages/🎓_Student_Dashboard.py"
             )
 
             st.stop()

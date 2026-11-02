@@ -6,7 +6,11 @@ from services.auth_service import (
 )
 
 from services.navigation_service import NavigationService
+from components.navigation import (
+    NavigationComponent
+)
 
+NavigationComponent.render()
 NavigationService.require_parent()
 
 # ==================================================
@@ -100,7 +104,7 @@ st.write(
 )
 
 subjects = (
-    SubjectService.get_active_subjects()
+    SubjectService.get_current_family_subjects()
 )
 
 # ==================================================
@@ -228,7 +232,6 @@ with st.form(
     if submitted:
 
         SubjectService.create_subject(
-            family_id=1,
             name=name,
             color=color
         )

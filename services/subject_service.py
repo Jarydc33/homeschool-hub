@@ -2,7 +2,7 @@
 
 from database.db import SessionLocal
 from database.models import Subject, Assignment
-
+from services.auth_service import AuthService
 
 class SubjectService:
 
@@ -76,6 +76,9 @@ class SubjectService:
             return (
                 db.query(Subject)
                 .filter(Subject.family_id == family_id)
+                .filter(
+                    Subject.active.is_(True)
+                )
                 .all()
             )
 
@@ -83,8 +86,20 @@ class SubjectService:
             db.close()
 
     @staticmethod
+    def get_current_family_subjects():
+
+        family_id = (
+            AuthService.get_current_family()
+        )
+
+        return (
+            SubjectService.get_subjects_by_family(
+                family_id
+            )
+        )
+
+    @staticmethod
     def create_subject(
-        family_id,
         name,
         color=None
     ):
@@ -94,7 +109,7 @@ class SubjectService:
         try:
 
             subject = Subject(
-                family_id=family_id,
+                family_id=AuthService.get_current_family(),
                 name=name,
                 color=color
             )

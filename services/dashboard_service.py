@@ -11,21 +11,22 @@ from services.assignment_service import (
 )
 
 
+
 class DashboardService:
 
     @staticmethod
     def get_dashboard_data():
 
         students = (
-            StudentService.get_all_students()
+            StudentService.get_current_family_students()
         )
 
         subjects = (
-            SubjectService.get_all_subjects()
+            SubjectService.get_current_family_subjects()
         )
 
         assignments = (
-            AssignmentService.get_all_assignments()
+            AssignmentService.get_current_family_assignments()
         )
 
         today = date.today()
