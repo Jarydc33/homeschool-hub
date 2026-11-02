@@ -94,6 +94,36 @@ def create_student_login_dialog(
                 str(ex)
             )
 
+@st.dialog("✏️ Update Student Login")
+def update_student_login_dialog(
+    student
+):
+
+    user = (
+        UserService.get_user_by_student_id(
+            student.id
+        )
+    )
+
+    email = st.text_input(
+        "Email",
+        value=user.email
+    )
+
+    if st.button(
+        "Save"
+    ):
+
+        UserService.update_user_email(
+            user.id,
+            email.strip().lower()
+        )
+
+        st.success(
+            "Email updated."
+        )
+
+        st.rerun()
 
 st.title("🎓 Student View")
 
@@ -141,10 +171,39 @@ else:
     st.info(
         "Parent Viewing Student Dashboard"
     )
-    if st.button(
-        "Create Student Login"
-    ):
-        create_student_login_dialog(selected_student)
+
+    student_user = UserService.get_user_by_student_id(
+        selected_student.id
+    )
+
+    if student_user:
+
+        st.success(
+            "✅ Student Login Enabled"
+        )
+
+        st.caption(
+            f"Email: {student_user.email}"
+        )
+
+        if st.button(
+            "✏️ Update Email"
+        ):
+
+            #update_student_login_dialog(
+            #    selected_student
+            #)
+            st.error("This feature coming soon")
+
+    else:
+
+        if st.button(
+            "🔐 Create Student Login"
+        ):
+
+            create_student_login_dialog(
+                selected_student
+            )
 
 
 student_assignments = (
