@@ -91,3 +91,39 @@ class AuthProvider:
         except Exception:
 
             return None
+
+    @staticmethod
+    def create_student_account(
+        email
+    ):
+
+        supabase = (
+            SupabaseService.get_admin_client()
+        )
+
+        return (
+            supabase.auth.admin.invite_user_by_email(
+                email,
+                {
+                    "redirect_to":
+                    "https://homeschool-app.streamlit.app/Complete_Account"
+                }
+            )
+        )
+
+    @staticmethod
+    def set_password(
+        password
+    ):
+
+        supabase = (
+            SupabaseService.get_client()
+        )
+
+        return (
+            supabase.auth.update_user(
+                {
+                    "password": password
+                }
+            )
+        )

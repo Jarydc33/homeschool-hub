@@ -100,7 +100,7 @@ class NavigationComponent:
                     )
                     st.session_state["logged_out"]=True
 
-                st.caption("Version 0.4.0")
+                st.caption("Version 0.4.1")
             else:
 
                 st.page_link(

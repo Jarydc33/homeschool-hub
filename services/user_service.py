@@ -22,6 +22,26 @@ class UserService:
             db.close()
 
     @staticmethod
+    def get_user_by_student_id(
+        student_id
+    ):
+
+        db = SessionLocal()
+
+        try:
+
+            return (
+                db.query(User)
+                .filter(
+                    User.student_id == student_id
+                )
+                .first()
+            )
+
+        finally:
+            db.close()
+
+    @staticmethod
     def get_user_by_id(user_id):
 
         db = SessionLocal()
@@ -88,8 +108,7 @@ class UserService:
     def create_student_user(
         family_id,
         student_id,
-        email,
-        password_hash
+        email
     ):
 
         db = SessionLocal()
@@ -100,7 +119,6 @@ class UserService:
                 family_id=family_id,
                 student_id=student_id,
                 email=email.strip().lower(),
-                password_hash=password_hash,
                 role="Student"
             )
 

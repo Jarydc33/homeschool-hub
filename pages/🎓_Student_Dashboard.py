@@ -4,6 +4,7 @@ from datetime import date
 
 import streamlit as st
 
+from services.auth_provider import AuthProvider
 from services.student_service import StudentService
 from services.auth_service import (
     AuthService
@@ -15,9 +16,84 @@ from services.navigation_service import (
 from components.navigation import (
     NavigationComponent
 )
+from services.user_service import UserService
 
 NavigationComponent.render()
 NavigationService.require_authentication()
+
+@st.dialog("🔐 Create Student Login")
+def create_student_login_dialog(
+    student
+):
+
+    st.write(
+        f"Create a login for {student.name}"
+    )
+
+    email = st.text_input(
+        "Student Email"
+    )
+
+    if st.button(
+        "Create Login"
+    ):
+
+        email = (
+            email.strip().lower()
+        )
+
+        existing_user = (
+            UserService.get_user_by_student_id(
+                student.id
+            )
+        )
+
+        if existing_user:
+
+            st.error(
+                "Student already has a login."
+            )
+
+            return
+
+        existing_email = (
+            UserService.get_user_by_email(
+                email
+            )
+        )
+
+        if existing_email:
+
+            st.error(
+                "Email already exists."
+            )
+
+            return
+
+        try:
+
+            UserService.create_student_user(
+                family_id=AuthService.get_current_family(),
+                student_id=student.id,
+                email=email
+            )
+
+            AuthProvider.create_student_account(
+                email
+            )
+
+            st.success(
+                "Student login created."
+            )
+
+            st.rerun()
+
+        except Exception as ex:
+
+            st.error(
+                str(ex)
+            )
+
 
 st.title("🎓 Student View")
 
@@ -38,8 +114,8 @@ if AuthService.is_student():
         )
     )
 
-    st.info(
-        "Student Mode"
+    st.success(
+        f"Welcome back, {selected_student.name}!"
     )
 
 else:
@@ -65,6 +141,11 @@ else:
     st.info(
         "Parent Viewing Student Dashboard"
     )
+    if st.button(
+        "Create Student Login"
+    ):
+        create_student_login_dialog(selected_student)
+
 
 student_assignments = (
     StudentService.get_student_assignments(
@@ -99,6 +180,34 @@ if total_assignments:
 # ------------------------------------------------------------------
 
 st.header(selected_student.name)
+
+st.metric(
+    "🔥 Streak",
+    "Coming Soon"
+)
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+
+    st.metric(
+        "✅ Complete",
+        completed_assignments
+    )
+
+with col2:
+
+    st.metric(
+        "📚 Remaining",
+        total_assignments - completed_assignments
+    )
+
+with col3:
+
+    st.metric(
+        "🎯 Progress",
+        f"{int(progress)}%"
+    )
 
 if selected_student.grade_level:
     st.caption(
@@ -205,6 +314,30 @@ upcoming.sort(
 # Dashboard Metrics
 # ------------------------------------------------------------------
 
+st.subheader("🎯 Today's Focus")
+
+if overdue:
+
+    next_assignment = overdue[0]
+
+elif today_assignments:
+
+    next_assignment = today_assignments[0]
+
+elif upcoming:
+
+    next_assignment = upcoming[0]
+
+else:
+
+    next_assignment = None
+
+if next_assignment:
+
+    st.info(
+        f"Next Task: {next_assignment.assignment.title}"
+    )
+
 col1, col2, col3 = st.columns(3)
 
 with col1:
@@ -266,6 +399,12 @@ def render_assignment(
         st.caption(
             f"Due: {assignment.due_date}"
         )
+
+        if assignment.assignment_type == "Recurring":
+
+            st.caption(
+                f"🔁 {assignment.recurrence_pattern}"
+            )
 
 # ------------------------------------------------------------------
 # Overdue Assignments
