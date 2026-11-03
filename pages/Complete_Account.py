@@ -1,24 +1,44 @@
 import streamlit as st
 
 from services.auth_provider import AuthProvider
-from services.auth_service import AuthService
+
+# This page acts only on the token in the invite link, never on a saved login.
+# A parent may open their student's link in a browser where they're logged in,
+# and the form must not change the parent's password.
 
 st.title("🔑 Complete Account Setup")
 
-auth_user = (
-    AuthProvider.get_current_auth_user()
-)
+if st.session_state.get("invite_complete"):
 
-if not auth_user:
+    st.success(
+        "Your password has been created. "
+        "You can now log in with it."
+    )
 
-    st.error(
-        "No active invitation found."
+    st.page_link(
+        "pages/🔐_Login.py",
+        label="Go to Login",
+        icon="🔐"
     )
 
     st.stop()
 
-st.success(
-    f"Account invitation verified for {auth_user.user.email}"
+token_hash = st.query_params.get(
+    "token_hash"
+)
+
+if not token_hash or st.query_params.get("type") != "invite":
+
+    st.error(
+        "This invitation link isn't valid. "
+        "Please use the link in your invitation email, "
+        "or ask a parent to send a new one."
+    )
+
+    st.stop()
+
+st.write(
+    "Choose a password for your new account."
 )
 
 password = st.text_input(
@@ -50,22 +70,26 @@ if st.button(
 
     else:
 
-        try:
+        # The token is only used here, not on page load, because it works
+        # once and email security scanners can open links before people do.
 
-            AuthProvider.set_password(
-                password
-            )
+        error_message = AuthProvider.complete_invite(
+            token_hash,
+            password
+        )
 
-            st.success(
-                "Password created successfully."
-            )
-
-            st.switch_page(
-                "app.py"
-            )
-
-        except Exception as ex:
+        if error_message:
 
             st.error(
-                str(ex)
+                error_message
             )
+
+        else:
+
+            st.session_state[
+                "invite_complete"
+            ] = True
+
+            st.query_params.clear()
+
+            st.rerun()

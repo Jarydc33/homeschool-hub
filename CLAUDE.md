@@ -85,14 +85,15 @@ tests/                  pytest suite for the services
 - ORM objects returned after `db.close()` can raise `DetachedInstanceError` on lazy relationships. Eager-load with `joinedload`, or use a session with `expire_on_commit=False`.
 - Browser writes run after the script does, so `st.rerun()` or `st.switch_page()` right after one can cancel it. That's why `SessionService` queues writes and stops the script until `components/browser_session` confirms. Follow `save_session` or `clear_session` with a rerun or page change, and let `NavigationComponent.render()` finish the write.
 - Supabase refresh tokens work once. Keep `auto_refresh_token=False` on clients, or a background timer uses up the token saved in the browser and ends the login. After a refresh, the new tokens must reach the browser before anything else happens.
-- Supabase email links (invite, password reset) put tokens in the URL fragment by default, and Streamlit's server can't read the fragment. Fix: use the `token_hash` email template, read `st.query_params`, call `verify_otp`.
+- Supabase email links (invite, password reset) put tokens in the URL fragment by default, and Streamlit's server can't read the fragment. Fix: use the `token_hash` email template, read `st.query_params`, and call `verify_otp` on submit, not on page load, because tokens work once and email scanners open links. Act only on the link's token, never a saved login, and set the password on the client that verified it.
 - `st.session_state` is per browser tab session and is lost on a refresh. Persistent login comes from the stored tokens.
 
 ## Known open items (see the roadmap for the full list)
 
 - Logging out in one tab doesn't end the session in another open tab until that tab is refreshed.
 - Archived students can't log in (`AuthService.get_current_user` blocks them) until a parent restores them on the Students page. Subjects and assignments can't be restored from the app yet.
-- The student invite flow (`Complete_Account`) doesn't work yet (URL fragment issue above).
+- Student invites depend on the Supabase "Invite user" email template linking to `{{ .SiteURL }}/Complete_Account?token_hash={{ .TokenHash }}&type=invite`.
+- A parent can't resend an invite or change a student's login email yet, so an expired invite leaves that student stuck. There's also no "forgot password" flow.
 - Recurring assignments use a single status per student. The occurrence model (one row per assignment, per student, per date) is planned for Phase 1.
 - Student Mode (a parent's device locked to one student, with a parent PIN to exit) and pairing codes for kids without email are designed but not built (roadmap Phase 2).
 

@@ -1,7 +1,7 @@
 import logging
 
 import streamlit as st
-from supabase_auth.errors import AuthApiError
+from supabase_auth.errors import AuthApiError, AuthWeakPasswordError
 
 from services.supabase_service import (
     SupabaseService
@@ -253,18 +253,168 @@ class AuthProvider:
         )
 
     @staticmethod
-    def set_password(
+    def invite_send_error_message(
+        error
+    ):
+        """
+        Returns what to show a parent when sending an invite fails, and
+        logs the detail for us.
+        """
+
+        logger.warning(
+            "Sending an invite failed: %s %s",
+            type(error).__name__,
+            getattr(error, "code", None)
+        )
+
+        if (
+            isinstance(error, AuthApiError)
+            and error.code == "email_exists"
+        ):
+
+            return (
+                "This email already has an account. "
+                "Please use a different email."
+            )
+
+        return (
+            "We couldn't send the invitation. "
+            "Please check the email address and try again."
+        )
+
+    @staticmethod
+    def complete_invite(
+        token_hash,
         password
     ):
+        """
+        Uses the token from an invite link to set that person's password.
+        Returns a message to show if it failed, or None if it worked.
+
+        The token only works once, so its session is kept for this browser
+        session. If the password is rejected, they can try another one.
+        """
+
+        session = st.session_state.get(
+            "invite_session"
+        )
 
         supabase = (
             SupabaseService.get_client()
         )
 
-        return (
+        if not session:
+
+            try:
+
+                session = (
+                    supabase.auth.verify_otp(
+                        {
+                            "token_hash": token_hash,
+                            "type": "invite"
+                        }
+                    ).session
+                )
+
+            except AuthApiError as ex:
+
+                logger.warning(
+                    "Verifying an invite failed: %s",
+                    ex.code
+                )
+
+                return (
+                    "This invitation link has expired or has already "
+                    "been used. Please ask a parent to send a new one."
+                )
+
+            except Exception as ex:
+
+                logger.warning(
+                    "Verifying an invite failed: %s",
+                    type(ex).__name__
+                )
+
+                return (
+                    "We couldn't set up your account right now. "
+                    "Please try again in a moment."
+                )
+
+            st.session_state[
+                "invite_session"
+            ] = session
+
+        else:
+
+            try:
+
+                session = (
+                    supabase.auth.set_session(
+                        session.access_token,
+                        session.refresh_token
+                    ).session
+                )
+
+            except Exception as ex:
+
+                logger.warning(
+                    "Resuming an invite failed: %s",
+                    type(ex).__name__
+                )
+
+                st.session_state.pop(
+                    "invite_session",
+                    None
+                )
+
+                return (
+                    "This invitation link has expired or has already "
+                    "been used. Please ask a parent to send a new one."
+                )
+
+            st.session_state[
+                "invite_session"
+            ] = session
+
+        try:
+
             supabase.auth.update_user(
                 {
                     "password": password
                 }
             )
+
+        except AuthWeakPasswordError:
+
+            return (
+                "That password is too easy to guess. "
+                "Please choose a stronger one."
+            )
+
+        except Exception as ex:
+
+            logger.warning(
+                "Setting an invited password failed: %s %s",
+                type(ex).__name__,
+                getattr(ex, "code", None)
+            )
+
+            return (
+                "We couldn't save that password. "
+                "Please try again or choose a different one."
+            )
+
+        # They log in themselves, so finishing this page can't replace a
+        # login already saved in this browser. End the setup session.
+
+        AuthProvider.sign_out(
+            session.access_token,
+            session.refresh_token
         )
+
+        st.session_state.pop(
+            "invite_session",
+            None
+        )
+
+        return None

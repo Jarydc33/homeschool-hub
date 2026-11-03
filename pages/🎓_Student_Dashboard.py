@@ -80,37 +80,50 @@ def create_student_login_dialog(
 
             return
 
-        try:
+        if not email:
 
-            student_user = UserService.create_student_user(
-                family_id=AuthService.get_current_family(),
-                student_id=student.id,
-                email=email
+            st.error(
+                "Please enter an email address."
             )
 
-            if not student_user:
+            return
 
-                st.error(
-                    "This student could not be found."
-                )
+        # Send the invite first. If it fails, no login row is left behind
+        # to block trying again.
 
-                return
+        try:
 
             AuthProvider.create_student_account(
                 email
             )
 
-            st.success(
-                "Student login created."
-            )
-
-            st.rerun()
-
         except Exception as ex:
 
             st.error(
-                str(ex)
+                AuthProvider.invite_send_error_message(ex)
             )
+
+            return
+
+        student_user = UserService.create_student_user(
+            family_id=AuthService.get_current_family(),
+            student_id=student.id,
+            email=email
+        )
+
+        if not student_user:
+
+            st.error(
+                "This student could not be found."
+            )
+
+            return
+
+        st.toast(
+            f"Invitation sent to {email}."
+        )
+
+        st.rerun()
 
 @st.dialog("✏️ Update Student Login")
 def update_student_login_dialog(
