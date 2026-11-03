@@ -64,19 +64,25 @@ if st.session_state.pop(
         "You have been logged out."
     )
 
-email = st.text_input(
-    "Email"
-)
+# In a form so tabbing past the password box's eye icon can't lose the password.
 
-password = st.text_input(
-    "Password",
-    type="password"
-)
+with st.form("login_form"):
 
-if st.button(
-    "Login",
-    use_container_width=True
-):
+    email = st.text_input(
+        "Email"
+    )
+
+    password = st.text_input(
+        "Password",
+        type="password"
+    )
+
+    submitted = st.form_submit_button(
+        "Login",
+        use_container_width=True
+    )
+
+if submitted:
 
     try:
 

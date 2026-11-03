@@ -70,6 +70,43 @@ class UserService:
             db.close()
 
     @staticmethod
+    def update_user_email(
+        user_id,
+        family_id,
+        email
+    ):
+        """
+        Changes a user's email within their family. Returns the user, or
+        None if they aren't in this family. Use
+        AuthService.update_student_email, which also updates Supabase.
+        """
+
+        db = SessionLocal()
+
+        try:
+
+            user = (
+                db.query(User)
+                .filter(
+                    User.id == user_id,
+                    User.family_id == family_id
+                )
+                .first()
+            )
+
+            if not user:
+                return None
+
+            user.email = email.strip().lower()
+
+            db.commit()
+
+            return user
+
+        finally:
+            db.close()
+
+    @staticmethod
     def create_parent_user(
         family_id,
         email

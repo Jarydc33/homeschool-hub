@@ -296,6 +296,75 @@ class AuthProvider:
         )
 
     @staticmethod
+    def find_auth_users(
+        *emails
+    ):
+        """
+        Returns the Supabase accounts for these emails, keyed by email.
+        Supabase can't look up by email, so this goes through the list.
+        Once users.auth_user_id exists, accounts can be fetched directly.
+        """
+
+        wanted = {
+            email.strip().lower()
+            for email in emails
+        }
+
+        admin = (
+            SupabaseService.get_admin_client().auth.admin
+        )
+
+        found = {}
+        page = 1
+        per_page = 200
+
+        while wanted - set(found):
+
+            users = admin.list_users(
+                page=page,
+                per_page=per_page
+            )
+
+            for user in users:
+
+                email = (user.email or "").lower()
+
+                if email in wanted:
+                    found[email] = user
+
+            if len(users) < per_page:
+                break
+
+            page += 1
+
+        return found
+
+    @staticmethod
+    def set_auth_email(
+        auth_user_id,
+        email,
+        confirmed
+    ):
+        """
+        Changes a Supabase account's email without asking the new address
+        to confirm. A finished account stays confirmed so it can still log
+        in. A pending invite stays unconfirmed so it can be invited again.
+        """
+
+        attributes = {
+            "email": email
+        }
+
+        if confirmed:
+
+            attributes["email_confirm"] = True
+
+        SupabaseService.get_admin_client().auth.admin.update_user_by_id(
+            auth_user_id,
+            attributes
+        )
+
+    @staticmethod
     def resend_invite_error_message(
         error
     ):

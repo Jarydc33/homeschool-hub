@@ -37,7 +37,7 @@ Config comes from `.env` locally, or from `st.secrets` on Streamlit Cloud (`.str
 | `DATABASE_URL` | SQLAlchemy connection to Supabase Postgres (the `postgres` user) |
 | `SUPABASE_URL` | Supabase project URL |
 | `SUPABASE_KEY` | Anon key, used only for auth calls |
-| `SERVICE_KEY` | Service-role key, used only for admin auth (student invites). Server-side only |
+| `SERVICE_KEY` | Service-role key, used only for admin auth (student invites and login email changes). Server-side only |
 
 Never print, log, or commit any of these values.
 
@@ -82,6 +82,7 @@ tests/                  pytest suite for the services
 ## Streamlit gotchas we've hit
 
 - Widgets inside `st.form` don't rerun until submit, so one widget can't enable or disable another inside the same form. Put the controlling widget outside the form.
+- Always put `type="password"` inputs in an `st.form`. Outside one, pressing Tab moves focus to the box's "Show password" icon, Streamlit doesn't send the value, and the server sees an empty password while the box shows it filled in.
 - When deployed files change, Streamlit reloads every project module while other scripts may still be running. Don't assume a module's objects stay valid across a deploy. `database/models.py` calls `configure_mappers()` for this reason. If a live error appears right after a push and a fresh start doesn't show it, try rebooting the app.
 - ORM objects returned after `db.close()` can raise `DetachedInstanceError` on lazy relationships. Eager-load with `joinedload`, or use a session with `expire_on_commit=False`.
 - Browser writes run after the script does, so `st.rerun()` or `st.switch_page()` right after one can cancel it. That's why `SessionService` queues writes and stops the script until `components/browser_session` confirms. Follow `save_session` or `clear_session` with a rerun or page change, and let `NavigationComponent.render()` finish the write.
@@ -94,7 +95,7 @@ tests/                  pytest suite for the services
 - Logging out in one tab doesn't end the session in another open tab until that tab is refreshed.
 - Archived students can't log in (`AuthService.get_current_user` blocks them) until a parent restores them on the Students page. Subjects and assignments can't be restored from the app yet.
 - Invites and password resets depend on Supabase's email templates. "Invite user" must link to `{{ .SiteURL }}/Complete_Account?token_hash={{ .TokenHash }}&type=invite`, and "Reset Password" to the same address with `type=recovery`.
-- A parent can't change a student's login email yet, so an invite sent to a mistyped address needs a manual fix. This is easier once `users.auth_user_id` exists (Phase 1).
+- Changing a student's login email has to update Supabase and `users` together, because they're linked by email. `AuthService.update_student_email` handles this. It finds the account by listing Supabase users, which `users.auth_user_id` (Phase 1) can replace. Parents can't change their own email yet.
 - Recurring assignments use a single status per student. The occurrence model (one row per assignment, per student, per date) is planned for Phase 1.
 - Student Mode (a parent's device locked to one student, with a parent PIN to exit) and pairing codes for kids without email are designed but not built (roadmap Phase 2).
 

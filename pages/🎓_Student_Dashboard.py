@@ -137,8 +137,26 @@ def update_student_login_dialog(
         )
     )
 
+    if not user:
+
+        st.error(
+            "This student doesn't have a login yet."
+        )
+
+        return
+
+    st.write(
+        f"Change the email {student.name} uses to log in."
+    )
+
+    st.caption(
+        "If they've already set a password, it stays the same. "
+        "If they haven't, we'll send a new invitation to the new "
+        "email, and the old invitation stops working."
+    )
+
     email = st.text_input(
-        "Email",
+        "New Email",
         value=user.email
     )
 
@@ -146,13 +164,21 @@ def update_student_login_dialog(
         "Save"
     ):
 
-        UserService.update_user_email(
-            user.id,
-            email.strip().lower()
+        updated, message = AuthService.update_student_email(
+            student.id,
+            email
         )
 
-        st.success(
-            "Email updated."
+        if not updated:
+
+            st.error(
+                message
+            )
+
+            return
+
+        st.toast(
+            message
         )
 
         st.rerun()
@@ -263,10 +289,9 @@ else:
             "✏️ Update Email"
         ):
 
-            #update_student_login_dialog(
-            #    selected_student
-            #)
-            st.error("This feature coming soon")
+            update_student_login_dialog(
+                selected_student
+            )
 
     else:
 

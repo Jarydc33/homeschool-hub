@@ -96,20 +96,26 @@ st.write(
     text["intro"]
 )
 
-password = st.text_input(
-    "Password",
-    type="password"
-)
+# In a form so tabbing past each box's eye icon can't lose the password.
 
-confirm_password = st.text_input(
-    "Confirm Password",
-    type="password"
-)
+with st.form("set_password_form"):
 
-if st.button(
-    text["button"],
-    use_container_width=True
-):
+    password = st.text_input(
+        "Password",
+        type="password"
+    )
+
+    confirm_password = st.text_input(
+        "Confirm Password",
+        type="password"
+    )
+
+    submitted = st.form_submit_button(
+        text["button"],
+        use_container_width=True
+    )
+
+if submitted:
 
     if password != confirm_password:
 
