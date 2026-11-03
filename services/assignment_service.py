@@ -100,37 +100,67 @@ class AssignmentService:
         assignment_type=AssignmentType.ONE_TIME.value,
         recurrence_pattern=None
     ):
+        """
+        Returns the new assignment, or None if the subject or any
+        student is not an active part of this family.
+        """
+
+        family_id = (
+            AuthService.get_current_family()
+        )
 
         db = SessionLocal()
 
         try:
 
+            subject = (
+                db.query(Subject)
+                .filter(
+                    Subject.id == subject_id,
+                    Subject.family_id == family_id,
+                    Subject.active.is_(True)
+                )
+                .first()
+            )
+
+            if not subject:
+                return None
+
+            requested_ids = set(student_ids)
+
+            active_ids = {
+                student_id
+                for (student_id,) in (
+                    db.query(Student.id)
+                    .filter(
+                        Student.family_id == family_id,
+                        Student.active.is_(True)
+                    )
+                )
+            }
+
+            if not requested_ids <= active_ids:
+                return None
+
             assignment = Assignment(
-                family_id=AuthService.get_current_family(),
+                family_id=family_id,
                 subject_id=subject_id,
                 title=title,
                 description=description,
                 due_date=due_date,
                 assignment_type=assignment_type,
-                recurrence_pattern=recurrence_pattern
+                recurrence_pattern=recurrence_pattern,
+                student_assignments=[
+                    StudentAssignment(
+                        student_id=student_id
+                    )
+                    for student_id in requested_ids
+                ]
             )
 
             db.add(assignment)
             db.commit()
             db.refresh(assignment)
-
-            # Create student assignment records
-
-            for student_id in student_ids:
-
-                student_assignment = StudentAssignment(
-                    assignment_id=assignment.id,
-                    student_id=student_id
-                )
-
-                db.add(student_assignment)
-
-            db.commit()
 
             return assignment
 
@@ -291,7 +321,9 @@ class AssignmentService:
             assignment = (
                 db.query(Assignment)
                 .filter(
-                    Assignment.id == assignment_id
+                    Assignment.id == assignment_id,
+                    Assignment.family_id
+                    == AuthService.get_current_family()
                 )
                 .first()
             )

@@ -228,9 +228,18 @@ def archive_assignment_dialog(assignment):
             use_container_width=True
         ):
 
-            AssignmentService.archive_assignment(
+            archived = AssignmentService.archive_assignment(
                 assignment.id
             )
+
+            if not archived:
+
+                st.error(
+                    "This assignment couldn't be archived. "
+                    "Please refresh the page and try again."
+                )
+
+                return
 
             st.toast(
                 "Assignment archived."
@@ -327,8 +336,8 @@ with st.form(
 
     if submitted:
 
-        AssignmentService.create_assignment(
-            subject_id=subject.id,
+        created = AssignmentService.create_assignment(
+            subject_id=subject.id if subject else None,
             title=title,
             student_ids=[
                 student.id
@@ -340,11 +349,18 @@ with st.form(
             recurrence_pattern=recurrence_pattern
         )
 
-        st.toast(
-            "Assignment created successfully."
-        )
+        if created:
 
-        st.rerun()
+            st.toast(
+                "Assignment created successfully."
+            )
+
+            st.rerun()
+
+        st.error(
+            "This assignment couldn't be created. Check that "
+            "you've chosen an active subject and students."
+        )
 
 # ==================================================
 # CURRENT ASSIGNMENTS

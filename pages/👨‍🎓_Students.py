@@ -26,6 +26,14 @@ def edit_student_dialog(student_id):
         )
     )
 
+    if not student:
+
+        st.error(
+            "This student could not be found."
+        )
+
+        return
+
     name = st.text_input(
         "Student Name",
         value=student.name
@@ -49,12 +57,21 @@ def edit_student_dialog(student_id):
 
     if st.button("💾 Save Changes"):
 
-        StudentService.update_student(
+        updated = StudentService.update_student(
             student_id=student.id,
             name=name,
             grade_level=grade_level,
             birth_year=birth_year
         )
+
+        if not updated:
+
+            st.error(
+                "This student couldn't be saved. "
+                "Please refresh the page and try again."
+            )
+
+            return
 
         st.toast(
             f"{name} updated successfully."
@@ -92,10 +109,18 @@ def archive_student_dialog(student):
             type="primary",
             use_container_width=True
         ):
-            #Potentially change this so a user cant archive another families student?
-            StudentService.archive_student(
+            archived = StudentService.archive_student(
                 student.id
             )
+
+            if not archived:
+
+                st.error(
+                    "This student couldn't be archived. "
+                    "Please refresh the page and try again."
+                )
+
+                return
 
             st.toast(
                 f"{student.name} archived."

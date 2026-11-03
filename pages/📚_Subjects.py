@@ -26,6 +26,14 @@ def edit_subject_dialog(subject_id):
         )
     )
 
+    if not subject:
+
+        st.error(
+            "This subject could not be found."
+        )
+
+        return
+
     name = st.text_input(
         "Subject Name",
         value=subject.name
@@ -40,11 +48,20 @@ def edit_subject_dialog(subject_id):
 
     if st.button("💾 Save Changes"):
 
-        SubjectService.update_subject(
+        updated = SubjectService.update_subject(
             subject_id=subject.id,
             name=name,
             color=color
         )
+
+        if not updated:
+
+            st.error(
+                "This subject couldn't be saved. "
+                "Please refresh the page and try again."
+            )
+
+            return
 
         st.toast(
             f"{name} updated successfully."
@@ -82,9 +99,18 @@ def archive_subject_dialog(subject):
             use_container_width=True
         ):
 
-            SubjectService.archive_subject(
+            archived = SubjectService.archive_subject(
                 subject.id
             )
+
+            if not archived:
+
+                st.error(
+                    "This subject couldn't be archived. "
+                    "Please refresh the page and try again."
+                )
+
+                return
 
             st.toast(
                 f"{subject.name} archived."

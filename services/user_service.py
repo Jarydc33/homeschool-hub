@@ -1,5 +1,5 @@
 from database.db import SessionLocal
-from database.models import User
+from database.models import Student, User
 
 class UserService:
 
@@ -23,7 +23,8 @@ class UserService:
 
     @staticmethod
     def get_user_by_student_id(
-        student_id
+        student_id,
+        family_id
     ):
 
         db = SessionLocal()
@@ -33,7 +34,8 @@ class UserService:
             return (
                 db.query(User)
                 .filter(
-                    User.student_id == student_id
+                    User.student_id == student_id,
+                    User.family_id == family_id
                 )
                 .first()
             )
@@ -92,10 +94,27 @@ class UserService:
         student_id,
         email
     ):
+        """
+        Returns the new user, or None if the student is not an
+        active part of this family.
+        """
 
         db = SessionLocal()
 
         try:
+
+            student = (
+                db.query(Student)
+                .filter(
+                    Student.id == student_id,
+                    Student.family_id == family_id,
+                    Student.active.is_(True)
+                )
+                .first()
+            )
+
+            if not student:
+                return None
 
             user = User(
                 family_id=family_id,

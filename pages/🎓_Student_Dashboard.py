@@ -44,7 +44,8 @@ def create_student_login_dialog(
 
         existing_user = (
             UserService.get_user_by_student_id(
-                student.id
+                student.id,
+                AuthService.get_current_family()
             )
         )
 
@@ -72,11 +73,19 @@ def create_student_login_dialog(
 
         try:
 
-            UserService.create_student_user(
+            student_user = UserService.create_student_user(
                 family_id=AuthService.get_current_family(),
                 student_id=student.id,
                 email=email
             )
+
+            if not student_user:
+
+                st.error(
+                    "This student could not be found."
+                )
+
+                return
 
             AuthProvider.create_student_account(
                 email
@@ -101,7 +110,8 @@ def update_student_login_dialog(
 
     user = (
         UserService.get_user_by_student_id(
-            student.id
+            student.id,
+            AuthService.get_current_family()
         )
     )
 
@@ -144,6 +154,15 @@ if AuthService.is_student():
         )
     )
 
+    if not selected_student:
+
+        st.error(
+            "We couldn't find your student profile. "
+            "Please ask a parent for help."
+        )
+
+        st.stop()
+
     st.success(
         f"Welcome back, {selected_student.name}!"
     )
@@ -173,7 +192,8 @@ else:
     )
 
     student_user = UserService.get_user_by_student_id(
-        selected_student.id
+        selected_student.id,
+        AuthService.get_current_family()
     )
 
     if student_user:
@@ -446,12 +466,19 @@ def render_assignment(
 
     if checked != completed:
 
-        StudentService.update_assignment_status(
+        updated = StudentService.update_assignment_status(
             student_assignment.id,
             checked
         )
 
-        st.rerun()
+        if updated:
+
+            st.rerun()
+
+        st.error(
+            "This assignment couldn't be updated. "
+            "Please refresh the page and try again."
+        )
 
     if assignment.due_date:
 

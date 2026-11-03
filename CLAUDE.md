@@ -10,7 +10,7 @@ A homeschool management app: parents manage students, subjects and assignments; 
 ## Current status
 
 - **Phase:** 0 (bug fixes and Streamlit stopgaps)
-- **Done:** Edit Assignment dialog crash, `update_assignment` wiping completion status
+- **Done:** Edit Assignment dialog crash, `update_assignment` wiping completion status, family checks in the student, subject, assignment and user services, pytest suite
 - **Next up:** the next open Phase 0 item on the roadmap
 - Update this section when a phase or major item is finished.
 
@@ -19,6 +19,13 @@ A homeschool management app: parents manage students, subjects and assignments; 
 ```bash
 pip install -r requirements.txt
 streamlit run app.py
+```
+
+Tests run on a temporary SQLite database, never Supabase:
+
+```bash
+pip install -r requirements-dev.txt
+pytest
 ```
 
 Config comes from `.env` locally, or from `st.secrets` on Streamlit Cloud (`.streamlit/secrets.toml`, never committed):
@@ -49,6 +56,7 @@ services/               All business logic and DB access (static-method classes)
 database/db.py          Engine, SessionLocal, Base
 database/models.py      ORM models + enums (UserRole, AssignmentStatus, AssignmentType, RecurrencePattern)
 scripts/                One-off scripts (init_db, seed_data, test_connection). Never run them from pages
+tests/                  pytest suite for the services
 ```
 
 ## How data flows
@@ -90,4 +98,4 @@ scripts/                One-off scripts (init_db, seed_data, test_connection). N
 
 - Make small, focused changes, one roadmap item at a time, and explain what changed and why.
 - Before a schema change, a data migration, or anything destructive in Supabase, stop and confirm first.
-- Add or update pytest tests for service changes once the test suite exists, including a check that one family can't read another family's data.
+- Add or update pytest tests for service changes, including a check that one family can't read another family's data.

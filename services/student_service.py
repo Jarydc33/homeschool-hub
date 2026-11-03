@@ -17,14 +17,28 @@ class StudentService:
 
         try:
 
-            student_assignment = (
+            query = (
                 db.query(StudentAssignment)
+                .join(StudentAssignment.assignment)
                 .filter(
                     StudentAssignment.id
-                    == student_assignment_id
+                    == student_assignment_id,
+                    Assignment.family_id
+                    == AuthService.get_current_family(),
+                    Assignment.active.is_(True)
                 )
-                .first()
             )
+
+            # Students can only check off their own work.
+
+            if AuthService.is_student():
+
+                query = query.filter(
+                    StudentAssignment.student_id
+                    == AuthService.get_current_student()
+                )
+
+            student_assignment = query.first()
 
             if not student_assignment:
                 return None
@@ -63,6 +77,7 @@ class StudentService:
 
             student_assignments = (
                 db.query(StudentAssignment)
+                .join(StudentAssignment.assignment)
                 .options(
                     joinedload(
                         StudentAssignment.assignment
@@ -71,7 +86,10 @@ class StudentService:
                     )
                 )
                 .filter(
-                    StudentAssignment.student_id == student_id
+                    StudentAssignment.student_id == student_id,
+                    Assignment.family_id
+                    == AuthService.get_current_family(),
+                    Assignment.active.is_(True)
                 )
                 .all()
             )
@@ -92,7 +110,11 @@ class StudentService:
         try:
             student = (
                 db.query(Student)
-                .filter(Student.id == student_id)
+                .filter(
+                    Student.id == student_id,
+                    Student.family_id
+                    == AuthService.get_current_family()
+                )
                 .first()
             )
 
@@ -184,7 +206,11 @@ class StudentService:
 
             student = (
                 db.query(Student)
-                .filter(Student.id == student_id)
+                .filter(
+                    Student.id == student_id,
+                    Student.family_id
+                    == AuthService.get_current_family()
+                )
                 .first()
             )
 
@@ -220,7 +246,11 @@ class StudentService:
 
             student = (
                 db.query(Student)
-                .filter(Student.id == student_id)
+                .filter(
+                    Student.id == student_id,
+                    Student.family_id
+                    == AuthService.get_current_family()
+                )
                 .first()
             )
 

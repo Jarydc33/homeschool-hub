@@ -16,7 +16,10 @@ class SubjectService:
             return (
                 db.query(Assignment)
                 .filter(
-                    Assignment.subject_id == subject_id
+                    Assignment.subject_id == subject_id,
+                    Assignment.family_id
+                    == AuthService.get_current_family(),
+                    Assignment.active.is_(True)
                 )
                 .count()
             )
@@ -33,7 +36,11 @@ class SubjectService:
 
             return (
                 db.query(Subject)
-                .filter(Subject.id == subject_id)
+                .filter(
+                    Subject.id == subject_id,
+                    Subject.family_id
+                    == AuthService.get_current_family()
+                )
                 .first()
             )
 
@@ -109,7 +116,11 @@ class SubjectService:
 
             subject = (
                 db.query(Subject)
-                .filter(Subject.id == subject_id)
+                .filter(
+                    Subject.id == subject_id,
+                    Subject.family_id
+                    == AuthService.get_current_family()
+                )
                 .first()
             )
 
@@ -138,7 +149,11 @@ class SubjectService:
 
             subject = (
                 db.query(Subject)
-                .filter(Subject.id == subject_id)
+                .filter(
+                    Subject.id == subject_id,
+                    Subject.family_id
+                    == AuthService.get_current_family()
+                )
                 .first()
             )
 
