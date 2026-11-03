@@ -15,7 +15,7 @@ _browser_session = components.declare_component(
 
 class SessionService:
     """
-    Keeps the login token in the browser's localStorage.
+    Keeps the login tokens in the browser's localStorage.
 
     Only the browser can reach localStorage, and it replies after the script
     has run. So each operation stops the script until the reply arrives, which
@@ -23,13 +23,14 @@ class SessionService:
     """
 
     TOKEN_STATE = "browser_session_token"
+    REFRESH_TOKEN_STATE = "browser_session_refresh_token"
     PENDING_STATE = "browser_session_pending"
     REQUEST_STATE = "browser_session_request"
 
     @staticmethod
-    def _perform(action, token=None):
+    def _perform(action, token=None, refresh_token=None):
         """
-        Runs an action in the browser and returns the token saved there.
+        Runs an action in the browser and returns what's saved there.
         Stops the script until the browser has replied.
         """
 
@@ -41,6 +42,7 @@ class SessionService:
         result = _browser_session(
             action=action,
             token=token,
+            refresh_token=refresh_token,
             request=request,
             key=f"browser_session_{request}",
             default=None
@@ -53,7 +55,7 @@ class SessionService:
             SessionService.REQUEST_STATE
         ] = request + 1
 
-        return result.get("token")
+        return result
 
     @staticmethod
     def get_access_token():
@@ -63,9 +65,15 @@ class SessionService:
 
         if SessionService.TOKEN_STATE not in st.session_state:
 
+            saved = SessionService._perform("read")
+
             st.session_state[
                 SessionService.TOKEN_STATE
-            ] = SessionService._perform("read")
+            ] = saved.get("token")
+
+            st.session_state[
+                SessionService.REFRESH_TOKEN_STATE
+            ] = saved.get("refresh_token")
 
         return st.session_state[
             SessionService.TOKEN_STATE
@@ -83,9 +91,20 @@ class SessionService:
         )
 
     @staticmethod
-    def save_session(access_token):
+    def get_known_refresh_token():
         """
-        Queues saving the token. It's written on the next call to
+        Returns the refresh token if it's already known, without asking
+        the browser.
+        """
+
+        return st.session_state.get(
+            SessionService.REFRESH_TOKEN_STATE
+        )
+
+    @staticmethod
+    def save_session(access_token, refresh_token=None):
+        """
+        Queues saving the tokens. They're written on the next call to
         sync_browser, so follow this with st.rerun() or a page change.
         """
 
@@ -94,17 +113,37 @@ class SessionService:
         ] = access_token
 
         st.session_state[
+            SessionService.REFRESH_TOKEN_STATE
+        ] = refresh_token
+
+        st.session_state[
             SessionService.PENDING_STATE
         ] = {
             "action": "save",
-            "token": access_token
+            "token": access_token,
+            "refresh_token": refresh_token
         }
 
     @staticmethod
     def clear_session():
         """
-        Queues removing the token. It's removed on the next call to
+        Queues removing the tokens. They're removed on the next call to
         sync_browser, so follow this with st.rerun().
+        """
+
+        SessionService.forget_session()
+
+        st.session_state[
+            SessionService.PENDING_STATE
+        ] = {
+            "action": "clear"
+        }
+
+    @staticmethod
+    def forget_session():
+        """
+        Stops using the tokens for the rest of this session, without
+        touching the browser.
         """
 
         st.session_state[
@@ -112,10 +151,8 @@ class SessionService:
         ] = None
 
         st.session_state[
-            SessionService.PENDING_STATE
-        ] = {
-            "action": "clear"
-        }
+            SessionService.REFRESH_TOKEN_STATE
+        ] = None
 
     @staticmethod
     def sync_browser():
@@ -133,7 +170,8 @@ class SessionService:
 
         SessionService._perform(
             pending["action"],
-            pending.get("token")
+            pending.get("token"),
+            pending.get("refresh_token")
         )
 
         del st.session_state[

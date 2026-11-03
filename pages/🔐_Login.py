@@ -4,7 +4,6 @@ from services.user_service import UserService
 from services.auth_service import AuthService
 from services.auth_provider import AuthProvider
 from services.session_service import SessionService
-from config import DEV_MODE
 from components.navigation import (
     NavigationComponent
 )
@@ -85,7 +84,7 @@ if st.button(
         if not user:
 
             st.error(
-                "User authenticated but no matching Homeschool Hub user exists."
+                "We couldn't find a Homeschool Hub account for this email."
             )
 
         elif AuthService.is_archived_student(user):
@@ -99,7 +98,8 @@ if st.button(
             if result.session:
 
                 SessionService.save_session(
-                    result.session.access_token
+                    result.session.access_token,
+                    result.session.refresh_token
                 )
 
             AuthService.set_current_user(
@@ -108,13 +108,8 @@ if st.button(
 
             st.rerun()
 
-    #/except Exception as ex:
-
-        #st.error(
-         #   "Invalid email or password."
-        #)
     except Exception as ex:
 
         st.error(
-            f"ERROR: {str(ex)}"
+            AuthProvider.login_error_message(ex)
         )

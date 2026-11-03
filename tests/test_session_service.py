@@ -23,18 +23,25 @@ class FakeBrowser:
 
     def __init__(self, token=None):
         self.token = token
+        self.refresh_token = None
         self.connected = True
         self.calls = []
 
-    def __call__(self, action, token, request, key, default):
+    def __call__(self, action, token, refresh_token, request, key, default):
         self.calls.append((action, key))
         if not self.connected:
             return default
         if action == "save":
             self.token = token
+            self.refresh_token = refresh_token
         elif action == "clear":
             self.token = None
-        return {"request": request, "token": self.token}
+            self.refresh_token = None
+        return {
+            "request": request,
+            "token": self.token,
+            "refresh_token": self.refresh_token,
+        }
 
 
 @pytest.fixture
@@ -191,7 +198,9 @@ def test_after_clear_the_browser_is_not_read_again(state, browser):
 def logged_in(state, browser):
     state["current_user_id"] = 1
     state[SessionService.TOKEN_STATE] = "saved"
+    state[SessionService.REFRESH_TOKEN_STATE] = "saved-refresh"
     browser.token = "saved"
+    browser.refresh_token = "saved-refresh"
 
 
 def test_logout_ends_the_session_in_supabase(state, browser):
@@ -200,7 +209,18 @@ def test_logout_ends_the_session_in_supabase(state, browser):
     with mock.patch.object(AuthProvider, "sign_out") as sign_out:
         AuthService.logout()
 
-    sign_out.assert_called_once_with("saved")
+    sign_out.assert_called_once_with("saved", "saved-refresh")
+
+
+def test_logout_forgets_the_refresh_token_too(state, browser):
+    logged_in(state, browser)
+
+    with mock.patch.object(AuthProvider, "sign_out"):
+        AuthService.logout()
+    SessionService.sync_browser()
+
+    assert SessionService.get_known_refresh_token() is None
+    assert browser.refresh_token is None
 
 
 def test_logout_signs_out_of_this_device_only():

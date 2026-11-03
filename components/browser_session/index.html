@@ -1,6 +1,6 @@
 <!doctype html>
 <!--
-  Reads and writes the login token in the browser, then tells the server it's
+  Reads and writes the login tokens in the browser, then tells the server it's
   done. Used by services/session_service.py, which waits for that reply so a
   rerun or page change can't cancel a write that hasn't happened yet.
 -->
@@ -8,6 +8,7 @@
   <body>
     <script>
       var TOKEN_KEY = "homeschoolhub_session";
+      var REFRESH_TOKEN_KEY = "homeschoolhub_refresh";
       // Left behind by the storage library this replaced.
       var OLD_TOKEN_KEY = "homeschoolhub_access_token";
       var lastRequest = null;
@@ -19,27 +20,44 @@
         );
       }
 
+      function store(key, value) {
+        if (value) {
+          localStorage.setItem(key, value);
+        } else {
+          localStorage.removeItem(key);
+        }
+      }
+
       function run(args) {
         var token = null;
+        var refreshToken = null;
 
         try {
           localStorage.removeItem(OLD_TOKEN_KEY);
 
           if (args.action === "save") {
-            localStorage.setItem(TOKEN_KEY, args.token);
+            store(TOKEN_KEY, args.token);
+            store(REFRESH_TOKEN_KEY, args.refresh_token);
           } else if (args.action === "clear") {
-            localStorage.removeItem(TOKEN_KEY);
+            store(TOKEN_KEY, null);
+            store(REFRESH_TOKEN_KEY, null);
           }
 
           token = localStorage.getItem(TOKEN_KEY);
+          refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
         } catch (error) {
           // Storage is blocked, so treat this browser as having no saved login.
           token = null;
+          refreshToken = null;
         }
 
         send("streamlit:setComponentValue", {
           dataType: "json",
-          value: { request: args.request, token: token },
+          value: {
+            request: args.request,
+            token: token,
+            refresh_token: refreshToken,
+          },
         });
       }
 

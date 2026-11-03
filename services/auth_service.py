@@ -182,7 +182,8 @@ class AuthService:
         if access_token:
 
             AuthProvider.sign_out(
-                access_token
+                access_token,
+                SessionService.get_known_refresh_token()
             )
 
         SessionService.clear_session()

@@ -120,7 +120,8 @@ with st.form(
                 if auth_result.session:
 
                     SessionService.save_session(
-                        auth_result.session.access_token
+                        auth_result.session.access_token,
+                        auth_result.session.refresh_token
                     )
 
                 AuthService.set_current_user(

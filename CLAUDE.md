@@ -38,7 +38,6 @@ Config comes from `.env` locally, or from `st.secrets` on Streamlit Cloud (`.str
 | `SUPABASE_URL` | Supabase project URL |
 | `SUPABASE_KEY` | Anon key, used only for auth calls |
 | `SERVICE_KEY` | Service-role key, used only for admin auth (student invites). Server-side only |
-| `DEV_MODE` | `true` shows impersonation buttons on Login. Must be false in production |
 
 Never print, log, or commit any of these values.
 
@@ -46,7 +45,6 @@ Never print, log, or commit any of these values.
 
 ```
 app.py                  Router: sends users to the landing page or a dashboard
-config.py               DEV_MODE flag
 pages/                  One file per Streamlit page (emoji filenames, e.g. "✅_Assignments.py")
 components/navigation.py  Sidebar nav + logout
 services/               All business logic and DB access (static-method classes)
@@ -86,12 +84,12 @@ tests/                  pytest suite for the services
 - Widgets inside `st.form` don't rerun until submit, so one widget can't enable or disable another inside the same form. Put the controlling widget outside the form.
 - ORM objects returned after `db.close()` can raise `DetachedInstanceError` on lazy relationships. Eager-load with `joinedload`, or use a session with `expire_on_commit=False`.
 - Browser writes run after the script does, so `st.rerun()` or `st.switch_page()` right after one can cancel it. That's why `SessionService` queues writes and stops the script until `components/browser_session` confirms. Follow `save_session` or `clear_session` with a rerun or page change, and let `NavigationComponent.render()` finish the write.
+- Supabase refresh tokens work once. Keep `auto_refresh_token=False` on clients, or a background timer uses up the token saved in the browser and ends the login. After a refresh, the new tokens must reach the browser before anything else happens.
 - Supabase email links (invite, password reset) put tokens in the URL fragment by default, and Streamlit's server can't read the fragment. Fix: use the `token_hash` email template, read `st.query_params`, call `verify_otp`.
 - `st.session_state` is per browser tab session and is lost on a refresh. Persistent login comes from the stored tokens.
 
 ## Known open items (see the roadmap for the full list)
 
-- The refresh token isn't stored yet, so a saved login stops working when its access token expires.
 - Logging out in one tab doesn't end the session in another open tab until that tab is refreshed.
 - Archived students can't log in (`AuthService.get_current_user` blocks them) until a parent restores them on the Students page. Subjects and assignments can't be restored from the app yet.
 - The student invite flow (`Complete_Account`) doesn't work yet (URL fragment issue above).
