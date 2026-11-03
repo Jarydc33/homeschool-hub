@@ -13,6 +13,17 @@ from services.session_service import (
 
 logger = logging.getLogger(__name__)
 
+EXPIRED_LINK_MESSAGES = {
+    "invite": (
+        "This invitation link has expired or has already been used. "
+        "Please ask a parent to send a new one."
+    ),
+    "recovery": (
+        "This password reset link has expired or has already been used. "
+        "Please request a new one."
+    ),
+}
+
 
 class AuthProvider:
 
@@ -78,11 +89,13 @@ class AuthProvider:
     @staticmethod
     def sign_out(
         access_token,
-        refresh_token=None
+        refresh_token=None,
+        scope="local"
     ):
         """
-        Ends this session in Supabase. Other devices stay logged in.
-        A failure is only logged, so it can't stop someone logging out.
+        Ends this session in Supabase. Other devices stay logged in unless
+        scope is "global". A failure is only logged, so it can't stop
+        someone logging out.
         """
 
         supabase = (
@@ -95,7 +108,7 @@ class AuthProvider:
 
                 supabase.auth.admin.sign_out(
                     access_token,
-                    "local"
+                    scope
                 )
 
             except AuthApiError:
@@ -114,7 +127,7 @@ class AuthProvider:
 
                 supabase.auth.admin.sign_out(
                     session.access_token,
-                    "local"
+                    scope
                 )
 
         except Exception as ex:
@@ -283,12 +296,105 @@ class AuthProvider:
         )
 
     @staticmethod
-    def complete_invite(
+    def resend_invite_error_message(
+        error
+    ):
+        """
+        Returns what to show a parent when resending an invite fails, and
+        logs the detail for us.
+        """
+
+        logger.warning(
+            "Resending an invite failed: %s %s",
+            type(error).__name__,
+            getattr(error, "code", None)
+        )
+
+        if isinstance(error, AuthApiError):
+
+            if error.code == "email_exists":
+
+                return (
+                    "This student has already set up their account. If "
+                    "they've forgotten their password, they can use "
+                    "\"Forgot your password?\" on the Login page."
+                )
+
+            if error.status == 429:
+
+                return (
+                    "An email was sent recently. "
+                    "Please wait a few minutes and try again."
+                )
+
+        return (
+            "We couldn't send the invitation. "
+            "Please try again in a moment."
+        )
+
+    @staticmethod
+    def send_password_reset(
+        email
+    ):
+        """
+        Emails a password reset link. Returns a message to show if it
+        couldn't be sent, or None. Unknown emails look the same as known
+        ones, so this can't be used to find out who has an account.
+        """
+
+        supabase = (
+            SupabaseService.get_client()
+        )
+
+        try:
+
+            supabase.auth.reset_password_for_email(
+                email
+            )
+
+        except Exception as ex:
+
+            logger.warning(
+                "Sending a password reset failed: %s %s",
+                type(ex).__name__,
+                getattr(ex, "code", None)
+            )
+
+            if (
+                isinstance(ex, AuthApiError)
+                and ex.status == 429
+            ):
+
+                return (
+                    "An email was sent recently. "
+                    "Please wait a few minutes and try again."
+                )
+
+            if (
+                isinstance(ex, AuthApiError)
+                and ex.status < 500
+            ):
+
+                return (
+                    "Please check the email address and try again."
+                )
+
+            return (
+                "We couldn't send the email right now. "
+                "Please try again in a moment."
+            )
+
+        return None
+
+    @staticmethod
+    def complete_email_link(
         token_hash,
+        link_type,
         password
     ):
         """
-        Uses the token from an invite link to set that person's password.
+        Uses the token from an invite ("invite") or password reset
+        ("recovery") link to set that person's password.
         Returns a message to show if it failed, or None if it worked.
 
         The token only works once, so its session is kept for this browser
@@ -296,7 +402,7 @@ class AuthProvider:
         """
 
         session = st.session_state.get(
-            "invite_session"
+            "email_link_session"
         )
 
         supabase = (
@@ -311,7 +417,7 @@ class AuthProvider:
                     supabase.auth.verify_otp(
                         {
                             "token_hash": token_hash,
-                            "type": "invite"
+                            "type": link_type
                         }
                     ).session
                 )
@@ -319,29 +425,26 @@ class AuthProvider:
             except AuthApiError as ex:
 
                 logger.warning(
-                    "Verifying an invite failed: %s",
+                    "Verifying an email link failed: %s",
                     ex.code
                 )
 
-                return (
-                    "This invitation link has expired or has already "
-                    "been used. Please ask a parent to send a new one."
-                )
+                return EXPIRED_LINK_MESSAGES[link_type]
 
             except Exception as ex:
 
                 logger.warning(
-                    "Verifying an invite failed: %s",
+                    "Verifying an email link failed: %s",
                     type(ex).__name__
                 )
 
                 return (
-                    "We couldn't set up your account right now. "
+                    "We couldn't finish this right now. "
                     "Please try again in a moment."
                 )
 
             st.session_state[
-                "invite_session"
+                "email_link_session"
             ] = session
 
         else:
@@ -358,22 +461,19 @@ class AuthProvider:
             except Exception as ex:
 
                 logger.warning(
-                    "Resuming an invite failed: %s",
+                    "Resuming an email link failed: %s",
                     type(ex).__name__
                 )
 
                 st.session_state.pop(
-                    "invite_session",
+                    "email_link_session",
                     None
                 )
 
-                return (
-                    "This invitation link has expired or has already "
-                    "been used. Please ask a parent to send a new one."
-                )
+                return EXPIRED_LINK_MESSAGES[link_type]
 
             st.session_state[
-                "invite_session"
+                "email_link_session"
             ] = session
 
         try:
@@ -394,7 +494,7 @@ class AuthProvider:
         except Exception as ex:
 
             logger.warning(
-                "Setting an invited password failed: %s %s",
+                "Setting a password from an email link failed: %s %s",
                 type(ex).__name__,
                 getattr(ex, "code", None)
             )
@@ -405,15 +505,18 @@ class AuthProvider:
             )
 
         # They log in themselves, so finishing this page can't replace a
-        # login already saved in this browser. End the setup session.
+        # login already saved in this browser. End the session from the link.
+        # A password reset ends every session, in case the old password was
+        # stolen, so anyone using it is logged out everywhere.
 
         AuthProvider.sign_out(
             session.access_token,
-            session.refresh_token
+            session.refresh_token,
+            "global" if link_type == "recovery" else "local"
         )
 
         st.session_state.pop(
-            "invite_session",
+            "email_link_session",
             None
         )
 

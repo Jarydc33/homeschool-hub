@@ -240,6 +240,26 @@ else:
         )
 
         if st.button(
+            "📧 Resend Invitation"
+        ):
+
+            try:
+
+                AuthProvider.create_student_account(
+                    student_user.email
+                )
+
+                st.success(
+                    f"Invitation sent to {student_user.email}."
+                )
+
+            except Exception as ex:
+
+                st.error(
+                    AuthProvider.resend_invite_error_message(ex)
+                )
+
+        if st.button(
             "✏️ Update Email"
         ):
 

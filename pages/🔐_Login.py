@@ -10,6 +10,18 @@ from components.navigation import (
 
 NavigationComponent.render()
 
+# Coming from an email link, whoever's saved in this browser logs out first,
+# so the person who just set a password can log in.
+
+if (
+    st.session_state.pop("switch_account", False)
+    and AuthService.is_authenticated()
+):
+
+    AuthService.logout()
+
+    st.rerun()
+
 if AuthService.is_authenticated():
 
     if AuthService.is_student():
@@ -113,3 +125,8 @@ if st.button(
         st.error(
             AuthProvider.login_error_message(ex)
         )
+
+st.page_link(
+    "pages/Forgot_Password.py",
+    label="Forgot your password?"
+)
