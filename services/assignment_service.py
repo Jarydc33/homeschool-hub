@@ -47,6 +47,11 @@ class AssignmentService:
     def get_assignments_by_family(
         family_id
     ):
+        """
+        Returns active assignments. Their student_assignments leave out
+        archived students, so rosters, progress, and overdue warnings
+        don't count them. The rows themselves are kept as history.
+        """
 
         db = SessionLocal()
 
@@ -60,7 +65,11 @@ class AssignmentService:
                     ),
 
                     joinedload(
-                        Assignment.student_assignments
+                        Assignment.student_assignments.and_(
+                            StudentAssignment.student.has(
+                                Student.active.is_(True)
+                            )
+                        )
                     ).joinedload(
                         StudentAssignment.student
                     )
