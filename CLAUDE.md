@@ -11,7 +11,7 @@ A homeschool management app: parents manage students, subjects and assignments; 
 
 - **Phase:** 0 (bug fixes and Streamlit stopgaps)
 - **Done:** Edit Assignment dialog crash, `update_assignment` wiping completion status, family checks in the student, subject, assignment and user services, pytest suite, family and system-wide announcements
-- **Next up (Phase 0):** Create Assignment form (move Assignment Type above the form); remove `create_all()` and seeding from the Parent Dashboard
+- **Next up (Phase 0):** remove `create_all()` and seeding from the Parent Dashboard
 - Update this section when a phase or major item is finished.
 
 ## Running it

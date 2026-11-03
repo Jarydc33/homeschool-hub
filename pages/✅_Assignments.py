@@ -268,6 +268,17 @@ subjects = (
 
 st.subheader("➕ Create Assignment")
 
+# Outside the form so that changing it reruns the page and shows Frequency.
+
+assignment_type = st.selectbox(
+    "Assignment Type",
+    [
+        AssignmentType.ONE_TIME.value,
+        AssignmentType.RECURRING.value
+    ],
+    key="create_assignment_type"
+)
+
 with st.form(
     "assignment_form",
     clear_on_submit=True
@@ -293,38 +304,27 @@ with st.form(
         "Description"
     )
 
-    assignment_type = st.selectbox(
-        "Assignment Type",
-        [
-            AssignmentType.ONE_TIME.value,
-            AssignmentType.RECURRING.value
-        ]
-    )
-
-    recurrence_pattern = st.selectbox(
-        "Frequency",
-        [
-            RecurrencePattern.DAILY.value,
-            RecurrencePattern.WEEKLY.value,
-            RecurrencePattern.MONTHLY.value,
-            RecurrencePattern.WEEKDAYS.value,
-            RecurrencePattern.EVERY_MONDAY.value,
-            RecurrencePattern.EVERY_TUESDAY.value,
-            RecurrencePattern.EVERY_WEDNESDAY.value,
-            RecurrencePattern.EVERY_THURSDAY.value,
-            RecurrencePattern.EVERY_FRIDAY.value
-        ],
-        disabled=(
-            assignment_type
-            != AssignmentType.RECURRING.value
-        )
-    )
+    recurrence_pattern = None
 
     if (
         assignment_type
-        == AssignmentType.ONE_TIME.value
+        == AssignmentType.RECURRING.value
     ):
-        recurrence_pattern = None
+
+        recurrence_pattern = st.selectbox(
+            "Frequency",
+            [
+                RecurrencePattern.DAILY.value,
+                RecurrencePattern.WEEKLY.value,
+                RecurrencePattern.MONTHLY.value,
+                RecurrencePattern.WEEKDAYS.value,
+                RecurrencePattern.EVERY_MONDAY.value,
+                RecurrencePattern.EVERY_TUESDAY.value,
+                RecurrencePattern.EVERY_WEDNESDAY.value,
+                RecurrencePattern.EVERY_THURSDAY.value,
+                RecurrencePattern.EVERY_FRIDAY.value
+            ]
+        )
 
     due_date = st.date_input(
         "Due Date"
