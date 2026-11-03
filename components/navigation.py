@@ -84,6 +84,18 @@ class NavigationComponent:
                         icon="🎓"
                     )
 
+                # -----------------
+                # Admin Navigation
+                # -----------------
+
+                elif AuthService.is_admin():
+
+                    st.page_link(
+                        "pages/📢_Announcements.py",
+                        label="Announcements",
+                        icon="📢"
+                    )
+
                 st.divider()
 
                 if st.button("Logout"):

@@ -309,6 +309,14 @@ class BannerMessage(Base):
         primary_key=True
     )
 
+    # The family this announcement belongs to.
+    # NULL means it's system-wide, created by an Admin.
+    family_id = Column(
+        Integer,
+        ForeignKey("families.id"),
+        nullable=True
+    )
+
     title = Column(
         String,
         nullable=False

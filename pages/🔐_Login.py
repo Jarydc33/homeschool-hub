@@ -38,15 +38,15 @@ if DEV_MODE:
 
 if AuthService.is_authenticated():
 
-    if AuthService.is_parent():
-
-        st.switch_page("app.py")
-
-    else:
+    if AuthService.is_student():
 
         st.switch_page(
             "pages/🎓_Student_Dashboard.py"
         )
+
+    else:
+
+        st.switch_page("app.py")
 
 
 st.title("🔐 Login")

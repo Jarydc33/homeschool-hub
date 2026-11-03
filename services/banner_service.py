@@ -1,15 +1,40 @@
 from datetime import date
 
+from sqlalchemy import false, or_
+
 from database.db import SessionLocal
 from database.models import BannerMessage
+from services.auth_service import AuthService
 
 
 class BannerService:
 
     @staticmethod
-    def get_all_banners():
+    def _manageable_filter():
         """
-        Returns all banner messages.
+        Limits a query to the banners the current user can manage:
+        system-wide ones for an Admin, their own family's for a Parent.
+        """
+
+        if AuthService.is_admin():
+
+            return BannerMessage.family_id.is_(None)
+
+        family_id = AuthService.get_current_family()
+
+        # Without the family check, a NULL family_id would match
+        # the system-wide banners.
+
+        if AuthService.is_parent() and family_id is not None:
+
+            return BannerMessage.family_id == family_id
+
+        return false()
+
+    @staticmethod
+    def get_manageable_banners():
+        """
+        Returns the banners listed on the Announcements page.
         """
 
         db = SessionLocal()
@@ -18,6 +43,10 @@ class BannerService:
 
             return (
                 db.query(BannerMessage)
+                .filter(
+                    BannerService._manageable_filter(),
+                    BannerMessage.active.is_(True)
+                )
                 .order_by(
                     BannerMessage.start_date.desc()
                 )
@@ -30,8 +59,11 @@ class BannerService:
     @staticmethod
     def get_active_banners():
         """
-        Returns banners that should currently display.
+        Returns banners that should currently display: the current
+        family's, plus system-wide ones.
         """
+
+        family_id = AuthService.get_current_family()
 
         db = SessionLocal()
 
@@ -42,6 +74,10 @@ class BannerService:
             return (
                 db.query(BannerMessage)
                 .filter(
+                    or_(
+                        BannerMessage.family_id.is_(None),
+                        BannerMessage.family_id == family_id
+                    ),
                     BannerMessage.active.is_(True),
                     BannerMessage.start_date <= today,
                     BannerMessage.end_date >= today
@@ -60,7 +96,7 @@ class BannerService:
         banner_id
     ):
         """
-        Returns a single banner.
+        Returns a single banner the current user can manage.
         """
 
         db = SessionLocal()
@@ -70,7 +106,8 @@ class BannerService:
             return (
                 db.query(BannerMessage)
                 .filter(
-                    BannerMessage.id == banner_id
+                    BannerMessage.id == banner_id,
+                    BannerService._manageable_filter()
                 )
                 .first()
             )
@@ -86,14 +123,27 @@ class BannerService:
         end_date
     ):
         """
-        Creates a new banner.
+        Creates a system-wide banner for an Admin, or a family banner
+        for a Parent. Returns None for anyone else.
         """
+
+        if AuthService.is_admin():
+
+            family_id = None
+
+        else:
+
+            family_id = AuthService.get_current_family()
+
+            if not AuthService.is_parent() or family_id is None:
+                return None
 
         db = SessionLocal()
 
         try:
 
             banner = BannerMessage(
+                family_id=family_id,
                 title=title,
                 message=message,
                 start_date=start_date,
@@ -120,7 +170,7 @@ class BannerService:
         end_date
     ):
         """
-        Updates an existing banner.
+        Updates a banner the current user can manage.
         """
 
         db = SessionLocal()
@@ -130,7 +180,8 @@ class BannerService:
             banner = (
                 db.query(BannerMessage)
                 .filter(
-                    BannerMessage.id == banner_id
+                    BannerMessage.id == banner_id,
+                    BannerService._manageable_filter()
                 )
                 .first()
             )
@@ -155,7 +206,7 @@ class BannerService:
         banner_id
     ):
         """
-        Soft delete banner.
+        Soft deletes a banner the current user can manage.
         """
 
         db = SessionLocal()
@@ -165,7 +216,8 @@ class BannerService:
             banner = (
                 db.query(BannerMessage)
                 .filter(
-                    BannerMessage.id == banner_id
+                    BannerMessage.id == banner_id,
+                    BannerService._manageable_filter()
                 )
                 .first()
             )

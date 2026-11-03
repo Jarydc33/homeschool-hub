@@ -1,5 +1,6 @@
 import streamlit as st
 
+from services.auth_service import AuthService
 from services.banner_service import BannerService
 
 from services.navigation_service import NavigationService
@@ -8,7 +9,7 @@ from components.navigation import (
 )
 
 NavigationComponent.render()
-NavigationService.require_parent()
+NavigationService.require_parent_or_admin()
 
 # ==================================================
 # DIALOGS
@@ -22,6 +23,14 @@ def edit_banner_dialog(banner_id):
             banner_id
         )
     )
+
+    if not banner:
+
+        st.error(
+            "This announcement could not be found."
+        )
+
+        return
 
     title = st.text_input(
         "Title",
@@ -48,13 +57,22 @@ def edit_banner_dialog(banner_id):
         use_container_width=True
     ):
 
-        BannerService.update_banner(
+        updated = BannerService.update_banner(
             banner_id=banner.id,
             title=title,
             message=message,
             start_date=start_date,
             end_date=end_date
         )
+
+        if not updated:
+
+            st.error(
+                "This announcement couldn't be saved. "
+                "Please refresh the page and try again."
+            )
+
+            return
 
         st.toast(
             "Announcement updated."
@@ -92,9 +110,18 @@ def archive_banner_dialog(banner):
             use_container_width=True
         ):
 
-            BannerService.archive_banner(
+            archived = BannerService.archive_banner(
                 banner.id
             )
+
+            if not archived:
+
+                st.error(
+                    "This announcement couldn't be archived. "
+                    "Please refresh the page and try again."
+                )
+
+                return
 
             st.toast(
                 "Announcement archived."
@@ -109,9 +136,18 @@ def archive_banner_dialog(banner):
 
 st.title("📢 Announcements")
 
-st.write(
-    "Create messages that appear on the Parent Dashboard."
-)
+if AuthService.is_admin():
+
+    st.write(
+        "Create system-wide messages that appear "
+        "for every family and student."
+    )
+
+else:
+
+    st.write(
+        "Create messages that appear on your family's dashboards."
+    )
 
 # ==================================================
 # EXISTING ANNOUNCEMENTS
@@ -122,7 +158,7 @@ st.subheader(
 )
 
 banners = (
-    BannerService.get_all_banners()
+    BannerService.get_manageable_banners()
 )
 
 if banners:
@@ -225,15 +261,22 @@ with st.form(
 
     if submitted:
 
-        BannerService.create_banner(
+        created = BannerService.create_banner(
             title=title,
             message=message,
             start_date=start_date,
             end_date=end_date
         )
 
-        st.toast(
-            "Announcement created."
-        )
+        if created:
 
-        st.rerun()
+            st.toast(
+                "Announcement created."
+            )
+
+            st.rerun()
+
+        st.error(
+            "This announcement couldn't be created. "
+            "Please refresh the page and try again."
+        )

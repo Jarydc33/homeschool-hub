@@ -98,6 +98,21 @@ class AuthService:
         )
 
     @staticmethod
+    def is_admin():
+
+        user = (
+            AuthService.get_current_user()
+        )
+
+        if not user:
+            return False
+
+        return (
+            user.role
+            == UserRole.ADMIN.value
+        )
+
+    @staticmethod
     def get_current_family():
 
         user = (

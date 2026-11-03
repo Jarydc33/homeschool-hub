@@ -5,6 +5,7 @@ from datetime import date
 import streamlit as st
 
 from services.auth_provider import AuthProvider
+from services.banner_service import BannerService
 from services.student_service import StudentService
 from services.auth_service import (
     AuthService
@@ -20,6 +21,14 @@ from services.user_service import UserService
 
 NavigationComponent.render()
 NavigationService.require_authentication()
+
+# Admins have no family or students to view.
+
+if AuthService.is_admin():
+
+    st.switch_page(
+        "pages/📢_Announcements.py"
+    )
 
 @st.dialog("🔐 Create Student Login")
 def create_student_login_dialog(
@@ -136,6 +145,17 @@ def update_student_login_dialog(
         st.rerun()
 
 st.title("🎓 Student View")
+
+# ------------------------------------------------------------------
+# Announcements
+# ------------------------------------------------------------------
+
+for banner in BannerService.get_active_banners():
+
+    st.info(
+        f"**{banner.title}**\n\n"
+        f"{banner.message}"
+    )
 
 # ------------------------------------------------------------------
 # Student Selection

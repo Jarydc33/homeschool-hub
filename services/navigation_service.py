@@ -36,11 +36,27 @@ class NavigationService:
 
             st.stop()
 
+        if AuthService.is_admin():
+
+            st.switch_page(
+                "pages/📢_Announcements.py"
+            )
+
+            st.stop()
+
         st.error(
             "You do not have access to this page."
         )
 
         st.stop()
+
+    @staticmethod
+    def require_parent_or_admin():
+
+        if AuthService.is_admin():
+            return
+
+        NavigationService.require_parent()
 
     @staticmethod
     def require_student():

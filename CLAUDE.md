@@ -10,8 +10,8 @@ A homeschool management app: parents manage students, subjects and assignments; 
 ## Current status
 
 - **Phase:** 0 (bug fixes and Streamlit stopgaps)
-- **Done:** Edit Assignment dialog crash, `update_assignment` wiping completion status, family checks in the student, subject, assignment and user services, pytest suite
-- **Next up:** the next open Phase 0 item on the roadmap
+- **Done:** Edit Assignment dialog crash, `update_assignment` wiping completion status, family checks in the student, subject, assignment and user services, pytest suite, family and system-wide announcements
+- **Next up (Phase 0):** exclude archived students from rosters, progress totals and overdue warnings; Create Assignment form (move Assignment Type above the form); remove `create_all()` and seeding from the Parent Dashboard
 - Update this section when a phase or major item is finished.
 
 ## Running it
@@ -65,6 +65,7 @@ tests/                  pytest suite for the services
 - Data goes through SQLAlchemy as the `postgres` user, so **Supabase RLS does not apply to app queries**. Keeping families apart is the service layer's job. RLS is enabled with no policies only to block Supabase's REST API.
 - Supabase is used for **auth only**. The app's `users` table links to Supabase users by email for now. Moving to `users.auth_user_id` (UUID) is planned for Phase 1.
 - Every page starts with `NavigationComponent.render()` and then a guard from `NavigationService`.
+- Announcements (`banner_messages`) belong to a family, or are system-wide when `family_id` is NULL. Parents manage their family's; Admins (`users.role = 'Admin'`, no family, a separate login) manage system-wide ones and only see the Announcements page.
 
 ## Rules (follow these on every change)
 
@@ -90,7 +91,6 @@ tests/                  pytest suite for the services
 
 - `AuthService.logout()` is a stub, and the refresh token isn't stored yet.
 - The student invite flow (`Complete_Account`) doesn't work yet (URL fragment issue above).
-- Announcements (`banner_messages`) have no `family_id`. They need family vs. system announcements.
 - Recurring assignments use a single status per student. The occurrence model (one row per assignment, per student, per date) is planned for Phase 1.
 - Student Mode (a parent's device locked to one student, with a parent PIN to exit) and pairing codes for kids without email are designed but not built (roadmap Phase 2).
 
