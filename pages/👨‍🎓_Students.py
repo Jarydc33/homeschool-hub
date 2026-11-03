@@ -88,8 +88,9 @@ def archive_student_dialog(student):
     )
 
     st.write(
-        "The student will be hidden from active views "
-        "but will remain in the database."
+        "The student will be hidden from active views and "
+        "won't be able to log in. You can restore them at "
+        "any time from Archived Students."
     )
 
     col1, col2 = st.columns(2)
@@ -198,6 +199,60 @@ else:
     st.info(
         "No students found."
     )
+
+# ==================================================
+# ARCHIVED STUDENTS
+# ==================================================
+
+archived_students = (
+    StudentService.get_archived_students()
+)
+
+if archived_students:
+
+    with st.expander(
+        f"📦 Archived Students ({len(archived_students)})"
+    ):
+
+        st.caption(
+            "Restoring a student brings back their assignments, "
+            "progress, and login."
+        )
+
+        for student in archived_students:
+
+            col1, col2 = st.columns(
+                [5, 2]
+            )
+
+            with col1:
+
+                st.write(
+                    student.name
+                )
+
+            with col2:
+
+                if st.button(
+                    "Restore",
+                    key=f"restore_{student.id}",
+                    use_container_width=True
+                ):
+
+                    if StudentService.restore_student(
+                        student.id
+                    ):
+
+                        st.toast(
+                            f"{student.name} restored."
+                        )
+
+                        st.rerun()
+
+                    st.error(
+                        "This student couldn't be restored. "
+                        "Please refresh the page and try again."
+                    )
 
 # ==================================================
 # ADD STUDENT

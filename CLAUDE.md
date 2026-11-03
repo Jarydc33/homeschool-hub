@@ -90,7 +90,7 @@ tests/                  pytest suite for the services
 ## Known open items (see the roadmap for the full list)
 
 - `AuthService.logout()` is a stub, and the refresh token isn't stored yet.
-- Archived students can't log in until they're unarchived (`AuthService.get_current_user` blocks them), but the app has no way to unarchive anything yet, so for now it's a manual change in Supabase.
+- Archived students can't log in (`AuthService.get_current_user` blocks them) until a parent restores them on the Students page. Subjects and assignments can't be restored from the app yet.
 - The student invite flow (`Complete_Account`) doesn't work yet (URL fragment issue above).
 - Recurring assignments use a single status per student. The occurrence model (one row per assignment, per student, per date) is planned for Phase 1.
 - Student Mode (a parent's device locked to one student, with a parent PIN to exit) and pairing codes for kids without email are designed but not built (roadmap Phase 2).

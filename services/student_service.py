@@ -160,6 +160,63 @@ class StudentService:
             db.close()
 
     @staticmethod
+    def get_archived_students():
+        """
+        Returns the current family's archived students.
+        """
+
+        db = SessionLocal()
+
+        try:
+
+            return (
+                db.query(Student)
+                .filter(
+                    Student.family_id
+                    == AuthService.get_current_family(),
+                    Student.active.is_(False)
+                )
+                .order_by(Student.name)
+                .all()
+            )
+
+        finally:
+            db.close()
+
+    @staticmethod
+    def restore_student(student_id):
+        """
+        Unarchives a student. Their assignments, progress, and login
+        return as they were.
+        """
+
+        db = SessionLocal()
+
+        try:
+
+            student = (
+                db.query(Student)
+                .filter(
+                    Student.id == student_id,
+                    Student.family_id
+                    == AuthService.get_current_family()
+                )
+                .first()
+            )
+
+            if not student:
+                return None
+
+            student.active = True
+
+            db.commit()
+
+            return student
+
+        finally:
+            db.close()
+
+    @staticmethod
     def create_student(
         name,
         grade_level=None,
