@@ -5,6 +5,7 @@ with Streamlit's session state and Supabase Auth replaced.
 """
 from types import SimpleNamespace
 from unittest import mock
+from uuid import uuid4
 
 import pytest
 import streamlit as st
@@ -18,6 +19,7 @@ from services.student_service import StudentService
 from services.user_service import UserService
 
 EMAIL = "bob@smith.test"
+AUTH_ID = "00000000-0000-0000-0000-00000000000b"
 
 
 @pytest.fixture
@@ -36,7 +38,7 @@ def no_saved_login():
 @pytest.fixture
 def saved_login():
     """A valid Supabase token saved in the browser for the student."""
-    auth_user = SimpleNamespace(user=SimpleNamespace(email=EMAIL))
+    auth_user = SimpleNamespace(user=SimpleNamespace(id=AUTH_ID, email=EMAIL))
     with mock.patch.object(
         AuthProvider, "get_current_auth_user", return_value=auth_user
     ):
@@ -44,6 +46,7 @@ def saved_login():
 
 
 def add_user(**fields):
+    fields.setdefault("auth_user_id", str(uuid4()))
     db = SessionLocal()
     try:
         user = User(**fields)
@@ -57,7 +60,11 @@ def add_user(**fields):
 @pytest.fixture
 def bob_user(world):
     return add_user(
-        family_id=world.smith, student_id=world.bob, email=EMAIL, role="Student"
+        family_id=world.smith,
+        student_id=world.bob,
+        email=EMAIL,
+        auth_user_id=AUTH_ID,
+        role="Student",
     )
 
 
@@ -76,6 +83,7 @@ def set_student_active(student_id, active):
 def test_user_lookups_can_read_student_after_session_closes(world, bob_user):
     assert UserService.get_user_by_id(bob_user).student.name == "Bob"
     assert UserService.get_user_by_email(EMAIL).student.name == "Bob"
+    assert UserService.get_user_by_auth_id(AUTH_ID).student.name == "Bob"
 
 
 def test_active_student_is_not_archived(world, bob_user):
@@ -152,6 +160,30 @@ def test_saved_login_is_blocked_for_archived_student(
     assert AuthService.get_current_user() is None
     assert "current_user_id" not in session_state
     assert session_state["account_inactive"] is True
+
+
+def test_saved_login_with_matching_email_but_other_account_gets_nothing(
+    world, bob_user, session_state
+):
+    # Someone else's Supabase account using Bob's email isn't Bob.
+    stranger = SimpleNamespace(user=SimpleNamespace(id=str(uuid4()), email=EMAIL))
+
+    with mock.patch.object(
+        AuthProvider, "get_current_auth_user", return_value=stranger
+    ):
+        assert AuthService.get_current_user() is None
+
+    assert "current_user_id" not in session_state
+
+
+def test_saved_login_follows_the_account_when_the_email_differs(
+    world, bob_user, session_state
+):
+    # The account is what counts, even if the two emails ever disagree.
+    moved = SimpleNamespace(user=SimpleNamespace(id=AUTH_ID, email="new@x.test"))
+
+    with mock.patch.object(AuthProvider, "get_current_auth_user", return_value=moved):
+        assert AuthService.get_current_user().id == bob_user
 
 
 # ----- Effects of being blocked -----

@@ -1,4 +1,6 @@
 """One family can't read or change another family's data."""
+from uuid import uuid4
+
 from database.models import Assignment, Student, StudentAssignment, Subject
 from services.assignment_service import AssignmentService
 from services.dashboard_service import DashboardService
@@ -108,7 +110,7 @@ def test_student_login_lookup_is_scoped(smith_parent):
     db = SessionLocal()
     db.add(User(
         family_id=w.jones, student_id=w.jones_kid,
-        email="kid@jones.test", role="Student",
+        email="kid@jones.test", auth_user_id=str(uuid4()), role="Student",
     ))
     db.commit()
     db.close()
@@ -120,20 +122,20 @@ def test_student_login_lookup_is_scoped(smith_parent):
 def test_cannot_create_login_for_other_familys_student(smith_parent):
     w = smith_parent
 
-    assert UserService.create_student_user(w.smith, w.jones_kid, "x@x.test") is None
+    assert UserService.create_student_user(w.smith, w.jones_kid, "x@x.test", uuid4()) is None
     assert UserService.get_user_by_email("x@x.test") is None
 
 
 def test_cannot_create_login_for_archived_student(smith_parent):
     w = smith_parent
 
-    assert UserService.create_student_user(w.smith, w.gone, "x@x.test") is None
+    assert UserService.create_student_user(w.smith, w.gone, "x@x.test", uuid4()) is None
 
 
 def test_can_create_login_for_own_student(smith_parent):
     w = smith_parent
 
-    user = UserService.create_student_user(w.smith, w.ann, "Ann@X.test ")
+    user = UserService.create_student_user(w.smith, w.ann, "Ann@X.test ", uuid4())
 
     assert user.email == "ann@x.test"
     assert user.student_id == w.ann

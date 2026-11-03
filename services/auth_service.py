@@ -36,10 +36,11 @@ class AuthService:
         Changes a student's login email. Returns (True, message) or
         (False, message), and a failure leaves the old email in place.
 
-        The email lives in both Supabase and our users table, and they're
-        linked by it, so both must change together. Supabase goes first
-        because it's the more likely to refuse. If our table then fails,
-        Supabase is changed back.
+        The email lives in both Supabase and our users table, and people
+        sign in with Supabase's, so both must change together. Supabase goes
+        first because it's the more likely to refuse, and it refuses an email
+        that another account already has. If our table then fails, Supabase
+        is changed back.
 
         Someone who has finished setting up keeps their password. Someone
         who hasn't gets a new invitation at the new address, which also
@@ -79,45 +80,30 @@ class AuthService:
 
         try:
 
-            accounts = AuthProvider.find_auth_users(
-                old_email,
-                new_email
+            account = AuthProvider.get_auth_user(
+                user.auth_user_id
             )
 
         except Exception as ex:
 
             logger.warning(
-                "Looking up accounts for an email change failed: %s",
+                "Looking up an account for an email change failed: %s",
                 type(ex).__name__
             )
 
             return False, EMAIL_UPDATE_FAILED_MESSAGE
 
-        if new_email in accounts:
-
-            return False, EMAIL_TAKEN_MESSAGE
-
-        account = accounts.get(old_email)
-
         finished = bool(
-            account and account.email_confirmed_at
+            account.email_confirmed_at
         )
 
         try:
 
-            if account:
-
-                AuthProvider.set_auth_email(
-                    account.id,
-                    new_email,
-                    finished
-                )
-
-            if not finished:
-
-                AuthProvider.create_student_account(
-                    new_email
-                )
+            AuthProvider.set_auth_email(
+                account.id,
+                new_email,
+                finished
+            )
 
         except Exception as ex:
 
@@ -127,13 +113,35 @@ class AuthService:
                 getattr(ex, "code", None)
             )
 
-            AuthService._restore_auth_email(
-                account,
-                old_email,
-                finished
-            )
+            if AuthProvider.is_email_taken_error(ex):
+
+                return False, EMAIL_TAKEN_MESSAGE
 
             return False, EMAIL_UPDATE_FAILED_MESSAGE
+
+        if not finished:
+
+            try:
+
+                AuthProvider.create_student_account(
+                    new_email
+                )
+
+            except Exception as ex:
+
+                logger.warning(
+                    "Inviting a changed email failed: %s %s",
+                    type(ex).__name__,
+                    getattr(ex, "code", None)
+                )
+
+                AuthService._restore_auth_email(
+                    account,
+                    old_email,
+                    finished
+                )
+
+                return False, EMAIL_UPDATE_FAILED_MESSAGE
 
         try:
 
@@ -182,9 +190,6 @@ class AuthService:
         """
         Puts a Supabase account's email back after a later step failed.
         """
-
-        if not account:
-            return
 
         try:
 
@@ -269,13 +274,9 @@ class AuthService:
         if not auth_user:
             return None
 
-        email = (
-            auth_user.user.email
-        )
-
         user = AuthService._allow_login(
-            UserService.get_user_by_email(
-                email
+            UserService.get_user_by_auth_id(
+                auth_user.user.id
             )
         )
 

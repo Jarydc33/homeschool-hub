@@ -48,3 +48,13 @@ def test_baseline_refuses_to_downgrade(empty_database):
 
     with pytest.raises(NotImplementedError):
         command.downgrade(_config(), "base")
+
+
+def test_auth_user_id_migration_can_be_undone(empty_database):
+    command.upgrade(_config(), "head")
+    command.downgrade(_config(), "0001")
+
+    columns = {column["name"] for column in inspect(engine).get_columns("users")}
+    assert "auth_user_id" not in columns
+
+    command.upgrade(_config(), "head")

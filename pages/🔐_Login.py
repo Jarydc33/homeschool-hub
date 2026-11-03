@@ -94,8 +94,8 @@ if submitted:
         )
 
         user = (
-            UserService.get_user_by_email(
-                email.strip().lower()
+            UserService.get_user_by_auth_id(
+                result.user.id
             )
         )
 

@@ -27,6 +27,27 @@ class UserService:
             db.close()
 
     @staticmethod
+    def get_user_by_auth_id(auth_user_id):
+
+        db = SessionLocal()
+
+        try:
+
+            return (
+                db.query(User)
+                .options(
+                    joinedload(User.student)
+                )
+                .filter(
+                    User.auth_user_id == str(auth_user_id)
+                )
+                .first()
+            )
+
+        finally:
+            db.close()
+
+    @staticmethod
     def get_user_by_student_id(
         student_id,
         family_id
@@ -109,7 +130,8 @@ class UserService:
     @staticmethod
     def create_parent_user(
         family_id,
-        email
+        email,
+        auth_user_id
     ):
         email = email.strip().lower()
         db = SessionLocal()
@@ -119,6 +141,7 @@ class UserService:
             user = User(
                 family_id=family_id,
                 email=email,
+                auth_user_id=str(auth_user_id),
                 role="Parent"
             )
 
@@ -137,7 +160,8 @@ class UserService:
     def create_student_user(
         family_id,
         student_id,
-        email
+        email,
+        auth_user_id
     ):
         """
         Returns the new user, or None if the student is not an
@@ -165,6 +189,7 @@ class UserService:
                 family_id=family_id,
                 student_id=student_id,
                 email=email.strip().lower(),
+                auth_user_id=str(auth_user_id),
                 role="Student"
             )
 

@@ -93,7 +93,7 @@ def create_student_login_dialog(
 
         try:
 
-            AuthProvider.create_student_account(
+            invite = AuthProvider.create_student_account(
                 email
             )
 
@@ -108,7 +108,8 @@ def create_student_login_dialog(
         student_user = UserService.create_student_user(
             family_id=AuthService.get_current_family(),
             student_id=student.id,
-            email=email
+            email=email,
+            auth_user_id=invite.user.id
         )
 
         if not student_user:

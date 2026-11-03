@@ -10,8 +10,8 @@ A homeschool management app: parents manage students, subjects and assignments; 
 ## Current status
 
 - **Phase:** 0 (bug fixes and Streamlit stopgaps) is complete. Phase 1 (portable foundation) is in progress
-- **Done:** Edit Assignment dialog crash, `update_assignment` wiping completion status, family checks in the student, subject, assignment and user services, pytest suite, family and system-wide announcements, archived students left out of lists and blocked from logging in, restoring students, Create Assignment form, no database setup on page load, Alembic with a baseline migration
-- **Next up:** `users.auth_user_id`, then constraints and indexes, the session context manager, the registration transaction, fetching the current user once, `families.timezone`, and occurrences. Student Mode tables wait until its UI is being built
+- **Done:** Edit Assignment dialog crash, `update_assignment` wiping completion status, family checks in the student, subject, assignment and user services, pytest suite, family and system-wide announcements, archived students left out of lists and blocked from logging in, restoring students, Create Assignment form, no database setup on page load, Alembic with a baseline migration, `users.auth_user_id`
+- **Next up:** constraints and indexes, then the session context manager, the registration transaction, fetching the current user once, `families.timezone`, and occurrences. Student Mode tables wait until its UI is being built
 - Update this section when a phase or major item is finished.
 
 ## Running it
@@ -74,7 +74,7 @@ tests/                  pytest suite for the services
 
 - Pages call services. Services open a SQLAlchemy session, query, and return ORM objects. Pages never query the DB directly.
 - Data goes through SQLAlchemy as the `postgres` user, so **Supabase RLS does not apply to app queries**. Keeping families apart is the service layer's job. RLS is enabled with no policies only to block Supabase's REST API.
-- Supabase is used for **auth only**. The app's `users` table links to Supabase users by email for now. Moving to `users.auth_user_id` (UUID) is planned for Phase 1.
+- Supabase is used for **auth only**. The app's `users` table links to Supabase accounts by `users.auth_user_id` (UUID), which is required and unique. Identify people by it, never by email; email is only how they sign in. Anything that creates a `users` row needs the account's UUID first, including an Admin added by hand.
 - Every page starts with `NavigationComponent.render()` and then a guard from `NavigationService`.
 - Announcements (`banner_messages`) belong to a family, or are system-wide when `family_id` is NULL. Parents manage their family's; Admins (`users.role = 'Admin'`, no family, a separate login) manage system-wide ones and only see the Announcements page.
 
@@ -106,7 +106,7 @@ tests/                  pytest suite for the services
 - Logging out in one tab doesn't end the session in another open tab until that tab is refreshed.
 - Archived students can't log in (`AuthService.get_current_user` blocks them) until a parent restores them on the Students page. Subjects and assignments can't be restored from the app yet.
 - Invites and password resets depend on Supabase's email templates. "Invite user" must link to `{{ .SiteURL }}/Complete_Account?token_hash={{ .TokenHash }}&type=invite`, and "Reset Password" to the same address with `type=recovery`.
-- Changing a student's login email has to update Supabase and `users` together, because they're linked by email. `AuthService.update_student_email` handles this. It finds the account by listing Supabase users, which `users.auth_user_id` (Phase 1) can replace. Parents can't change their own email yet.
+- Changing a student's login email has to update Supabase and `users` together, because people sign in with Supabase's copy and the app shows its own. `AuthService.update_student_email` handles this. Supabase refuses an email another account already has. Parents can't change their own email yet.
 - Recurring assignments use a single status per student. The occurrence model (one row per assignment, per student, per date) is planned for Phase 1.
 - Student Mode (a parent's device locked to one student, with a parent PIN to exit) and pairing codes for kids without email are designed but not built (roadmap Phase 2).
 

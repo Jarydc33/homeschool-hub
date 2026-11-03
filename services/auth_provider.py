@@ -157,6 +157,24 @@ class AuthProvider:
         )
 
     @staticmethod
+    def new_account_id(
+        auth_result
+    ):
+        """
+        Returns the id of the account a sign-up just created, or None if the
+        email was already registered. With email confirmation on, Supabase
+        hides that by returning a made-up user with no identities, and its id
+        doesn't belong to any account.
+        """
+
+        user = auth_result.user
+
+        if not user or not user.identities:
+            return None
+
+        return user.id
+
+    @staticmethod
     def get_current_auth_user():
 
         access_token = (
@@ -296,48 +314,25 @@ class AuthProvider:
         )
 
     @staticmethod
-    def find_auth_users(
-        *emails
+    def get_auth_user(
+        auth_user_id
     ):
-        """
-        Returns the Supabase accounts for these emails, keyed by email.
-        Supabase can't look up by email, so this goes through the list.
-        Once users.auth_user_id exists, accounts can be fetched directly.
-        """
 
-        wanted = {
-            email.strip().lower()
-            for email in emails
-        }
-
-        admin = (
-            SupabaseService.get_admin_client().auth.admin
+        return (
+            SupabaseService.get_admin_client()
+            .auth.admin.get_user_by_id(auth_user_id)
+            .user
         )
 
-        found = {}
-        page = 1
-        per_page = 200
+    @staticmethod
+    def is_email_taken_error(
+        error
+    ):
 
-        while wanted - set(found):
-
-            users = admin.list_users(
-                page=page,
-                per_page=per_page
-            )
-
-            for user in users:
-
-                email = (user.email or "").lower()
-
-                if email in wanted:
-                    found[email] = user
-
-            if len(users) < per_page:
-                break
-
-            page += 1
-
-        return found
+        return (
+            isinstance(error, AuthApiError)
+            and error.code == "email_exists"
+        )
 
     @staticmethod
     def set_auth_email(

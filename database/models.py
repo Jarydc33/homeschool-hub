@@ -10,6 +10,7 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    Uuid,
 )
 from sqlalchemy.orm import configure_mappers, relationship
 
@@ -105,6 +106,14 @@ class User(Base):
 
     email = Column(
         String,
+        unique=True,
+        nullable=False
+    )
+
+    # The user's Supabase account. This is what identifies them at login;
+    # email is only how they sign in, and it can change.
+    auth_user_id = Column(
+        Uuid(as_uuid=False),
         unique=True,
         nullable=False
     )

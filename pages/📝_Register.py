@@ -92,6 +92,21 @@ with st.form(
                     )
                 )
 
+                auth_user_id = (
+                    AuthProvider.new_account_id(
+                        auth_result
+                    )
+                )
+
+                if not auth_user_id:
+
+                    st.error(
+                        "This email already has an account. "
+                        "Please log in instead."
+                    )
+
+                    st.stop()
+
                 # -----------------------------
                 # Create Family
                 # -----------------------------
@@ -109,7 +124,8 @@ with st.form(
                 user = (
                     UserService.create_parent_user(
                         family_id=family.id,
-                        email=email
+                        email=email,
+                        auth_user_id=auth_user_id
                     )
                 )
 

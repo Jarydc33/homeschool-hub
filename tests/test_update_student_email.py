@@ -4,10 +4,10 @@ from types import SimpleNamespace
 from unittest import mock
 
 import pytest
+from supabase_auth.errors import AuthApiError
 
 from database.db import SessionLocal
 from database.models import User, UserRole
-from services.auth_provider import AuthProvider
 from services.auth_service import AuthService
 from services.user_service import UserService
 
@@ -16,11 +16,13 @@ NEW = "bob@new.test"
 AUTH_ID = "00000000-0000-0000-0000-00000000000b"
 
 
-def account(email=OLD, finished=True):
+def account(finished=True):
     return SimpleNamespace(
-        id=AUTH_ID,
-        email=email,
-        email_confirmed_at=datetime(2026, 1, 1) if finished else None,
+        user=SimpleNamespace(
+            id=AUTH_ID,
+            email=OLD,
+            email_confirmed_at=datetime(2026, 1, 1) if finished else None,
+        )
     )
 
 
@@ -29,7 +31,11 @@ def bob(world):
     db = SessionLocal()
     try:
         user = User(
-            family_id=world.smith, student_id=world.bob, email=OLD, role="Student"
+            family_id=world.smith,
+            student_id=world.bob,
+            email=OLD,
+            auth_user_id=AUTH_ID,
+            role="Student",
         )
         db.add(user)
         db.commit()
@@ -42,7 +48,7 @@ def bob(world):
 def admin():
     """The Supabase admin API, with one finished account for Bob."""
     fake = mock.Mock()
-    fake.list_users.return_value = [account()]
+    fake.get_user_by_id.return_value = account()
     client = mock.Mock()
     client.auth.admin = fake
     with mock.patch(
@@ -106,7 +112,7 @@ def test_login_lookup_finds_the_new_email(parent, bob):
 
 
 def test_pending_invite_moves_and_sends_a_new_one(parent, admin, bob):
-    admin.list_users.return_value = [account(finished=False)]
+    admin.get_user_by_id.return_value = account(finished=False)
 
     updated, message = change(parent)
 
@@ -119,23 +125,12 @@ def test_pending_invite_moves_and_sends_a_new_one(parent, admin, bob):
 
 def test_pending_account_is_changed_before_inviting(parent, admin):
     # Inviting first would create a second account at the new address.
-    admin.list_users.return_value = [account(finished=False)]
+    admin.get_user_by_id.return_value = account(finished=False)
 
     change(parent)
 
     names = [call[0] for call in admin.method_calls]
     assert names.index("update_user_by_id") < names.index("invite_user_by_email")
-
-
-def test_login_row_with_no_supabase_account_gets_invited(parent, admin, bob):
-    admin.list_users.return_value = []
-
-    updated, _ = change(parent)
-
-    assert updated is True
-    admin.update_user_by_id.assert_not_called()
-    assert admin.invite_user_by_email.call_args.args[0] == NEW
-    assert saved_email(bob) == NEW
 
 
 # ----- Refused before anything changes -----
@@ -165,7 +160,7 @@ def test_same_email_is_refused(parent, admin, bob):
 
 
 def test_email_used_by_another_app_user_is_refused(parent, admin, bob):
-    UserService.create_parent_user(parent.jones, NEW)
+    UserService.create_parent_user(parent.jones, NEW, "00000000-0000-0000-0000-00000000000c")
 
     updated, message = change(parent)
 
@@ -175,17 +170,26 @@ def test_email_used_by_another_app_user_is_refused(parent, admin, bob):
 
 
 def test_email_with_a_supabase_account_is_refused(parent, admin, bob):
-    admin.list_users.return_value = [account(), account(NEW)]
+    admin.update_user_by_id.side_effect = AuthApiError("d", 422, "email_exists")
 
     updated, message = change(parent)
 
     assert updated is False
     assert "already has an account" in message
-    assert_nothing_changed(admin, bob)
+    admin.update_user_by_id.assert_called_once()
+    admin.invite_user_by_email.assert_not_called()
+    assert saved_email(bob) == OLD
+
+
+def test_the_account_is_found_by_its_uuid(parent, admin):
+    change(parent)
+
+    admin.get_user_by_id.assert_called_once_with(AUTH_ID)
+    admin.list_users.assert_not_called()
 
 
 def test_supabase_lookup_failure_changes_nothing(parent, admin, bob):
-    admin.list_users.side_effect = RuntimeError("secret detail")
+    admin.get_user_by_id.side_effect = RuntimeError("secret detail")
 
     updated, message = change(parent)
 
@@ -253,7 +257,7 @@ def test_supabase_refusal_leaves_the_table_alone(parent, admin, bob):
 
 
 def test_failed_invite_restores_supabase(parent, admin, bob):
-    admin.list_users.return_value = [account(finished=False)]
+    admin.get_user_by_id.return_value = account(finished=False)
     admin.invite_user_by_email.side_effect = RuntimeError("down")
 
     updated, _ = change(parent)
@@ -295,36 +299,3 @@ def test_logs_leave_out_email_addresses(parent, admin, caplog):
 
     assert NEW not in caplog.text
     assert OLD not in caplog.text
-
-
-# ----- Finding accounts -----
-
-
-def test_finding_accounts_goes_through_every_page(admin):
-    full_page = [account(f"u{i}@x.test") for i in range(200)]
-    admin.list_users.side_effect = [full_page, [account()]]
-
-    found = AuthProvider.find_auth_users(OLD)
-
-    assert found[OLD].id == AUTH_ID
-    assert admin.list_users.call_count == 2
-
-
-def test_finding_accounts_stops_once_everything_is_found(admin):
-    admin.list_users.side_effect = [[account(f"u{i}@x.test") for i in range(199)] + [account()]]
-
-    AuthProvider.find_auth_users(OLD)
-
-    assert admin.list_users.call_count == 1
-
-
-def test_finding_accounts_ignores_case(admin):
-    admin.list_users.return_value = [account("BOB@Old.test")]
-
-    assert OLD in AuthProvider.find_auth_users(OLD)
-
-
-def test_finding_accounts_handles_accounts_with_no_email(admin):
-    admin.list_users.return_value = [account(None), account()]
-
-    assert OLD in AuthProvider.find_auth_users(OLD)
