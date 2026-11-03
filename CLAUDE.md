@@ -9,9 +9,9 @@ A homeschool management app: parents manage students, subjects and assignments; 
 
 ## Current status
 
-- **Phase:** 0 (bug fixes and Streamlit stopgaps)
-- **Done:** Edit Assignment dialog crash, `update_assignment` wiping completion status, family checks in the student, subject, assignment and user services, pytest suite, family and system-wide announcements
-- **Next up (Phase 0):** remove `create_all()` and seeding from the Parent Dashboard
+- **Phase:** 0 (bug fixes and Streamlit stopgaps) is complete. Phase 1 is next
+- **Done:** Edit Assignment dialog crash, `update_assignment` wiping completion status, family checks in the student, subject, assignment and user services, pytest suite, family and system-wide announcements, archived students left out of lists and blocked from logging in, restoring students, Create Assignment form, no database setup on page load
+- **Next up:** the first Phase 1 item on the roadmap
 - Update this section when a phase or major item is finished.
 
 ## Running it
@@ -20,6 +20,8 @@ A homeschool management app: parents manage students, subjects and assignments; 
 pip install -r requirements.txt
 streamlit run app.py
 ```
+
+The app doesn't create tables or sample data on its own. A brand-new database needs `python scripts/init_db.py` first, and optionally `python scripts/seed_data.py` for sample data (it does nothing if a family already exists). Both use whatever `DATABASE_URL` points to, so check it first.
 
 Tests run on a temporary SQLite database, never Supabase:
 

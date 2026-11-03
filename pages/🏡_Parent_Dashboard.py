@@ -9,12 +9,6 @@ from services.subject_service import SubjectService
 from services.assignment_service import AssignmentService
 from services.banner_service import BannerService
 
-from services.startup_service import (
-    initialize_database,
-    database_is_empty
-)
-
-from scripts.seed_data import seed_database
 from services.auth_service import (
     AuthService
 )
@@ -31,15 +25,6 @@ from components.navigation import (
 )
 
 NavigationComponent.render()
-
-# --------------------------------------------------
-# Startup
-# --------------------------------------------------
-
-initialize_database()
-
-if database_is_empty():
-    seed_database()
 
 current_user = (
     AuthService.get_current_user()
