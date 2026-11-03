@@ -33,13 +33,41 @@ def edit_assignment_dialog(assignment_id):
         )
     )
 
+    if not assignment:
+
+        st.error(
+            "This assignment could not be found."
+        )
+
+        return
+
     subjects = (
-        SubjectService.get_active_subjects()
+        SubjectService.get_current_family_subjects()
     )
 
     students = (
-        StudentService.get_active_students()
+        StudentService.get_current_family_students()
     )
+
+    # Keep an archived subject selectable so saving doesn't
+    # silently move the assignment to a different subject.
+
+    current_subject_archived = (
+        assignment.subject is not None
+        and not assignment.subject.active
+    )
+
+    if current_subject_archived:
+
+        subjects = [assignment.subject] + subjects
+
+    if not subjects:
+
+        st.warning(
+            "Add a subject before editing this assignment."
+        )
+
+        return
 
     assigned_student_ids = [
         sa.student_id
@@ -115,7 +143,11 @@ def edit_assignment_dialog(assignment_id):
             ),
             0
         ),
-        format_func=lambda x: x.name
+        format_func=lambda x: (
+            f"{x.name} (archived)"
+            if not x.active
+            else x.name
+        )
     )
 
     selected_students = st.multiselect(
@@ -136,7 +168,7 @@ def edit_assignment_dialog(assignment_id):
 
     if st.button("💾 Save Changes"):
 
-        AssignmentService.update_assignment(
+        updated = AssignmentService.update_assignment(
             assignment_id=assignment.id,
             title=title,
             description=description,
@@ -149,6 +181,15 @@ def edit_assignment_dialog(assignment_id):
             assignment_type=assignment_type,
             recurrence_pattern=recurrence_pattern
         )
+
+        if not updated:
+
+            st.error(
+                "This assignment couldn't be saved. "
+                "Please refresh the page and try again."
+            )
+
+            return
 
         st.toast(
             "Assignment updated successfully."

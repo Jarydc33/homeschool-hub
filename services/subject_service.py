@@ -7,17 +7,6 @@ from services.auth_service import AuthService
 class SubjectService:
 
     @staticmethod
-    def get_all_subjects():
-
-        db = SessionLocal()
-
-        try:
-            return db.query(Subject).all()
-
-        finally:
-            db.close()
-
-    @staticmethod
     def get_subject_assignment_count(subject_id):
 
         db = SessionLocal()
@@ -30,22 +19,6 @@ class SubjectService:
                     Assignment.subject_id == subject_id
                 )
                 .count()
-            )
-
-        finally:
-            db.close()
-
-    @staticmethod
-    def get_active_subjects():
-
-        db = SessionLocal()
-
-        try:
-
-            return (
-                db.query(Subject)
-                .filter(Subject.active.is_(True))
-                .all()
             )
 
         finally:

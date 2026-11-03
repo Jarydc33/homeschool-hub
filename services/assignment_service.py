@@ -5,68 +5,13 @@ from database.models import (
     Assignment,
     Student,
     StudentAssignment,
-    AssignmentType,
-    RecurrencePattern
+    Subject,
+    AssignmentType
 )
 
 from services.auth_service import AuthService
 
 class AssignmentService:
-
-    @staticmethod
-    def get_all_assignments():
-
-        db = SessionLocal()
-
-        try:
-
-            assignments = (
-                db.query(Assignment)
-                .options(
-                    joinedload(Assignment.subject),
-                    joinedload(
-                        Assignment.student_assignments
-                    ).joinedload(
-                        StudentAssignment.student
-                    )
-                )
-                .all()
-            )
-
-            return assignments
-
-        finally:
-            db.close()
-
-    @staticmethod
-    def get_active_assignments():
-
-        db = SessionLocal()
-
-        try:
-
-            assignments = (
-                db.query(Assignment)
-                .options(
-                    joinedload(
-                        Assignment.subject
-                    ),
-                    joinedload(
-                        Assignment.student_assignments
-                    ).joinedload(
-                        StudentAssignment.student
-                    )
-                )
-                .filter(
-                    Assignment.active.is_(True)
-                )
-                .all()
-            )
-
-            return assignments
-
-        finally:
-            db.close()
 
     @staticmethod
     def get_assignment_by_id(
@@ -81,11 +26,16 @@ class AssignmentService:
                 db.query(Assignment)
                 .options(
                     joinedload(
+                        Assignment.subject
+                    ),
+                    joinedload(
                         Assignment.student_assignments
                     )
                 )
                 .filter(
-                    Assignment.id == assignment_id
+                    Assignment.id == assignment_id,
+                    Assignment.family_id
+                    == AuthService.get_current_family()
                 )
                 .first()
             )
@@ -198,6 +148,19 @@ class AssignmentService:
         assignment_type,
         recurrence_pattern
     ):
+        """
+        Returns the updated assignment, or None if the assignment,
+        subject, or any student is not available to this family.
+
+        Only student links that changed are added or removed, so
+        everyone else keeps their status, completion date, and notes.
+        Links to archived students are left alone, since archived
+        students aren't offered as choices on the edit form.
+        """
+
+        family_id = (
+            AuthService.get_current_family()
+        )
 
         db = SessionLocal()
 
@@ -206,12 +169,69 @@ class AssignmentService:
             assignment = (
                 db.query(Assignment)
                 .filter(
-                    Assignment.id == assignment_id
+                    Assignment.id == assignment_id,
+                    Assignment.family_id == family_id
                 )
                 .first()
             )
 
             if not assignment:
+                return None
+
+            # -------------------------
+            # Validate Subject
+            # -------------------------
+
+            # An archived subject may stay on an assignment that
+            # already has it, but can't be newly chosen.
+
+            if subject_id != assignment.subject_id:
+
+                subject = (
+                    db.query(Subject)
+                    .filter(
+                        Subject.id == subject_id,
+                        Subject.family_id == family_id,
+                        Subject.active.is_(True)
+                    )
+                    .first()
+                )
+
+                if not subject:
+                    return None
+
+            # -------------------------
+            # Validate Students
+            # -------------------------
+
+            requested_ids = set(student_ids)
+
+            active_ids = {
+                student_id
+                for (student_id,) in (
+                    db.query(Student.id)
+                    .filter(
+                        Student.family_id == family_id,
+                        Student.active.is_(True)
+                    )
+                )
+            }
+
+            links = (
+                db.query(StudentAssignment)
+                .filter(
+                    StudentAssignment.assignment_id
+                    == assignment_id
+                )
+                .all()
+            )
+
+            linked_ids = {
+                link.student_id
+                for link in links
+            }
+
+            if not (requested_ids - linked_ids) <= active_ids:
                 return None
 
             # -------------------------
@@ -231,15 +251,18 @@ class AssignmentService:
             )
 
             # -------------------------
-            # Replace Student Mappings
+            # Apply Student Changes
             # -------------------------
 
-            db.query(StudentAssignment).filter(
-                StudentAssignment.assignment_id
-                == assignment_id
-            ).delete()
+            for link in links:
 
-            for student_id in student_ids:
+                if (
+                    link.student_id in active_ids
+                    and link.student_id not in requested_ids
+                ):
+                    db.delete(link)
+
+            for student_id in requested_ids - linked_ids:
 
                 db.add(
                     StudentAssignment(
@@ -249,6 +272,7 @@ class AssignmentService:
                 )
 
             db.commit()
+            db.refresh(assignment)
 
             return assignment
 

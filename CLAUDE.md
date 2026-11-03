@@ -10,7 +10,8 @@ A homeschool management app: parents manage students, subjects and assignments; 
 ## Current status
 
 - **Phase:** 0 (bug fixes and Streamlit stopgaps)
-- **Next up:** Edit Assignment dialog crash, `update_assignment` wiping completion status
+- **Done:** Edit Assignment dialog crash, `update_assignment` wiping completion status
+- **Next up:** the next open Phase 0 item on the roadmap
 - Update this section when a phase or major item is finished.
 
 ## Running it
@@ -59,7 +60,7 @@ scripts/                One-off scripts (init_db, seed_data, test_connection). N
 
 ## Rules (follow these on every change)
 
-1. **Scope everything to the family.** Every service function that reads or changes a row by ID must also filter by the current family's `family_id`, e.g. `filter(Student.id == student_id, Student.family_id == family_id)`. Creates must check that referenced subjects and students belong to the same family. Never use unscoped helpers like `get_all_*` or `get_active_subjects` from pages.
+1. **Scope everything to the family.** Every service function that reads or changes a row by ID must also filter by the current family's `family_id`, e.g. `filter(Student.id == student_id, Student.family_id == family_id)`. Creates must check that referenced subjects and students belong to the same family. Never call or add unscoped helpers (like the removed `get_all_*`) for pages to use.
 2. **Never trust the page for identity.** Get the role, family, and student from `AuthService`, not from widget values or query params.
 3. **Archive, don't delete.** Entities use `active` / `is_active` soft deletes. Every list a user sees filters out archived rows, including joined ones such as archived assignments on the student dashboard.
 4. **Keep completion history.** Never delete and recreate `StudentAssignment` rows (or occurrence rows) to apply an edit; add and remove only what changed.
