@@ -9,9 +9,9 @@ A homeschool management app: parents manage students, subjects and assignments; 
 
 ## Current status
 
-- **Phase:** 0 (bug fixes and Streamlit stopgaps) is complete. Phase 1 is next
-- **Done:** Edit Assignment dialog crash, `update_assignment` wiping completion status, family checks in the student, subject, assignment and user services, pytest suite, family and system-wide announcements, archived students left out of lists and blocked from logging in, restoring students, Create Assignment form, no database setup on page load
-- **Next up:** the first Phase 1 item on the roadmap
+- **Phase:** 0 (bug fixes and Streamlit stopgaps) is complete. Phase 1 (portable foundation) is in progress
+- **Done:** Edit Assignment dialog crash, `update_assignment` wiping completion status, family checks in the student, subject, assignment and user services, pytest suite, family and system-wide announcements, archived students left out of lists and blocked from logging in, restoring students, Create Assignment form, no database setup on page load, Alembic with a baseline migration
+- **Next up:** `users.auth_user_id`, then constraints and indexes, the session context manager, the registration transaction, fetching the current user once, `families.timezone`, and occurrences. Student Mode tables wait until its UI is being built
 - Update this section when a phase or major item is finished.
 
 ## Running it
@@ -21,7 +21,7 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
-The app doesn't create tables or sample data on its own. A brand-new database needs `python scripts/init_db.py` first, and optionally `python scripts/seed_data.py` for sample data (it does nothing if a family already exists). Both use whatever `DATABASE_URL` points to, so check it first.
+The app doesn't create tables or sample data on its own. A brand-new database needs `python scripts/init_db.py` first (it runs the migrations, so it needs `requirements-dev.txt`), and optionally `python scripts/seed_data.py` for sample data (it does nothing if a family already exists). Both use whatever `DATABASE_URL` points to, so check it first.
 
 Tests run on a temporary SQLite database, never Supabase:
 
@@ -29,6 +29,16 @@ Tests run on a temporary SQLite database, never Supabase:
 pip install -r requirements-dev.txt
 pytest
 ```
+
+Schema changes use Alembic, run by hand from the project root against whatever `DATABASE_URL` points to. Deploys don't run them, so migrate before pushing code that needs the change:
+
+```bash
+alembic revision --autogenerate -m "Describe the change"   # then read and fix the generated file
+alembic upgrade head --sql                                 # review the SQL without running it
+alembic upgrade head
+```
+
+`migrations/env.py` enables RLS on any `public` table that lacks it after every run, so migrations don't need to. Keep migrations working on both Postgres and SQLite, since the tests run them on SQLite.
 
 Config comes from `.env` locally, or from `st.secrets` on Streamlit Cloud (`.streamlit/secrets.toml`, never committed):
 
@@ -55,6 +65,7 @@ services/               All business logic and DB access (static-method classes)
   *_service.py          One service per entity
 database/db.py          Engine, SessionLocal, Base
 database/models.py      ORM models + enums (UserRole, AssignmentStatus, AssignmentType, RecurrencePattern)
+migrations/             Alembic environment and migration files
 scripts/                One-off scripts (init_db, seed_data, test_connection). Never run them from pages
 tests/                  pytest suite for the services
 ```
@@ -75,7 +86,7 @@ tests/                  pytest suite for the services
 4. **Keep completion history.** Never delete and recreate `StudentAssignment` rows (or occurrence rows) to apply an edit; add and remove only what changed.
 5. **One transaction per user action.** Multi-step writes (registration, creating an assignment with its student links) commit once.
 6. **No side effects on page load.** No `create_all()`, seeding, or migrations from pages.
-7. **Schema changes go through migrations** once Alembic is added (Phase 1). Don't rely on `create_all()` to change existing tables.
+7. **Schema changes go through Alembic migrations.** Never use `create_all()` outside tests.
 8. **Dates:** "today" means the family's local date, not the server's UTC date (Phase 1 adds `families.timezone`).
 9. **User-facing errors are friendly.** Don't show `str(ex)` to users; log the detail instead.
 

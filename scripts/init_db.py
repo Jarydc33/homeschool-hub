@@ -1,19 +1,19 @@
 import os
-import sys
 
-sys.path.append(
-    os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "..")
-    )
+from alembic import command
+from alembic.config import Config
+
+ROOT = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..")
 )
 
 
-from database.db import Base, engine
-from database.models import *
-
 def initialize_database():
-    Base.metadata.create_all(bind=engine)
-    print("✅ Database initialized successfully.")
+    command.upgrade(
+        Config(os.path.join(ROOT, "alembic.ini")),
+        "head"
+    )
+    print("✅ Database is up to date.")
 
 
 if __name__ == "__main__":
