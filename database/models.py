@@ -11,7 +11,7 @@ from sqlalchemy import (
     String,
     Text,
 )
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import configure_mappers, relationship
 
 from database.db import Base
 
@@ -356,3 +356,10 @@ class CurrentSession:
     role = None
 
     student_id = None
+
+
+# Link the relationships now instead of on the first query. When deployed files
+# change, Streamlit forgets these modules, and a script still running can query
+# with the old classes after the others are gone. Unlinked, that raises
+# "expression 'Family' failed to locate a name".
+configure_mappers()
