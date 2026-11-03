@@ -11,7 +11,7 @@ A homeschool management app: parents manage students, subjects and assignments; 
 
 - **Phase:** 0 (bug fixes and Streamlit stopgaps)
 - **Done:** Edit Assignment dialog crash, `update_assignment` wiping completion status, family checks in the student, subject, assignment and user services, pytest suite, family and system-wide announcements
-- **Next up (Phase 0):** exclude archived students from rosters, progress totals and overdue warnings; Create Assignment form (move Assignment Type above the form); remove `create_all()` and seeding from the Parent Dashboard
+- **Next up (Phase 0):** Create Assignment form (move Assignment Type above the form); remove `create_all()` and seeding from the Parent Dashboard
 - Update this section when a phase or major item is finished.
 
 ## Running it
@@ -90,6 +90,7 @@ tests/                  pytest suite for the services
 ## Known open items (see the roadmap for the full list)
 
 - `AuthService.logout()` is a stub, and the refresh token isn't stored yet.
+- Archived students can't log in until they're unarchived (`AuthService.get_current_user` blocks them), but the app has no way to unarchive anything yet, so for now it's a manual change in Supabase.
 - The student invite flow (`Complete_Account`) doesn't work yet (URL fragment issue above).
 - Recurring assignments use a single status per student. The occurrence model (one row per assignment, per student, per date) is planned for Phase 1.
 - Student Mode (a parent's device locked to one student, with a parent PIN to exit) and pairing codes for kids without email are designed but not built (roadmap Phase 2).

@@ -1,3 +1,5 @@
+from sqlalchemy.orm import joinedload
+
 from database.db import SessionLocal
 from database.models import Student, User
 
@@ -12,6 +14,9 @@ class UserService:
 
             return (
                 db.query(User)
+                .options(
+                    joinedload(User.student)
+                )
                 .filter(
                     User.email == email.strip().lower()
                 )
@@ -52,6 +57,9 @@ class UserService:
 
             return (
                 db.query(User)
+                .options(
+                    joinedload(User.student)
+                )
                 .filter(
                     User.id == user_id
                 )

@@ -18,6 +18,38 @@ class AuthService:
         ] = user_id
 
     @staticmethod
+    def is_archived_student(user):
+        """
+        True for a student login whose student has been archived.
+        They can't sign in until the student is unarchived.
+        """
+
+        if user.role != UserRole.STUDENT.value:
+            return False
+
+        return not (
+            user.student
+            and user.student.active
+        )
+
+    @staticmethod
+    def _allow_login(user):
+        """
+        Returns the user, or None if their account can't be used.
+        The flag lets the Login page explain why.
+        """
+
+        if user and AuthService.is_archived_student(user):
+
+            st.session_state[
+                "account_inactive"
+            ] = True
+
+            return None
+
+        return user
+
+    @staticmethod
     def get_current_user():
 
         user_id = (
@@ -28,7 +60,7 @@ class AuthService:
 
         if user_id:
 
-            return (
+            return AuthService._allow_login(
                 UserService.get_user_by_id(
                     user_id
                 )
@@ -45,7 +77,7 @@ class AuthService:
             auth_user.user.email
         )
 
-        user = (
+        user = AuthService._allow_login(
             UserService.get_user_by_email(
                 email
             )

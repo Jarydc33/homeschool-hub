@@ -55,6 +55,20 @@ st.write(
     "Sign in to Homeschool Hub."
 )
 
+INACTIVE_MESSAGE = (
+    "This account is inactive. "
+    "Please ask a parent to reactivate it."
+)
+
+if st.session_state.pop(
+    "account_inactive",
+    False
+):
+
+    st.error(
+        INACTIVE_MESSAGE
+    )
+
 email = st.text_input(
     "Email"
 )
@@ -88,6 +102,12 @@ if st.button(
 
             st.error(
                 "User authenticated but no matching Homeschool Hub user exists."
+            )
+
+        elif AuthService.is_archived_student(user):
+
+            st.error(
+                INACTIVE_MESSAGE
             )
 
         else:
