@@ -52,7 +52,7 @@ components/navigation.py  Sidebar nav + logout
 services/               All business logic and DB access (static-method classes)
   auth_provider.py      Supabase Auth calls (login, register, invite, set password)
   auth_service.py       Current user, role, and family from session state
-  session_service.py    Access token in browser localStorage (streamlit-local-storage)
+  session_service.py    Access token in browser localStorage (via components/browser_session)
   navigation_service.py Page guards: require_authentication / require_parent / require_student
   *_service.py          One service per entity
 database/db.py          Engine, SessionLocal, Base
@@ -85,13 +85,14 @@ tests/                  pytest suite for the services
 
 - Widgets inside `st.form` don't rerun until submit, so one widget can't enable or disable another inside the same form. Put the controlling widget outside the form.
 - ORM objects returned after `db.close()` can raise `DetachedInstanceError` on lazy relationships. Eager-load with `joinedload`, or use a session with `expire_on_commit=False`.
-- `streamlit-local-storage`: each `setItem` call in one run needs its own `key=` argument, or Streamlit raises a duplicate key error.
+- Browser writes run after the script does, so `st.rerun()` or `st.switch_page()` right after one can cancel it. That's why `SessionService` queues writes and stops the script until `components/browser_session` confirms. Follow `save_session` or `clear_session` with a rerun or page change, and let `NavigationComponent.render()` finish the write.
 - Supabase email links (invite, password reset) put tokens in the URL fragment by default, and Streamlit's server can't read the fragment. Fix: use the `token_hash` email template, read `st.query_params`, call `verify_otp`.
 - `st.session_state` is per browser tab session and is lost on a refresh. Persistent login comes from the stored tokens.
 
 ## Known open items (see the roadmap for the full list)
 
-- `AuthService.logout()` is a stub, and the refresh token isn't stored yet.
+- The refresh token isn't stored yet, so a saved login stops working when its access token expires.
+- Logging out in one tab doesn't end the session in another open tab until that tab is refreshed.
 - Archived students can't log in (`AuthService.get_current_user` blocks them) until a parent restores them on the Students page. Subjects and assignments can't be restored from the app yet.
 - The student invite flow (`Complete_Account`) doesn't work yet (URL fragment issue above).
 - Recurring assignments use a single status per student. The occurrence model (one row per assignment, per student, per date) is planned for Phase 1.

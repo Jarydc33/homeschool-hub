@@ -1,0 +1,64 @@
+<!doctype html>
+<!--
+  Reads and writes the login token in the browser, then tells the server it's
+  done. Used by services/session_service.py, which waits for that reply so a
+  rerun or page change can't cancel a write that hasn't happened yet.
+-->
+<html>
+  <body>
+    <script>
+      var TOKEN_KEY = "homeschoolhub_session";
+      // Left behind by the storage library this replaced.
+      var OLD_TOKEN_KEY = "homeschoolhub_access_token";
+      var lastRequest = null;
+
+      function send(type, data) {
+        window.parent.postMessage(
+          Object.assign({ isStreamlitMessage: true, type: type }, data),
+          "*"
+        );
+      }
+
+      function run(args) {
+        var token = null;
+
+        try {
+          localStorage.removeItem(OLD_TOKEN_KEY);
+
+          if (args.action === "save") {
+            localStorage.setItem(TOKEN_KEY, args.token);
+          } else if (args.action === "clear") {
+            localStorage.removeItem(TOKEN_KEY);
+          }
+
+          token = localStorage.getItem(TOKEN_KEY);
+        } catch (error) {
+          // Storage is blocked, so treat this browser as having no saved login.
+          token = null;
+        }
+
+        send("streamlit:setComponentValue", {
+          dataType: "json",
+          value: { request: args.request, token: token },
+        });
+      }
+
+      window.addEventListener("message", function (event) {
+        if (event.data.type !== "streamlit:render") {
+          return;
+        }
+
+        // Streamlit can render the same request more than once.
+        if (event.data.args.request === lastRequest) {
+          return;
+        }
+
+        lastRequest = event.data.args.request;
+        run(event.data.args);
+      });
+
+      send("streamlit:componentReady", { apiVersion: 1 });
+      send("streamlit:setFrameHeight", { height: 0 });
+    </script>
+  </body>
+</html>

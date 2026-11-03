@@ -170,5 +170,24 @@ class AuthService:
 
     @staticmethod
     def logout():
+        """
+        Ends the session in Supabase and here, and queues removing the token
+        from the browser. Follow this with st.rerun().
+        """
 
-        pass
+        access_token = (
+            SessionService.get_known_token()
+        )
+
+        if access_token:
+
+            AuthProvider.sign_out(
+                access_token
+            )
+
+        SessionService.clear_session()
+
+        st.session_state.pop(
+            "current_user_id",
+            None
+        )

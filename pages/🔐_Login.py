@@ -3,38 +3,13 @@ import streamlit as st
 from services.user_service import UserService
 from services.auth_service import AuthService
 from services.auth_provider import AuthProvider
+from services.session_service import SessionService
 from config import DEV_MODE
 from components.navigation import (
     NavigationComponent
 )
 
 NavigationComponent.render()
-
-if DEV_MODE:
-
-        st.divider()
-
-        st.subheader(
-            "🛠 Developer Tools"
-        )
-
-        if st.button(
-            "Parent"
-        ):
-            AuthService.set_current_user(1)
-            st.rerun()
-
-        if st.button(
-            "Emma"
-        ):
-            AuthService.set_current_user(2)
-            st.rerun()
-
-        if st.button(
-            "Noah"
-        ):
-            AuthService.set_current_user(3)
-            st.rerun()
 
 if AuthService.is_authenticated():
 
@@ -67,6 +42,15 @@ if st.session_state.pop(
 
     st.error(
         INACTIVE_MESSAGE
+    )
+
+if st.session_state.pop(
+    "logged_out",
+    False
+):
+
+    st.success(
+        "You have been logged out."
     )
 
 email = st.text_input(
@@ -112,12 +96,14 @@ if st.button(
 
         else:
 
+            if result.session:
+
+                SessionService.save_session(
+                    result.session.access_token
+                )
+
             AuthService.set_current_user(
                 user.id
-            )
-
-            st.success(
-                f"Welcome {user.email}"
             )
 
             st.rerun()
@@ -132,25 +118,3 @@ if st.button(
         st.error(
             f"ERROR: {str(ex)}"
         )
-
-if AuthService.is_authenticated():
-
-    current_user = (
-        AuthService.get_current_user()
-    )
-
-    st.divider()
-
-    st.success(
-        f"Logged in as "
-        f"{current_user.email}"
-    )
-
-    if st.button(
-        "Logout",
-        use_container_width=True
-    ):
-
-        AuthService.logout()
-
-        st.rerun()

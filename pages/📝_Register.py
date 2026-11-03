@@ -2,6 +2,7 @@ import streamlit as st
 
 from services.family_service import FamilyService
 from services.user_service import UserService
+from services.session_service import SessionService
 from services.auth_service import AuthService
 from services.auth_provider import AuthProvider
 from components.navigation import (
@@ -115,6 +116,12 @@ with st.form(
                 # -----------------------------
                 # Login
                 # -----------------------------
+
+                if auth_result.session:
+
+                    SessionService.save_session(
+                        auth_result.session.access_token
+                    )
 
                 AuthService.set_current_user(
                     user.id

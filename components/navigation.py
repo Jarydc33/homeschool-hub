@@ -10,6 +10,16 @@ class NavigationComponent:
     @staticmethod
     def render():
 
+        # Finish any login or logout write before drawing the page.
+
+        if SessionService.sync_browser() == "clear":
+
+            st.session_state["logged_out"] = True
+
+            st.switch_page(
+                "pages/🔐_Login.py"
+            )
+
         with st.sidebar:
 
             st.title("🏡 Homeschool Hub")
@@ -100,17 +110,9 @@ class NavigationComponent:
 
                 if st.button("Logout"):
 
-                    storage = (
-                        SessionService.get_storage()
-                    )
+                    AuthService.logout()
 
-                    storage.deleteAll()
-                    st.success("Logged out.")
-                    st.session_state.pop(
-                        "current_user_id",
-                        None
-                    )
-                    st.session_state["logged_out"]=True
+                    st.rerun()
 
                 st.caption("Version 0.4.1")
             else:
@@ -132,15 +134,3 @@ class NavigationComponent:
                     label="Register",
                     icon="📝"
                 )
-        if st.session_state.get("logged_out"):
-
-            st.success("You have been successfully logged out.")
-            st.caption(
-                "Select any navigation link to continue."
-            )
-            st.session_state.pop(
-                "logged_out",
-                None
-            )
-
-            st.stop()

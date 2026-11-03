@@ -1,3 +1,5 @@
+import logging
+
 from services.supabase_service import (
     SupabaseService
 )
@@ -5,6 +7,9 @@ from services.supabase_service import (
 from services.session_service import (
     SessionService
 )
+
+logger = logging.getLogger(__name__)
+
 
 class AuthProvider:
 
@@ -18,7 +23,7 @@ class AuthProvider:
             SupabaseService.get_client()
         )
 
-        result = (
+        return (
             supabase.auth.sign_in_with_password(
                 {
                     "email": email,
@@ -27,14 +32,32 @@ class AuthProvider:
             )
         )
 
-        if result.session:
+    @staticmethod
+    def sign_out(
+        access_token
+    ):
+        """
+        Ends this session in Supabase. Other devices stay logged in.
+        A failure is only logged, so it can't stop someone logging out.
+        """
 
-            SessionService.save_session(
-                result.session.access_token,
-                None
+        supabase = (
+            SupabaseService.get_client()
+        )
+
+        try:
+
+            supabase.auth.admin.sign_out(
+                access_token,
+                "local"
             )
 
-        return result
+        except Exception as ex:
+
+            logger.warning(
+                "Supabase sign out failed: %s",
+                type(ex).__name__
+            )
 
     @staticmethod
     def register(
@@ -58,17 +81,8 @@ class AuthProvider:
     @staticmethod
     def get_current_auth_user():
 
-        session = (
-            SessionService.get_session()
-        )
-
-        if not session:
-            return None
-
         access_token = (
-            session.get(
-                "access_token"
-            )
+            SessionService.get_access_token()
         )
 
         if not access_token:
