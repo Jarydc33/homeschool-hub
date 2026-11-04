@@ -176,3 +176,32 @@ def test_write_occurrences_migration_can_be_undone(empty_database):
     assert columns["due_date"]["nullable"] is True
 
     command.upgrade(_config(), "head")
+
+
+def test_dropping_link_progress_keeps_the_links(empty_database):
+    command.upgrade(_config(), "0006")
+    with engine.begin() as connection:
+        _add_old_assignment(connection)
+        connection.execute(
+            text(
+                "INSERT INTO student_assignments (assignment_id, student_id, status) "
+                "VALUES (1, 1, 'Not Started')"
+            )
+        )
+
+    command.upgrade(_config(), "head")
+
+    columns = {c["name"] for c in inspect(engine).get_columns("student_assignments")}
+    assert columns == {"id", "assignment_id", "student_id"}
+    with engine.connect() as connection:
+        assert connection.execute(text("SELECT student_id FROM student_assignments")).scalar() == 1
+
+
+def test_dropping_link_progress_can_be_undone(empty_database):
+    command.upgrade(_config(), "head")
+    command.downgrade(_config(), "0006")
+
+    columns = {c["name"] for c in inspect(engine).get_columns("student_assignments")}
+    assert {"status", "completed_at", "notes"} <= columns
+
+    command.upgrade(_config(), "head")

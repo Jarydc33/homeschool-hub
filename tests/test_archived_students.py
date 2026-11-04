@@ -155,4 +155,5 @@ def test_editing_after_listing_keeps_archived_students_link(parent, fetch):
         recurrence_pattern=None,
     )
 
-    assert fetch(StudentAssignment, w.gone_essay).status == "Complete"
+    assert fetch(StudentAssignment, w.gone_essay) is not None
+    assert fetch(AssignmentOccurrence, w.gone_essay_day).status == "Complete"

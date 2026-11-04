@@ -1,7 +1,7 @@
 from datetime import date
 
 from database.db import SessionLocal
-from database.models import Assignment, StudentAssignment
+from database.models import Assignment, AssignmentOccurrence, StudentAssignment
 from services.assignment_service import AssignmentService
 
 
@@ -11,6 +11,19 @@ def links_for(assignment_id):
         return {
             link.student_id: link
             for link in db.query(StudentAssignment).filter_by(
+                assignment_id=assignment_id
+            )
+        }
+    finally:
+        db.close()
+
+
+def occurrences_for(assignment_id):
+    db = SessionLocal()
+    try:
+        return {
+            row.student_id: row
+            for row in db.query(AssignmentOccurrence).filter_by(
                 assignment_id=assignment_id
             )
         }
@@ -51,7 +64,7 @@ def test_edit_keeps_completed_students_progress(smith_parent):
 
     edit(w)
 
-    ann = links_for(w.essay)[w.ann]
+    ann = occurrences_for(w.essay)[w.ann]
     assert ann.status == "Complete"
     assert ann.completed_at == w.done_at
     assert ann.notes == "Well done"
@@ -72,10 +85,10 @@ def test_edit_adds_and_removes_only_what_changed(smith_parent):
 
     edit(w, students=[w.ann, w.cat])
 
-    links = links_for(w.essay)
-    assert w.bob not in links
-    assert links[w.cat].status == "Not Started"
-    assert links[w.ann].status == "Complete"
+    assert w.bob not in links_for(w.essay)
+    rows = occurrences_for(w.essay)
+    assert rows[w.cat].status == "Not Started"
+    assert rows[w.ann].status == "Complete"
 
 
 def test_edit_ignores_duplicate_students(smith_parent):
@@ -94,7 +107,8 @@ def test_edit_keeps_archived_students_link(smith_parent):
 
     edit(w)
 
-    assert links_for(w.essay)[w.gone].status == "Complete"
+    assert w.gone in links_for(w.essay)
+    assert occurrences_for(w.essay)[w.gone].status == "Complete"
 
 
 def test_edit_can_keep_existing_archived_subject(smith_parent, fetch):

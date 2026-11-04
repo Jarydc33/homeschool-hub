@@ -316,6 +316,8 @@ class Assignment(Base):
     )
 
 class StudentAssignment(Base):
+    """Says who is assigned. Progress on each date is in AssignmentOccurrence."""
+
     __tablename__ = "student_assignments"
 
     __table_args__ = (
@@ -339,15 +341,6 @@ class StudentAssignment(Base):
         ForeignKey("students.id"),
         nullable=False
     )
-
-    status = Column(
-        String,
-        default=AssignmentStatus.NOT_STARTED.value
-    )
-
-    completed_at = Column(DateTime)
-
-    notes = Column(Text)
 
     assignment = relationship(
         "Assignment",

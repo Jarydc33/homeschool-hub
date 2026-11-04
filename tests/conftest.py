@@ -104,20 +104,9 @@ def world():
 
     done_at = datetime(2026, 11, 1, 9, 0)
     links = _add(
-        ann_essay=StudentAssignment(
-            assignment_id=work.essay,
-            student_id=people.ann,
-            status="Complete",
-            completed_at=done_at,
-            notes="Well done",
-        ),
+        ann_essay=StudentAssignment(assignment_id=work.essay, student_id=people.ann),
         bob_essay=StudentAssignment(assignment_id=work.essay, student_id=people.bob),
-        gone_essay=StudentAssignment(
-            assignment_id=work.essay,
-            student_id=people.gone,
-            status="Complete",
-            completed_at=done_at,
-        ),
+        gone_essay=StudentAssignment(assignment_id=work.essay, student_id=people.gone),
         ann_archived=StudentAssignment(
             assignment_id=work.archived, student_id=people.ann
         ),
