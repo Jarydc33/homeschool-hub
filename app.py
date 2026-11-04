@@ -3,6 +3,8 @@ from services.auth_service import (
 )
 import streamlit as st
 
+AuthService.start_page_run()
+
 if AuthService.is_authenticated():
 
     if AuthService.is_student():

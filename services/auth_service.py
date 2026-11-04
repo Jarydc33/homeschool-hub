@@ -39,6 +39,10 @@ INVITE_FAILED_MESSAGE = (
     "Please try again in a moment."
 )
 
+# Holds the current user for one page run. Having no user is saved too, since
+# looking that up can mean a call to Supabase.
+USER_THIS_RUN = "current_user_this_run"
+
 
 class AuthService:
 
@@ -406,11 +410,29 @@ class AuthService:
             )
 
     @staticmethod
+    def start_page_run():
+        """
+        Forgets the saved user, so this page run looks them up fresh. Run it
+        before anything reads the current user. NavigationComponent.render()
+        does, and so does app.py.
+
+        A button in an open dialog reruns only the dialog, so it keeps the
+        user from when the page last ran.
+        """
+
+        st.session_state.pop(
+            USER_THIS_RUN,
+            None
+        )
+
+    @staticmethod
     def set_current_user(user_id):
 
         st.session_state[
             "current_user_id"
         ] = user_id
+
+        AuthService.start_page_run()
 
     @staticmethod
     def is_archived_student(user):
@@ -446,6 +468,22 @@ class AuthService:
 
     @staticmethod
     def get_current_user():
+        """
+        Returns the signed-in user, looking them up once per page run.
+        """
+
+        if USER_THIS_RUN not in st.session_state:
+
+            st.session_state[
+                USER_THIS_RUN
+            ] = AuthService._load_current_user()
+
+        return st.session_state[
+            USER_THIS_RUN
+        ]
+
+    @staticmethod
+    def _load_current_user():
 
         user_id = (
             st.session_state.get(
@@ -583,3 +621,5 @@ class AuthService:
             "current_user_id",
             None
         )
+
+        AuthService.start_page_run()

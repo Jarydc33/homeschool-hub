@@ -138,6 +138,7 @@ def test_unarchiving_restores_access(world, bob_user, session_state, no_saved_lo
     assert AuthService.get_current_user() is None
 
     set_student_active(world.bob, True)
+    AuthService.start_page_run()
 
     assert AuthService.get_current_user().id == bob_user
 

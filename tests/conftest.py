@@ -135,7 +135,8 @@ def login():
 
     yield _login
 
-    for patcher in patches:
+    # Newest first, or a test that logs in twice leaves a fake user behind.
+    for patcher in reversed(patches):
         patcher.stop()
 
 

@@ -10,6 +10,8 @@ class NavigationComponent:
     @staticmethod
     def render():
 
+        AuthService.start_page_run()
+
         # Finish any login or logout write before drawing the page.
 
         if SessionService.sync_browser() == "clear":
