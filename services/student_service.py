@@ -1,5 +1,12 @@
 from database.db import get_session
-from database.models import Student, StudentAssignment, Assignment, AssignmentStatus
+from database.models import (
+    Assignment,
+    AssignmentOccurrence,
+    AssignmentStatus,
+    AssignmentType,
+    Student,
+    StudentAssignment,
+)
 from sqlalchemy.orm import joinedload
 from datetime import datetime
 from services.auth_service import AuthService
@@ -58,6 +65,34 @@ class StudentService:
                 )
 
                 student_assignment.completed_at = None
+
+            # Pages still read the link, but occurrences take over soon, so
+            # keep one-time work matching. Recurring work has no single date
+            # to update until check-offs are made per date.
+
+            assignment = student_assignment.assignment
+
+            if assignment.assignment_type != AssignmentType.RECURRING.value:
+
+                occurrence = (
+                    db.query(AssignmentOccurrence)
+                    .filter(
+                        AssignmentOccurrence.assignment_id == assignment.id,
+                        AssignmentOccurrence.student_id
+                        == student_assignment.student_id,
+                        AssignmentOccurrence.occurrence_date
+                        == assignment.due_date
+                    )
+                    .first()
+                )
+
+                if occurrence:
+
+                    occurrence.status = student_assignment.status
+
+                    occurrence.completed_at = (
+                        student_assignment.completed_at
+                    )
 
             db.commit()
 

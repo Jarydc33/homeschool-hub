@@ -13,6 +13,7 @@ from services.auth_service import (
 )
 
 from services.navigation_service import NavigationService
+from services.occurrence_service import OccurrenceService
 from components.navigation import (
     NavigationComponent
 )
@@ -161,12 +162,44 @@ def edit_assignment_dialog(assignment_id):
         format_func=lambda x: x.name
     )
 
+    is_recurring = (
+        assignment_type
+        == AssignmentType.RECURRING.value
+    )
+
     due_date = st.date_input(
-        "Due Date",
+        "Starts On" if is_recurring else "Due Date",
         value=assignment.due_date
     )
 
+    end_date = None
+
+    if is_recurring:
+
+        end_date = st.date_input(
+            "Ends On",
+            value=(
+                assignment.end_date
+                or OccurrenceService.default_end_date(
+                    AuthService.get_today()
+                )
+            )
+        )
+
     if st.button("💾 Save Changes"):
+
+        schedule_error = OccurrenceService.schedule_error(
+            assignment_type,
+            recurrence_pattern,
+            due_date,
+            end_date
+        )
+
+        if schedule_error:
+
+            st.error(schedule_error)
+
+            return
 
         updated = AssignmentService.update_assignment(
             assignment_id=assignment.id,
@@ -179,7 +212,8 @@ def edit_assignment_dialog(assignment_id):
                 for student in selected_students
             ],
             assignment_type=assignment_type,
-            recurrence_pattern=recurrence_pattern
+            recurrence_pattern=recurrence_pattern,
+            end_date=end_date
         )
 
         if not updated:
@@ -326,16 +360,47 @@ with st.form(
             ]
         )
 
-    due_date = st.date_input(
-        "Due Date",
-        value=AuthService.get_today()
+    is_recurring = (
+        assignment_type
+        == AssignmentType.RECURRING.value
     )
+
+    today = AuthService.get_today()
+
+    due_date = st.date_input(
+        "Starts On" if is_recurring else "Due Date",
+        value=today
+    )
+
+    end_date = None
+
+    if is_recurring:
+
+        end_date = st.date_input(
+            "Ends On",
+            value=OccurrenceService.default_end_date(today)
+        )
 
     submitted = st.form_submit_button(
         "Create Assignment"
     )
 
-    if submitted:
+    schedule_error = (
+        OccurrenceService.schedule_error(
+            assignment_type,
+            recurrence_pattern,
+            due_date,
+            end_date
+        )
+        if submitted
+        else None
+    )
+
+    if schedule_error:
+
+        st.error(schedule_error)
+
+    elif submitted:
 
         created = AssignmentService.create_assignment(
             subject_id=subject.id if subject else None,
@@ -347,7 +412,8 @@ with st.form(
             description=description,
             due_date=due_date,
             assignment_type=assignment_type,
-            recurrence_pattern=recurrence_pattern
+            recurrence_pattern=recurrence_pattern,
+            end_date=end_date
         )
 
         if created:

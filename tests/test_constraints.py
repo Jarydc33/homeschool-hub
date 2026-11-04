@@ -38,8 +38,13 @@ def test_a_student_cant_be_linked_to_an_assignment_twice(world):
     [
         lambda w: Student(name="No family"),
         lambda w: Subject(name="No family"),
-        lambda w: Assignment(subject_id=w.art, title="No family"),
-        lambda w: Assignment(family_id=w.smith, title="No subject"),
+        lambda w: Assignment(
+            subject_id=w.art, title="No family", due_date=date(2026, 12, 1)
+        ),
+        lambda w: Assignment(
+            family_id=w.smith, title="No subject", due_date=date(2026, 12, 1)
+        ),
+        lambda w: Assignment(family_id=w.smith, subject_id=w.art, title="No due date"),
         lambda w: StudentAssignment(student_id=w.ann),
         lambda w: StudentAssignment(assignment_id=w.essay),
     ],
@@ -48,6 +53,7 @@ def test_a_student_cant_be_linked_to_an_assignment_twice(world):
         "subject-family",
         "assignment-family",
         "assignment-subject",
+        "assignment-due-date",
         "link-assignment",
         "link-student",
     ],
@@ -96,7 +102,7 @@ def test_update_returns_none_if_another_tab_links_the_student_first(
             assignment_id=w.essay,
             title="Changed",
             description=None,
-            due_date=None,
+            due_date=date(2026, 12, 1),
             subject_id=w.art,
             student_ids=[w.ann, w.bob, w.cat],
             assignment_type="One Time",

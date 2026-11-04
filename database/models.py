@@ -40,7 +40,7 @@ class AssignmentType(str, Enum):
 
 class RecurrencePattern(Enum):
 
-    DAILY = "Daily"
+    DAILY = "Every Day"
 
     WEEKLY = "Weekly"
 
@@ -276,7 +276,14 @@ class Assignment(Base):
 
     recurrence_pattern = Column(String)
 
-    due_date = Column(Date)
+    # When one-time work is due, or the first date of recurring work.
+    due_date = Column(
+        Date,
+        nullable=False
+    )
+
+    # The last possible date of recurring work. Empty for one-time work.
+    end_date = Column(Date)
 
     created_at = Column(
         DateTime,

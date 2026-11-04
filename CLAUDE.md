@@ -10,8 +10,8 @@ A homeschool management app: parents manage students, subjects and assignments; 
 ## Current status
 
 - **Phase:** 0 (bug fixes and Streamlit stopgaps) is complete. Phase 1 (portable foundation) is in progress
-- **Done:** Edit Assignment dialog crash, `update_assignment` wiping completion status, family checks in the student, subject, assignment and user services, pytest suite, family and system-wide announcements, archived students left out of lists and blocked from logging in, restoring students, Create Assignment form, no database setup on page load, Alembic with a baseline migration, `users.auth_user_id`, constraints and `family_id` indexes, session context manager, registration transaction, fetching the current user once per page run, `families.timezone`, occurrences table and date generator (not used by the app yet)
-- **Next up:** writing occurrences when assignments are saved, then switching the dashboards and check-offs to them. Student Mode tables wait until its UI is being built
+- **Done:** Edit Assignment dialog crash, `update_assignment` wiping completion status, family checks in the student, subject, assignment and user services, pytest suite, family and system-wide announcements, archived students left out of lists and blocked from logging in, restoring students, Create Assignment form, no database setup on page load, Alembic with a baseline migration, `users.auth_user_id`, constraints and `family_id` indexes, session context manager, registration transaction, fetching the current user once per page run, `families.timezone`, occurrences table and date generator, writing occurrences when assignments are saved
+- **Next up:** switching the dashboards and check-offs to occurrences, then per-date notes, then dropping the old `student_assignments` columns. Student Mode tables wait until its UI is being built
 - Update this section when a phase or major item is finished.
 
 ## Running it

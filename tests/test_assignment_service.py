@@ -164,6 +164,7 @@ def create(world, subject=None, students=None):
         subject_id=subject,
         title="New work",
         student_ids=[world.ann, world.bob] if students is None else students,
+        due_date=date(2026, 12, 1),
     )
 
 

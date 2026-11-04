@@ -1,3 +1,4 @@
+from datetime import date
 import os
 import sys
 
@@ -15,6 +16,7 @@ from database.models import (
     Assignment,
     StudentAssignment,
 )
+from services.occurrence_service import OccurrenceService
 
 
 def seed_database():
@@ -128,19 +130,22 @@ def seed_database():
     assignment1 = Assignment(
         family_id=family.id,
         subject_id=math.id,
-        title="Math Lesson 32"
+        title="Math Lesson 32",
+        due_date=date.today()
     )
 
     assignment2 = Assignment(
         family_id=family.id,
         subject_id=reading.id,
-        title="Read Chapter 6"
+        title="Read Chapter 6",
+        due_date=date.today()
     )
 
     assignment3 = Assignment(
         family_id=family.id,
         subject_id=science.id,
-        title="Science Worksheet"
+        title="Science Worksheet",
+        due_date=date.today()
     )
 
     db.add_all([
@@ -182,6 +187,10 @@ def seed_database():
         ),
 
     ])
+
+    OccurrenceService.sync(db, assignment1, {emma.id, noah.id}, date.today())
+    OccurrenceService.sync(db, assignment2, {emma.id}, date.today())
+    OccurrenceService.sync(db, assignment3, {olivia.id}, date.today())
 
     db.commit()
 

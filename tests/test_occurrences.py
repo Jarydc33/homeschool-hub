@@ -32,14 +32,14 @@ def test_one_time_work_happens_once_on_its_date():
 
 
 def test_one_time_work_ignores_any_pattern_or_end_date():
-    assert OccurrenceService.dates_for("One Time", "Daily", WED, NEXT_WED) == [WED]
+    assert OccurrenceService.dates_for("One Time", "Every Day", WED, NEXT_WED) == [WED]
 
 
 # ----- Recurring patterns -----
 
 
 def test_daily_includes_weekends_and_both_ends():
-    assert recurring("Daily", FRI, SUN) == days(6, 7, 8)
+    assert recurring("Every Day", FRI, SUN) == days(6, 7, 8)
 
 
 def test_weekdays_skips_the_weekend():
@@ -112,7 +112,7 @@ def test_monthly_stops_before_a_date_past_the_end():
 # ----- Edges -----
 
 
-@pytest.mark.parametrize("pattern", ["Daily", "Weekly", "Monthly", "Weekdays", "Every Friday"])
+@pytest.mark.parametrize("pattern", ["Every Day", "Weekly", "Monthly", "Weekdays", "Every Friday"])
 def test_an_end_before_the_start_gives_no_dates(pattern):
     assert recurring(pattern, FRI, WED) == []
 
@@ -123,7 +123,7 @@ def test_a_single_day_range_that_misses_the_pattern_gives_no_dates():
 
 def test_recurring_work_needs_an_end_date():
     with pytest.raises(ValueError):
-        OccurrenceService.dates_for("Recurring", "Daily", WED)
+        OccurrenceService.dates_for("Recurring", "Every Day", WED)
 
 
 @pytest.mark.parametrize("pattern", [None, "Every Saturday"])

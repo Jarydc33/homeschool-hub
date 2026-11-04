@@ -6,7 +6,7 @@ the tests can't reach the Supabase project configured in .env.
 """
 import os
 import tempfile
-from datetime import datetime
+from datetime import date, datetime
 from types import SimpleNamespace
 from unittest import mock
 
@@ -74,16 +74,30 @@ def world():
         jones_kid=Student(family_id=jones, name="Jones kid"),
     )
 
+    due = date(2026, 12, 1)
+
     work = _add(
-        essay=Assignment(family_id=smith, subject_id=people.art, title="Essay"),
+        essay=Assignment(
+            family_id=smith, subject_id=people.art, title="Essay", due_date=due
+        ),
         on_old=Assignment(
-            family_id=smith, subject_id=people.old_subject, title="On old subject"
+            family_id=smith,
+            subject_id=people.old_subject,
+            title="On old subject",
+            due_date=due,
         ),
         archived=Assignment(
-            family_id=smith, subject_id=people.art, title="Archived", active=False
+            family_id=smith,
+            subject_id=people.art,
+            title="Archived",
+            due_date=due,
+            active=False,
         ),
         jones_work=Assignment(
-            family_id=jones, subject_id=people.jones_subject, title="Jones work"
+            family_id=jones,
+            subject_id=people.jones_subject,
+            title="Jones work",
+            due_date=due,
         ),
     )
 

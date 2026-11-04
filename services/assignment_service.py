@@ -1,4 +1,5 @@
 # services/assignment_service.py
+from datetime import date
 import logging
 
 from sqlalchemy.exc import IntegrityError
@@ -13,6 +14,7 @@ from database.models import (
 )
 
 from services.auth_service import AuthService
+from services.occurrence_service import OccurrenceService
 
 logger = logging.getLogger(__name__)
 
@@ -103,12 +105,26 @@ class AssignmentService:
         description=None,
         due_date=None,
         assignment_type=AssignmentType.ONE_TIME.value,
-        recurrence_pattern=None
+        recurrence_pattern=None,
+        end_date=None
     ):
         """
-        Returns the new assignment, or None if the subject or any
-        student is not an active part of this family.
+        Returns the new assignment, or None if its schedule isn't valid or
+        the subject or any student is not an active part of this family.
+        Its student links and occurrences are saved in the same commit.
         """
+
+        if OccurrenceService.schedule_error(
+            assignment_type,
+            recurrence_pattern,
+            due_date,
+            end_date
+        ):
+            return None
+
+        if assignment_type != AssignmentType.RECURRING.value:
+            recurrence_pattern = None
+            end_date = None
 
         family_id = (
             AuthService.get_current_family()
@@ -153,6 +169,7 @@ class AssignmentService:
                 due_date=due_date,
                 assignment_type=assignment_type,
                 recurrence_pattern=recurrence_pattern,
+                end_date=end_date,
                 student_assignments=[
                     StudentAssignment(
                         student_id=student_id
@@ -162,6 +179,15 @@ class AssignmentService:
             )
 
             db.add(assignment)
+            db.flush()
+
+            OccurrenceService.sync(
+                db,
+                assignment,
+                requested_ids,
+                date.min
+            )
+
             db.commit()
             db.refresh(assignment)
 
@@ -176,17 +202,31 @@ class AssignmentService:
         subject_id,
         student_ids,
         assignment_type,
-        recurrence_pattern
+        recurrence_pattern,
+        end_date=None
     ):
         """
-        Returns the updated assignment, or None if the assignment,
-        subject, or any student is not available to this family.
+        Returns the updated assignment, or None if its schedule isn't valid
+        or the assignment, subject, or any student is not available to this
+        family.
 
         Only student links that changed are added or removed, so
         everyone else keeps their status, completion date, and notes.
         Links to archived students are left alone, since archived
         students aren't offered as choices on the edit form.
         """
+
+        if OccurrenceService.schedule_error(
+            assignment_type,
+            recurrence_pattern,
+            due_date,
+            end_date
+        ):
+            return None
+
+        if assignment_type != AssignmentType.RECURRING.value:
+            recurrence_pattern = None
+            end_date = None
 
         family_id = (
             AuthService.get_current_family()
@@ -278,9 +318,13 @@ class AssignmentService:
                 recurrence_pattern
             )
 
+            assignment.end_date = end_date
+
             # -------------------------
             # Apply Student Changes
             # -------------------------
+
+            kept_ids = set(requested_ids)
 
             for link in links:
 
@@ -290,6 +334,9 @@ class AssignmentService:
                 ):
                     db.delete(link)
 
+                else:
+                    kept_ids.add(link.student_id)
+
             for student_id in requested_ids - linked_ids:
 
                 db.add(
@@ -298,6 +345,13 @@ class AssignmentService:
                         student_id=student_id
                     )
                 )
+
+            OccurrenceService.sync(
+                db,
+                assignment,
+                kept_ids,
+                AuthService.get_today()
+            )
 
             # Another tab may have just linked the same student.
             try:

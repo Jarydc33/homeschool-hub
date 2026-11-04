@@ -71,7 +71,7 @@ def test_progress_total_leaves_out_archived_students(parent):
 
 def test_assignment_with_only_archived_students_stays_listed(parent):
     w = parent
-    only_gone = add_assignment(w, "Only gone", None, [w.gone])
+    only_gone = add_assignment(w, "Only gone", TODAY, [w.gone])
 
     assert listed(only_gone).student_assignments == []
 
@@ -138,7 +138,7 @@ def test_editing_after_listing_keeps_archived_students_link(parent, fetch):
         assignment_id=w.essay,
         title="Edited",
         description=None,
-        due_date=None,
+        due_date=date(2026, 12, 1),
         subject_id=w.art,
         student_ids=[w.ann, w.bob],
         assignment_type="One Time",
