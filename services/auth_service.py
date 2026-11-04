@@ -34,6 +34,11 @@ REGISTRATION_FAILED_MESSAGE = (
     "Please try again in a moment."
 )
 
+INVITE_FAILED_MESSAGE = (
+    "We couldn't finish creating this login, so nothing was saved. "
+    "Please try again in a moment."
+)
+
 
 class AuthService:
 
@@ -49,8 +54,8 @@ class AuthService:
         nothing was created.
 
         Supabase can't share a transaction with our database, so if saving
-        fails, the account made here is removed. Otherwise the email could
-        never sign up again, and it would have no app user to log in as.
+        fails, an account nothing uses is removed. Otherwise the email could
+        be stuck with no app user to log in as.
         """
 
         email = email.strip().lower()
@@ -74,6 +79,13 @@ class AuthService:
 
             return None, None, REGISTERED_EMAIL_MESSAGE
 
+        # Supabase hands back the existing account for an email that hasn't
+        # been confirmed yet, which may already belong to someone here.
+
+        if UserService.get_user_by_auth_id(auth_user_id):
+
+            return None, None, REGISTERED_EMAIL_MESSAGE
+
         try:
 
             user = FamilyService.create_family_with_parent(
@@ -89,7 +101,7 @@ class AuthService:
                 type(ex).__name__
             )
 
-            AuthService._remove_new_account(
+            AuthService._remove_unused_account(
                 auth_user_id
             )
 
@@ -98,14 +110,103 @@ class AuthService:
         return user, auth_result.session, None
 
     @staticmethod
-    def _remove_new_account(
+    def invite_student(
+        student_id,
+        email
+    ):
+        """
+        Invites a student by email and saves their login. Returns
+        (True, message) or (False, message).
+
+        The invite goes first because it needs the new account's id. If
+        saving then fails, an account nothing uses is removed, so the parent
+        can simply try again.
+        """
+
+        family_id = AuthService.get_current_family()
+
+        if not AuthService.is_parent() or family_id is None:
+
+            return False, "You do not have access to do this."
+
+        email = (email or "").strip().lower()
+
+        if not EMAIL_PATTERN.match(email):
+
+            return False, "Please enter a valid email address."
+
+        if UserService.get_user_by_student_id(
+            student_id,
+            family_id
+        ):
+
+            return False, "Student already has a login."
+
+        if UserService.get_user_by_email(email):
+
+            return False, EMAIL_TAKEN_MESSAGE
+
+        try:
+
+            invite = AuthProvider.create_student_account(
+                email
+            )
+
+        except Exception as ex:
+
+            return False, AuthProvider.invite_send_error_message(ex)
+
+        auth_user_id = invite.user.id
+
+        try:
+
+            user = UserService.create_student_user(
+                family_id=family_id,
+                student_id=student_id,
+                email=email,
+                auth_user_id=auth_user_id
+            )
+
+        except Exception as ex:
+
+            logger.warning(
+                "Saving a student login failed: %s",
+                type(ex).__name__
+            )
+
+            AuthService._remove_unused_account(
+                auth_user_id
+            )
+
+            return False, INVITE_FAILED_MESSAGE
+
+        if not user:
+
+            AuthService._remove_unused_account(
+                auth_user_id
+            )
+
+            return False, "This student could not be found."
+
+        return True, f"Invitation sent to {email}."
+
+    @staticmethod
+    def _remove_unused_account(
         auth_user_id
     ):
         """
-        Removes the Supabase account from a sign-up that couldn't be saved.
+        Removes a Supabase account after its login couldn't be saved. An
+        account a users row points to belongs to someone else, because
+        Supabase returns the existing account for an unconfirmed email, so
+        it stays. So does any account we can't check: deleting can't be
+        undone, and an unconfirmed email can still try again.
         """
 
         try:
+
+            if UserService.get_user_by_auth_id(auth_user_id):
+
+                return
 
             AuthProvider.delete_auth_user(
                 auth_user_id
@@ -113,12 +214,9 @@ class AuthService:
 
         except Exception as ex:
 
-            # That email can't sign up again until someone removes the
-            # account by hand.
-
             logger.error(
-                "Removing a new account failed, leaving auth user %s with no "
-                "app user: %s",
+                "Removing an unused account failed, leaving auth user %s "
+                "with no app user: %s",
                 auth_user_id,
                 type(ex).__name__
             )

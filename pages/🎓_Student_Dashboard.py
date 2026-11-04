@@ -47,82 +47,18 @@ def create_student_login_dialog(
         "Create Login"
     ):
 
-        email = (
-            email.strip().lower()
+        invited, message = AuthService.invite_student(
+            student.id,
+            email
         )
 
-        existing_user = (
-            UserService.get_user_by_student_id(
-                student.id,
-                AuthService.get_current_family()
-            )
-        )
+        if not invited:
 
-        if existing_user:
-
-            st.error(
-                "Student already has a login."
-            )
+            st.error(message)
 
             return
 
-        existing_email = (
-            UserService.get_user_by_email(
-                email
-            )
-        )
-
-        if existing_email:
-
-            st.error(
-                "Email already exists."
-            )
-
-            return
-
-        if not email:
-
-            st.error(
-                "Please enter an email address."
-            )
-
-            return
-
-        # Send the invite first. If it fails, no login row is left behind
-        # to block trying again.
-
-        try:
-
-            invite = AuthProvider.create_student_account(
-                email
-            )
-
-        except Exception as ex:
-
-            st.error(
-                AuthProvider.invite_send_error_message(ex)
-            )
-
-            return
-
-        student_user = UserService.create_student_user(
-            family_id=AuthService.get_current_family(),
-            student_id=student.id,
-            email=email,
-            auth_user_id=invite.user.id
-        )
-
-        if not student_user:
-
-            st.error(
-                "This student could not be found."
-            )
-
-            return
-
-        st.toast(
-            f"Invitation sent to {email}."
-        )
+        st.toast(message)
 
         st.rerun()
 

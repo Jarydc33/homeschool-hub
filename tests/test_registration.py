@@ -130,3 +130,15 @@ def test_sign_up_errors_are_friendly_and_save_nothing(provider, failure, expecte
     assert "private detail" not in error
     assert _count(Family) == 0
     provider.delete.assert_not_called()
+
+
+def test_signing_up_with_someones_unconfirmed_email_changes_nothing(provider):
+    # Supabase hands back the real account for an unconfirmed email.
+    FamilyService.create_family_with_parent("Earlier", EMAIL, AUTH_ID)
+
+    user, _, error = AuthService.register_parent("Smith", EMAIL, "password1")
+
+    assert user is None
+    assert "already has an account" in error
+    assert _count(Family) == 1
+    provider.delete.assert_not_called()
