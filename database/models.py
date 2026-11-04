@@ -7,7 +7,9 @@ from sqlalchemy import (
     Date,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
+    Numeric,
     String,
     Text,
     UniqueConstraint,
@@ -198,6 +200,11 @@ class Student(Base):
         back_populates="student"
     )
 
+    occurrences = relationship(
+        "AssignmentOccurrence",
+        back_populates="student"
+    )
+
 class Subject(Base):
     __tablename__ = "subjects"
 
@@ -291,6 +298,11 @@ class Assignment(Base):
         back_populates="assignment"
     )
 
+    occurrences = relationship(
+        "AssignmentOccurrence",
+        back_populates="assignment"
+    )
+
     active = Column(
         Boolean,
         default=True
@@ -338,6 +350,67 @@ class StudentAssignment(Base):
     student = relationship(
         "Student",
         back_populates="student_assignments"
+    )
+
+class AssignmentOccurrence(Base):
+    """One assignment, for one student, on one date."""
+
+    __tablename__ = "assignment_occurrences"
+
+    __table_args__ = (
+        UniqueConstraint(
+            "assignment_id",
+            "student_id",
+            "occurrence_date",
+            name="uq_assignment_occurrences_assignment_student_date"
+        ),
+        Index(
+            "ix_assignment_occurrences_student_date",
+            "student_id",
+            "occurrence_date"
+        ),
+    )
+
+    id = Column(Integer, primary_key=True)
+
+    assignment_id = Column(
+        Integer,
+        ForeignKey("assignments.id"),
+        nullable=False
+    )
+
+    student_id = Column(
+        Integer,
+        ForeignKey("students.id"),
+        nullable=False
+    )
+
+    occurrence_date = Column(
+        Date,
+        nullable=False
+    )
+
+    status = Column(
+        String,
+        nullable=False,
+        default=AssignmentStatus.NOT_STARTED.value,
+        server_default=AssignmentStatus.NOT_STARTED.value
+    )
+
+    completed_at = Column(DateTime)
+
+    notes = Column(Text)
+
+    score = Column(Numeric(6, 2))
+
+    assignment = relationship(
+        "Assignment",
+        back_populates="occurrences"
+    )
+
+    student = relationship(
+        "Student",
+        back_populates="occurrences"
     )
 
 class BannerMessage(Base):

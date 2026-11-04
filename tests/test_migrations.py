@@ -93,3 +93,12 @@ def test_timezone_migration_can_be_undone(empty_database):
     assert "timezone" not in columns
 
     command.upgrade(_config(), "head")
+
+
+def test_occurrences_migration_can_be_undone(empty_database):
+    command.upgrade(_config(), "head")
+    command.downgrade(_config(), "0004")
+
+    assert "assignment_occurrences" not in inspect(engine).get_table_names()
+
+    command.upgrade(_config(), "head")
