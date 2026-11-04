@@ -23,6 +23,7 @@ import pytest
 from database.db import Base, SessionLocal, engine
 from database.models import (
     Assignment,
+    DEFAULT_TIMEZONE,
     Family,
     Student,
     StudentAssignment,
@@ -127,7 +128,10 @@ def login():
 
     def _login(family_id, role=UserRole.PARENT, student_id=None):
         user = SimpleNamespace(
-            family_id=family_id, role=role.value, student_id=student_id
+            family_id=family_id,
+            family=SimpleNamespace(timezone=DEFAULT_TIMEZONE) if family_id else None,
+            role=role.value,
+            student_id=student_id,
         )
         patcher = mock.patch.object(AuthService, "get_current_user", return_value=user)
         patcher.start()

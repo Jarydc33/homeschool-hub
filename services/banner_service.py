@@ -1,5 +1,3 @@
-from datetime import date
-
 from sqlalchemy import false, or_
 
 from database.db import get_session
@@ -62,7 +60,7 @@ class BannerService:
 
         with get_session() as db:
 
-            today = date.today()
+            today = AuthService.get_today()
 
             return (
                 db.query(BannerMessage)

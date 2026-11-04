@@ -327,7 +327,8 @@ with st.form(
         )
 
     due_date = st.date_input(
-        "Due Date"
+        "Due Date",
+        value=AuthService.get_today()
     )
 
     submitted = st.form_submit_button(

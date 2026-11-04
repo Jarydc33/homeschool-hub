@@ -1,11 +1,13 @@
 import logging
 import re
+from datetime import datetime
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import streamlit as st
 
 from services.family_service import FamilyService
 from services.user_service import UserService
-from database.models import UserRole
+from database.models import DEFAULT_TIMEZONE, UserRole
 
 from services.auth_provider import AuthProvider
 from services.session_service import (
@@ -50,7 +52,8 @@ class AuthService:
     def register_parent(
         family_name,
         email,
-        password
+        password,
+        timezone=DEFAULT_TIMEZONE
     ):
         """
         Creates a Supabase account, then the family and parent that go with
@@ -95,7 +98,8 @@ class AuthService:
             user = FamilyService.create_family_with_parent(
                 family_name,
                 email,
-                auth_user_id
+                auth_user_id,
+                timezone
             )
 
         except Exception as ex:
@@ -584,6 +588,33 @@ class AuthService:
             return None
 
         return user.family_id
+
+    @staticmethod
+    def get_today():
+        """
+        Returns today's date for the current family. Admins and anyone
+        logged out have no family, so they get UTC's date.
+        """
+
+        user = AuthService.get_current_user()
+
+        name = (
+            user.family.timezone
+            if user and user.family
+            else "UTC"
+        )
+
+        try:
+
+            zone = ZoneInfo(name)
+
+        except (ZoneInfoNotFoundError, ValueError):
+
+            logger.warning("Unknown family time zone: %s", name)
+
+            zone = ZoneInfo("UTC")
+
+        return datetime.now(zone).date()
 
     @staticmethod
     def get_current_student():

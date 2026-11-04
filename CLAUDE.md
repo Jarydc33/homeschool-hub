@@ -10,8 +10,8 @@ A homeschool management app: parents manage students, subjects and assignments; 
 ## Current status
 
 - **Phase:** 0 (bug fixes and Streamlit stopgaps) is complete. Phase 1 (portable foundation) is in progress
-- **Done:** Edit Assignment dialog crash, `update_assignment` wiping completion status, family checks in the student, subject, assignment and user services, pytest suite, family and system-wide announcements, archived students left out of lists and blocked from logging in, restoring students, Create Assignment form, no database setup on page load, Alembic with a baseline migration, `users.auth_user_id`, constraints and `family_id` indexes, session context manager, registration transaction, fetching the current user once per page run
-- **Next up:** `families.timezone`, and occurrences. Student Mode tables wait until its UI is being built
+- **Done:** Edit Assignment dialog crash, `update_assignment` wiping completion status, family checks in the student, subject, assignment and user services, pytest suite, family and system-wide announcements, archived students left out of lists and blocked from logging in, restoring students, Create Assignment form, no database setup on page load, Alembic with a baseline migration, `users.auth_user_id`, constraints and `family_id` indexes, session context manager, registration transaction, fetching the current user once per page run, `families.timezone`
+- **Next up:** occurrences. Student Mode tables wait until its UI is being built
 - Update this section when a phase or major item is finished.
 
 ## Running it
@@ -87,7 +87,7 @@ tests/                  pytest suite for the services
 5. **One transaction per user action.** Multi-step writes (registration, creating an assignment with its student links) commit once.
 6. **No side effects on page load.** No `create_all()`, seeding, or migrations from pages.
 7. **Schema changes go through Alembic migrations.** Never use `create_all()` outside tests.
-8. **Dates:** "today" means the family's local date, not the server's UTC date (Phase 1 adds `families.timezone`).
+8. **Dates:** "today" means the family's local date, not the server's UTC date. Use `AuthService.get_today()`, never `date.today()`, including for date picker defaults.
 9. **User-facing errors are friendly.** Don't show `str(ex)` to users; log the detail instead.
 
 ## Streamlit gotchas we've hit
@@ -107,6 +107,7 @@ tests/                  pytest suite for the services
 - Archived students can't log in (`AuthService.get_current_user` blocks them) until a parent restores them on the Students page. Subjects and assignments can't be restored from the app yet.
 - Invites and password resets depend on Supabase's email templates. "Invite user" must link to `{{ .SiteURL }}/Complete_Account?token_hash={{ .TokenHash }}&type=invite`, and "Reset Password" to the same address with `type=recovery`.
 - Changing a student's login email has to update Supabase and `users` together, because people sign in with Supabase's copy and the app shows its own. `AuthService.update_student_email` handles this. Supabase refuses an email another account already has. Parents can't change their own email yet.
+- Families can't change their time zone after signing up yet; that needs a settings screen.
 - Recurring assignments use a single status per student. The occurrence model (one row per assignment, per student, per date) is planned for Phase 1.
 - Student Mode (a parent's device locked to one student, with a parent PIN to exit) and pairing codes for kids without email are designed but not built (roadmap Phase 2).
 

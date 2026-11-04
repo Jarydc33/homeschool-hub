@@ -29,7 +29,8 @@ class UserService:
             return (
                 db.query(User)
                 .options(
-                    joinedload(User.student)
+                    joinedload(User.student),
+                    joinedload(User.family)
                 )
                 .filter(
                     User.auth_user_id == str(auth_user_id)
@@ -62,7 +63,8 @@ class UserService:
             return (
                 db.query(User)
                 .options(
-                    joinedload(User.student)
+                    joinedload(User.student),
+                    joinedload(User.family)
                 )
                 .filter(
                     User.id == user_id

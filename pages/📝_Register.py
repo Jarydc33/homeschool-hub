@@ -1,5 +1,6 @@
 import streamlit as st
 
+from services.family_service import FamilyService
 from services.session_service import SessionService
 from services.auth_service import AuthService
 from components.navigation import (
@@ -38,6 +39,20 @@ with st.form(
     confirm_password = st.text_input(
         "Confirm Password",
         type="password"
+    )
+
+    timezone_choices = FamilyService.timezone_choices()
+
+    timezone = st.selectbox(
+        "Time Zone",
+        timezone_choices,
+        index=timezone_choices.index(
+            FamilyService.preferred_timezone(
+                st.context.timezone
+            )
+        ),
+        format_func=FamilyService.timezone_label,
+        help="Used to work out what's due today for your family."
     )
 
     submitted = st.form_submit_button(
@@ -80,7 +95,8 @@ with st.form(
                 AuthService.register_parent(
                     family_name,
                     email,
-                    password
+                    password,
+                    timezone
                 )
             )
 

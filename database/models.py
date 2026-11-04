@@ -17,6 +17,8 @@ from sqlalchemy.orm import configure_mappers, relationship
 
 from database.db import Base
 
+DEFAULT_TIMEZONE = "America/Chicago"
+
 
 class UserRole(str, Enum):
     PARENT = "Parent"
@@ -62,6 +64,14 @@ class Family(Base):
     family_name = Column(
         String,
         nullable=False
+    )
+
+    # An IANA name. "Today" for this family is the date in this zone.
+    timezone = Column(
+        String,
+        nullable=False,
+        default=DEFAULT_TIMEZONE,
+        server_default=DEFAULT_TIMEZONE
     )
 
     created_at = Column(

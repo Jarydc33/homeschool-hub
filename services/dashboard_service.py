@@ -1,5 +1,4 @@
-from datetime import date
-
+from services.auth_service import AuthService
 from services.student_service import (
     StudentService
 )
@@ -29,7 +28,7 @@ class DashboardService:
             AssignmentService.get_current_family_assignments()
         )
 
-        today = date.today()
+        today = AuthService.get_today()
 
         overdue_assignments = []
         today_assignments = []
@@ -73,7 +72,7 @@ class DashboardService:
     @staticmethod
     def get_student_metrics(student):
 
-        today = date.today()
+        today = AuthService.get_today()
 
         student_assignments = (
             StudentService.get_student_assignments(

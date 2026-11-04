@@ -246,13 +246,15 @@ with st.form(
     with col1:
 
         start_date = st.date_input(
-            "Start Date"
+            "Start Date",
+            value=AuthService.get_today()
         )
 
     with col2:
 
         end_date = st.date_input(
-            "End Date"
+            "End Date",
+            value=AuthService.get_today()
         )
 
     submitted = st.form_submit_button(

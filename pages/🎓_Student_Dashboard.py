@@ -1,7 +1,5 @@
 # pages/student_view.py
 
-from datetime import date
-
 import streamlit as st
 
 from services.auth_provider import AuthProvider
@@ -341,7 +339,7 @@ hide_completed = st.checkbox(
 # Assignment Categorization
 # ------------------------------------------------------------------
 
-today = date.today()
+today = AuthService.get_today()
 
 completed_assignments = []
 

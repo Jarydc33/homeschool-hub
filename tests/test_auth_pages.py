@@ -81,7 +81,7 @@ def test_login_refuses_another_account_with_the_same_email(world):
 # ----- Registration -----
 
 
-def register(identities, session=None):
+def register(identities, session=None, timezone=None):
     result = SimpleNamespace(
         user=SimpleNamespace(id=AUTH_ID, identities=identities), session=session
     )
@@ -92,6 +92,8 @@ def register(identities, session=None):
         at.text_input[1].set_value(EMAIL)
         at.text_input[2].set_value("password1")
         at.text_input[3].set_value("password1")
+        if timezone:
+            at.selectbox[0].set_value(timezone)
         return at.button[0].click().run()
 
 
@@ -99,6 +101,16 @@ def test_registering_saves_the_account_id():
     register(["email"])
 
     assert UserService.get_user_by_auth_id(AUTH_ID).email == EMAIL
+
+
+def test_registering_saves_the_chosen_time_zone():
+    register(["email"], timezone="Asia/Tokyo")
+
+    db = SessionLocal()
+    try:
+        assert db.query(Family).one().timezone == "Asia/Tokyo"
+    finally:
+        db.close()
 
 
 def test_registering_a_taken_email_creates_nothing():

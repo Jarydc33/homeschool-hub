@@ -71,3 +71,25 @@ def test_constraints_migration_can_be_undone(empty_database):
     assert nullable["family_id"] is True
 
     command.upgrade(_config(), "head")
+
+
+def test_existing_families_get_the_default_time_zone(empty_database):
+    command.upgrade(_config(), "0003")
+    with engine.begin() as connection:
+        connection.execute(text("INSERT INTO families (family_name) VALUES ('Smith')"))
+
+    command.upgrade(_config(), "head")
+
+    with engine.connect() as connection:
+        zone = connection.execute(text("SELECT timezone FROM families")).scalar()
+    assert zone == "America/Chicago"
+
+
+def test_timezone_migration_can_be_undone(empty_database):
+    command.upgrade(_config(), "head")
+    command.downgrade(_config(), "0003")
+
+    columns = {column["name"] for column in inspect(engine).get_columns("families")}
+    assert "timezone" not in columns
+
+    command.upgrade(_config(), "head")
