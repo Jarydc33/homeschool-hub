@@ -417,6 +417,19 @@ def render_occurrence(
             "Please refresh the page and try again."
         )
 
+    if assignment.description:
+
+        st.caption(
+            f"📝 {assignment.description}"
+        )
+
+    if occurrence.notes:
+
+        st.info(
+            occurrence.notes,
+            icon="📝"
+        )
+
     st.caption(
         f"Due: {occurrence.occurrence_date}"
     )

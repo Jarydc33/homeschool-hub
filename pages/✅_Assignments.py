@@ -232,6 +232,109 @@ def edit_assignment_dialog(assignment_id):
         st.rerun()
 
 
+@st.dialog("📝 Note for a Date")
+def note_dialog(assignment_id):
+
+    rows = AssignmentService.get_note_rows(
+        assignment_id
+    )
+
+    if not rows:
+
+        st.warning(
+            "This assignment has no students to add a note for."
+        )
+
+        return
+
+    dates = sorted(
+        {row.occurrence_date for row in rows}
+    )
+
+    day = st.selectbox(
+        "Date",
+        dates,
+        index=dates.index(
+            OccurrenceService.default_note_date(
+                dates,
+                AuthService.get_today()
+            )
+        ),
+        format_func=lambda d: d.strftime("%a, %b %d, %Y")
+    )
+
+    rows_on_day = [
+        row
+        for row in rows
+        if row.occurrence_date == day
+    ]
+
+    names = {
+        row.student_id: row.student.name
+        for row in rows_on_day
+    }
+
+    selected_students = st.multiselect(
+        "For",
+        list(names),
+        default=list(names),
+        format_func=names.get,
+        key=f"note_students_{day}"
+    )
+
+    existing_notes = {
+        row.notes or ""
+        for row in rows_on_day
+        if row.student_id in selected_students
+    }
+
+    if len(existing_notes) > 1:
+
+        st.caption(
+            "These students have different notes. "
+            "Saving replaces them all."
+        )
+
+    note = st.text_area(
+        "Note",
+        value=min(existing_notes, default=""),
+        key=f"note_text_{day}",
+        help="Students see this on that date. Leave it blank to remove it."
+    )
+
+    if st.button("💾 Save Note"):
+
+        if not selected_students:
+
+            st.error(
+                "Please choose at least one student."
+            )
+
+            return
+
+        saved = AssignmentService.set_occurrence_note(
+            assignment_id,
+            day,
+            selected_students,
+            note
+        )
+
+        if not saved:
+
+            st.error(
+                "This note couldn't be saved. "
+                "Please refresh the page and try again."
+            )
+
+            return
+
+        st.toast(
+            "Note saved."
+        )
+
+        st.rerun()
+
+
 @st.dialog("📦 Archive Assignment")
 def archive_assignment_dialog(assignment):
 
@@ -459,8 +562,8 @@ if assignments:
 
         with st.container():
 
-            col1, col2, col3 = st.columns(
-                [6, 1, 1]
+            col1, col2, col3, col4 = st.columns(
+                [6, 1, 1, 1]
             )
 
             with col1:
@@ -545,6 +648,18 @@ if assignments:
                 ):
 
                     edit_assignment_dialog(
+                        assignment.id
+                    )
+
+            with col4:
+
+                if st.button(
+                    "📝",
+                    key=f"note_{assignment.id}",
+                    help="Add a Note for a Date"
+                ):
+
+                    note_dialog(
                         assignment.id
                     )
 

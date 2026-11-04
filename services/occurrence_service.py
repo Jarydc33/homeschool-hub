@@ -255,6 +255,21 @@ class OccurrenceService:
         return done, len(rows)
 
     @staticmethod
+    def default_note_date(
+        dates,
+        today
+    ):
+        """
+        Returns which of the sorted dates to offer first: the next one from
+        today on, or the last one if they've all passed.
+        """
+
+        return next(
+            (day for day in dates if day >= today),
+            dates[-1]
+        )
+
+    @staticmethod
     def is_untouched(row):
         """
         True if nobody has done anything with this occurrence yet.

@@ -3,6 +3,7 @@ from datetime import date
 import logging
 
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import and_
 from sqlalchemy.orm import joinedload, selectinload
 from database.db import get_session
 from database.models import (
@@ -377,6 +378,94 @@ class AssignmentService:
             db.refresh(assignment)
 
             return assignment
+
+    @staticmethod
+    def get_note_rows(
+        assignment_id
+    ):
+        """
+        Returns the occurrences a parent can add notes to on this assignment,
+        with their students: dates for active students still assigned to it.
+        """
+
+        if not AuthService.is_parent():
+            return []
+
+        with get_session() as db:
+
+            return (
+                db.query(AssignmentOccurrence)
+                .join(AssignmentOccurrence.assignment)
+                .join(AssignmentOccurrence.student)
+                .join(
+                    StudentAssignment,
+                    and_(
+                        StudentAssignment.assignment_id
+                        == AssignmentOccurrence.assignment_id,
+                        StudentAssignment.student_id
+                        == AssignmentOccurrence.student_id
+                    )
+                )
+                .options(
+                    joinedload(AssignmentOccurrence.student)
+                )
+                .filter(
+                    AssignmentOccurrence.assignment_id == assignment_id,
+                    Assignment.family_id
+                    == AuthService.get_current_family(),
+                    Assignment.active.is_(True),
+                    Student.active.is_(True)
+                )
+                .order_by(
+                    AssignmentOccurrence.occurrence_date,
+                    Student.name
+                )
+                .all()
+            )
+
+    @staticmethod
+    def set_occurrence_note(
+        assignment_id,
+        occurrence_date,
+        student_ids,
+        note
+    ):
+        """
+        Saves a note on one date for the chosen students, in one commit. A
+        blank note removes it. Returns how many rows changed, or None if
+        there's nothing here this parent can change.
+        """
+
+        rows = [
+            row
+            for row in AssignmentService.get_note_rows(assignment_id)
+            if row.occurrence_date == occurrence_date
+            and row.student_id in set(student_ids)
+        ]
+
+        if not rows:
+            return None
+
+        note = (note or "").strip() or None
+
+        with get_session() as db:
+
+            saved = (
+                db.query(AssignmentOccurrence)
+                .filter(
+                    AssignmentOccurrence.id.in_(
+                        [row.id for row in rows]
+                    )
+                )
+                .all()
+            )
+
+            for row in saved:
+                row.notes = note
+
+            db.commit()
+
+            return len(saved)
 
     @staticmethod
     def archive_assignment(
