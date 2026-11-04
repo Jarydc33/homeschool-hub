@@ -81,9 +81,9 @@ def test_login_refuses_another_account_with_the_same_email(world):
 # ----- Registration -----
 
 
-def register(identities):
+def register(identities, session=None):
     result = SimpleNamespace(
-        user=SimpleNamespace(id=AUTH_ID, identities=identities), session=None
+        user=SimpleNamespace(id=AUTH_ID, identities=identities), session=session
     )
 
     with mock.patch.object(AuthProvider, "register", return_value=result):
@@ -107,6 +107,26 @@ def test_registering_a_taken_email_creates_nothing():
     assert "already has an account" in errors(at)
     assert count(Family) == 0
     assert count(User) == 0
+
+
+def test_registering_without_a_session_waits_for_email_confirmation():
+    at = register(["email"])
+
+    assert "Check your email" in " ".join(s.value for s in at.success)
+    assert "current_user_id" not in at.session_state
+    st.switch_page.assert_not_called()
+
+
+def test_registering_with_a_session_logs_in():
+    session = SimpleNamespace(access_token="access", refresh_token="refresh")
+
+    with mock.patch.object(SessionService, "save_session") as save:
+        at = register(["email"], session=session)
+
+    save.assert_called_once_with("access", "refresh")
+    user = UserService.get_user_by_auth_id(AUTH_ID)
+    assert at.session_state["current_user_id"] == user.id
+    st.switch_page.assert_called_once_with("app.py")
 
 
 # ----- Inviting a student -----

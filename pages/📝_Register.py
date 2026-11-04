@@ -88,14 +88,12 @@ with st.form(
 
                 st.error(error)
 
-            else:
+            elif session:
 
-                if session:
-
-                    SessionService.save_session(
-                        session.access_token,
-                        session.refresh_token
-                    )
+                SessionService.save_session(
+                    session.access_token,
+                    session.refresh_token
+                )
 
                 AuthService.set_current_user(
                     user.id
@@ -107,4 +105,13 @@ with st.form(
 
                 st.switch_page(
                     "app.py"
+                )
+
+            else:
+
+                # With email confirmation on, Supabase gives no session
+                # until the email is confirmed.
+
+                st.success(
+                    "Check your email to confirm your account, then log in."
                 )
