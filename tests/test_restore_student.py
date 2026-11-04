@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 
 from database.db import SessionLocal
+from database.models import AssignmentOccurrence
 from database.models import Assignment, Student, StudentAssignment
 from services.assignment_service import AssignmentService
 from services.dashboard_service import DashboardService
@@ -79,9 +80,9 @@ def test_restore_brings_back_roster_and_history(smith_parent, fetch):
     StudentService.restore_student(w.gone)
 
     assert roster(w.essay) == {"Ann", "Bob", "Gone"}
-    link = fetch(StudentAssignment, w.gone_essay)
-    assert link.status == "Complete"
-    assert link.completed_at == w.done_at
+    row = fetch(AssignmentOccurrence, w.gone_essay_day)
+    assert row.status == "Complete"
+    assert row.completed_at == w.done_at
 
 
 def test_archive_and_restore_round_trip_keeps_progress(smith_parent, fetch):
@@ -93,9 +94,9 @@ def test_archive_and_restore_round_trip_keeps_progress(smith_parent, fetch):
     StudentService.restore_student(w.ann)
 
     assert "Ann" in roster(w.essay)
-    link = fetch(StudentAssignment, w.ann_essay)
-    assert link.status == "Complete"
-    assert link.notes == "Well done"
+    row = fetch(AssignmentOccurrence, w.ann_essay_day)
+    assert row.status == "Complete"
+    assert row.notes == "Well done"
 
 
 def test_restore_brings_back_overdue_warning(smith_parent):
@@ -110,13 +111,18 @@ def test_restore_brings_back_overdue_warning(smith_parent):
     db.add(late)
     db.flush()
     db.add(StudentAssignment(assignment_id=late.id, student_id=w.gone))
+    db.add(
+        AssignmentOccurrence(
+            assignment_id=late.id, student_id=w.gone, occurrence_date=late.due_date
+        )
+    )
     db.commit()
     db.close()
 
     def overdue():
         return {
-            a.title
-            for a in DashboardService.get_dashboard_data()["overdue_assignments"]
+            entry["assignment"].title
+            for entry in DashboardService.get_dashboard_data()["overdue_assignments"]
         }
 
     assert "Late" not in overdue()

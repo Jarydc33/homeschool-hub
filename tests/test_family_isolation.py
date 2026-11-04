@@ -1,6 +1,7 @@
 """One family can't read or change another family's data."""
 from uuid import uuid4
 
+from database.models import AssignmentOccurrence
 from database.models import Assignment, Student, StudentAssignment, Subject
 from services.assignment_service import AssignmentService
 from services.dashboard_service import DashboardService
@@ -31,7 +32,7 @@ def test_cannot_read_other_familys_rows_by_id(smith_parent):
     assert StudentService.get_student_by_id(w.jones_kid) is None
     assert SubjectService.get_subject_by_id(w.jones_subject) is None
     assert AssignmentService.get_assignment_by_id(w.jones_work) is None
-    assert StudentService.get_student_assignments(w.jones_kid) == []
+    assert StudentService.get_student_occurrences(w.jones_kid) == []
     assert SubjectService.get_subject_assignment_count(w.jones_subject) == 0
 
 
@@ -81,8 +82,8 @@ def test_cannot_archive_other_familys_assignment(smith_parent, fetch):
 def test_cannot_check_off_other_familys_work(smith_parent, fetch):
     w = smith_parent
 
-    assert StudentService.update_assignment_status(w.jones_link, True) is None
-    assert fetch(StudentAssignment, w.jones_link).status == "Not Started"
+    assert StudentService.update_occurrence_status(w.jones_link_day, True) is None
+    assert fetch(AssignmentOccurrence, w.jones_link_day).status == "Not Started"
 
 
 def test_own_family_can_still_make_changes(smith_parent, fetch):

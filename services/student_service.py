@@ -3,10 +3,10 @@ from database.models import (
     Assignment,
     AssignmentOccurrence,
     AssignmentStatus,
-    AssignmentType,
     Student,
     StudentAssignment,
 )
+from sqlalchemy import and_
 from sqlalchemy.orm import joinedload
 from datetime import datetime
 from services.auth_service import AuthService
@@ -15,19 +15,22 @@ from services.auth_service import AuthService
 class StudentService:
 
     @staticmethod
-    def update_assignment_status(
-        student_assignment_id,
+    def update_occurrence_status(
+        occurrence_id,
         completed
     ):
+        """
+        Checks one date of an assignment on or off. Returns the row, or None
+        if it isn't available to the current user.
+        """
 
         with get_session() as db:
 
             query = (
-                db.query(StudentAssignment)
-                .join(StudentAssignment.assignment)
+                db.query(AssignmentOccurrence)
+                .join(AssignmentOccurrence.assignment)
                 .filter(
-                    StudentAssignment.id
-                    == student_assignment_id,
+                    AssignmentOccurrence.id == occurrence_id,
                     Assignment.family_id
                     == AuthService.get_current_family(),
                     Assignment.active.is_(True)
@@ -39,90 +42,81 @@ class StudentService:
             if AuthService.is_student():
 
                 query = query.filter(
-                    StudentAssignment.student_id
+                    AssignmentOccurrence.student_id
                     == AuthService.get_current_student()
                 )
 
-            student_assignment = query.first()
+            occurrence = query.first()
 
-            if not student_assignment:
+            if not occurrence:
                 return None
 
             if completed:
 
-                student_assignment.status = (
+                occurrence.status = (
                     AssignmentStatus.COMPLETE.value
                 )
 
-                student_assignment.completed_at = (
+                occurrence.completed_at = (
                     datetime.utcnow()
                 )
 
             else:
 
-                student_assignment.status = (
+                occurrence.status = (
                     AssignmentStatus.NOT_STARTED.value
                 )
 
-                student_assignment.completed_at = None
-
-            # Pages still read the link, but occurrences take over soon, so
-            # keep one-time work matching. Recurring work has no single date
-            # to update until check-offs are made per date.
-
-            assignment = student_assignment.assignment
-
-            if assignment.assignment_type != AssignmentType.RECURRING.value:
-
-                occurrence = (
-                    db.query(AssignmentOccurrence)
-                    .filter(
-                        AssignmentOccurrence.assignment_id == assignment.id,
-                        AssignmentOccurrence.student_id
-                        == student_assignment.student_id,
-                        AssignmentOccurrence.occurrence_date
-                        == assignment.due_date
-                    )
-                    .first()
-                )
-
-                if occurrence:
-
-                    occurrence.status = student_assignment.status
-
-                    occurrence.completed_at = (
-                        student_assignment.completed_at
-                    )
+                occurrence.completed_at = None
 
             db.commit()
 
-            return student_assignment
+            return occurrence
 
     @staticmethod
-    def get_student_assignments(student_id):
+    def get_student_occurrences(student_id):
+        """
+        Returns a student's occurrences on active assignments they're still
+        assigned to. Rows kept after a student comes off an assignment stay
+        in the database as history, but aren't shown as their work. A student
+        can only read their own.
+        """
+
+        if (
+            AuthService.is_student()
+            and student_id != AuthService.get_current_student()
+        ):
+            return []
 
         with get_session() as db:
 
-            student_assignments = (
-                db.query(StudentAssignment)
-                .join(StudentAssignment.assignment)
+            return (
+                db.query(AssignmentOccurrence)
+                .join(AssignmentOccurrence.assignment)
+                .join(
+                    StudentAssignment,
+                    and_(
+                        StudentAssignment.assignment_id
+                        == AssignmentOccurrence.assignment_id,
+                        StudentAssignment.student_id
+                        == AssignmentOccurrence.student_id
+                    )
+                )
                 .options(
                     joinedload(
-                        StudentAssignment.assignment
+                        AssignmentOccurrence.assignment
                     ).joinedload(
                         Assignment.subject
                     )
                 )
                 .filter(
-                    StudentAssignment.student_id == student_id,
+                    AssignmentOccurrence.student_id == student_id,
                     Assignment.family_id
                     == AuthService.get_current_family(),
                     Assignment.active.is_(True)
                 )
                 .all()
             )
-
-            return student_assignments
 
     @staticmethod
     def get_student_by_id(student_id):

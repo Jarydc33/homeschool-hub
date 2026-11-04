@@ -1,4 +1,5 @@
 from services.auth_service import AuthService
+from services.occurrence_service import OccurrenceService
 from services.student_service import (
     StudentService
 )
@@ -10,11 +11,15 @@ from services.assignment_service import (
 )
 
 
-
 class DashboardService:
 
     @staticmethod
     def get_dashboard_data():
+        """
+        overdue_assignments and today_assignments are lists of
+        {"assignment", "student_names"}. Overdue names who still owes the
+        work. Missed recurring dates aren't overdue.
+        """
 
         students = (
             StudentService.get_current_family_students()
@@ -35,29 +40,60 @@ class DashboardService:
 
         for assignment in assignments:
 
-            if not assignment.due_date:
-                continue
+            names = {
+                link.student_id: link.student.name
+                for link in assignment.student_assignments
+            }
 
-            incomplete_students = [
-                sa
-                for sa
-                in assignment.student_assignments
-                if sa.status != "Complete"
+            rows = [
+                row
+                for row in assignment.occurrences
+                if row.student_id in names
             ]
 
-            if not incomplete_students:
-                continue
+            is_one_time = (
+                assignment.assignment_type != "Recurring"
+            )
 
-            if assignment.due_date < today:
+            late = [
+                row
+                for row in rows
+                if is_one_time
+                and row.occurrence_date < today
+                and not OccurrenceService.is_complete(row)
+            ]
+
+            if late:
 
                 overdue_assignments.append(
-                    assignment
+                    {
+                        "assignment": assignment,
+                        "student_names": sorted(
+                            names[row.student_id]
+                            for row in late
+                        ),
+                    }
                 )
 
-            elif assignment.due_date == today:
+            due_today = [
+                row
+                for row in rows
+                if row.occurrence_date == today
+            ]
+
+            if any(
+                not OccurrenceService.is_complete(row)
+                for row in due_today
+            ):
 
                 today_assignments.append(
-                    assignment
+                    {
+                        "assignment": assignment,
+                        "student_names": sorted(
+                            names[row.student_id]
+                            for row in due_today
+                        ),
+                    }
                 )
 
         return {
@@ -72,50 +108,18 @@ class DashboardService:
     @staticmethod
     def get_student_metrics(student):
 
-        today = AuthService.get_today()
-
-        student_assignments = (
-            StudentService.get_student_assignments(
+        groups = OccurrenceService.group_for_student(
+            StudentService.get_student_occurrences(
                 student.id
-            )
+            ),
+            AuthService.get_today()
         )
 
-        total = len(student_assignments)
-
-        completed = len(
-            [
-                assignment
-                for assignment
-                in student_assignments
-                if assignment.status == "Complete"
-            ]
-        )
-
-        percent = 0
-
-        if total > 0:
-
-            percent = round(
-                (completed / total) * 100
-            )
-
-        overdue_count = len(
-            [
-                assignment
-                for assignment
-                in student_assignments
-                if (
-                    assignment.assignment.due_date
-                    and assignment.assignment.due_date < today
-                    and assignment.status != "Complete"
-                )
-            ]
-        )
+        progress = OccurrenceService.progress(groups)
 
         return {
-            "total": total,
-            "completed": completed,
-            "percent": percent,
-            "student_assignments": student_assignments,
-            "overdue_count": overdue_count
+            "total": progress["total"],
+            "completed": progress["completed"],
+            "percent": progress["percent"],
+            "overdue_count": len(groups["overdue"]),
         }

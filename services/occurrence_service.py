@@ -12,6 +12,11 @@ from database.models import (
 # About two years, so a mistyped year can't create thousands of rows.
 MAX_SCHEDULE_DAYS = 731
 
+# How far back the dashboard lists completed and missed work, so a student can
+# undo a mistake or catch up without the lists growing all year. Progress still
+# counts everything.
+RECENT_DAYS = 30
+
 MONDAY_TO_FRIDAY = {0, 1, 2, 3, 4}
 
 WEEKDAY_OF_PATTERN = {
@@ -77,6 +82,177 @@ class OccurrenceService:
             return "This frequency doesn't fall on any date in that range."
 
         return None
+
+    @staticmethod
+    def is_complete(row):
+
+        return row.status == AssignmentStatus.COMPLETE.value
+
+    @staticmethod
+    def group_for_student(
+        rows,
+        today
+    ):
+        """
+        Sorts a student's occurrences into what the dashboards show. Each
+        row needs its assignment loaded.
+
+        A past recurring date that wasn't finished is missed, not overdue,
+        so a week away doesn't leave a pile of late work. Upcoming only has
+        the next date of each assignment, so Every Day work doesn't fill the
+        page with the rest of the year.
+        """
+
+        groups = {
+            "completed": [],
+            "overdue": [],
+            "today": [],
+            "upcoming": [],
+            "missed": [],
+        }
+
+        upcoming_assignments = set()
+
+        for row in sorted(rows, key=lambda r: r.occurrence_date):
+
+            if OccurrenceService.is_complete(row):
+
+                groups["completed"].append(row)
+
+            elif row.occurrence_date == today:
+
+                groups["today"].append(row)
+
+            elif row.occurrence_date > today:
+
+                if row.assignment_id not in upcoming_assignments:
+
+                    upcoming_assignments.add(row.assignment_id)
+
+                    groups["upcoming"].append(row)
+
+            elif (
+                row.assignment.assignment_type
+                == AssignmentType.RECURRING.value
+            ):
+
+                groups["missed"].append(row)
+
+            else:
+
+                groups["overdue"].append(row)
+
+        groups["completed"].reverse()
+        groups["missed"].reverse()
+
+        return groups
+
+    @staticmethod
+    def recently_completed(
+        completed_rows,
+        today
+    ):
+        """
+        Returns the rows checked off in the last 30 days, newest first. It
+        goes by when the work was checked off, so catching up on an old date
+        still shows. A row with no completion time goes by its date.
+        """
+
+        def finished_on(row):
+
+            if row.completed_at:
+                return row.completed_at.date()
+
+            return row.occurrence_date
+
+        cutoff = today - timedelta(days=RECENT_DAYS)
+
+        return sorted(
+            (
+                row
+                for row in completed_rows
+                if finished_on(row) >= cutoff
+            ),
+            key=finished_on,
+            reverse=True
+        )
+
+    @staticmethod
+    def recently_missed(
+        missed_rows,
+        today
+    ):
+        """
+        Returns the missed rows dated in the last 30 days, keeping their order.
+        """
+
+        cutoff = today - timedelta(days=RECENT_DAYS)
+
+        return [
+            row
+            for row in missed_rows
+            if row.occurrence_date >= cutoff
+        ]
+
+    @staticmethod
+    def progress(groups):
+        """
+        Returns a student's totals from group_for_student. Work that isn't
+        due yet doesn't count until it's done, so a year of recurring dates
+        doesn't make the percent look low.
+        """
+
+        completed = len(groups["completed"])
+
+        remaining = len(groups["overdue"]) + len(groups["today"])
+
+        total = completed + remaining + len(groups["missed"])
+
+        return {
+            "completed": completed,
+            "remaining": remaining,
+            "total": total,
+            "percent": round(completed / total * 100) if total else 0,
+        }
+
+    @staticmethod
+    def assignment_progress(
+        assignment,
+        today
+    ):
+        """
+        Returns (done, total) for one assignment across its current students.
+        Needs its student_assignments and occurrences loaded. One-time work
+        counts students. Recurring work counts dates so far.
+        """
+
+        current_students = {
+            link.student_id
+            for link in assignment.student_assignments
+        }
+
+        rows = [
+            row
+            for row in assignment.occurrences
+            if row.student_id in current_students
+        ]
+
+        if assignment.assignment_type == AssignmentType.RECURRING.value:
+
+            rows = [
+                row
+                for row in rows
+                if row.occurrence_date <= today
+                or OccurrenceService.is_complete(row)
+            ]
+
+        done = sum(
+            1
+            for row in rows
+            if OccurrenceService.is_complete(row)
+        )
+
+        return done, len(rows)
 
     @staticmethod
     def is_untouched(row):

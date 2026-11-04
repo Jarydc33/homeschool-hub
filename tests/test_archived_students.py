@@ -4,9 +4,10 @@ from datetime import date, timedelta
 import pytest
 
 from database.db import SessionLocal
-from database.models import Assignment, StudentAssignment
+from database.models import Assignment, AssignmentOccurrence, StudentAssignment
 from services.assignment_service import AssignmentService
 from services.dashboard_service import DashboardService
+from services.occurrence_service import OccurrenceService
 from services.student_service import StudentService
 
 YESTERDAY = date.today() - timedelta(days=1)
@@ -28,6 +29,12 @@ def add_assignment(world, title, due_date, student_ids):
             StudentAssignment(assignment_id=assignment.id, student_id=student_id)
             for student_id in student_ids
         )
+        db.add_all(
+            AssignmentOccurrence(
+                assignment_id=assignment.id, student_id=student_id, occurrence_date=due_date
+            )
+            for student_id in student_ids
+        )
         db.commit()
         return assignment.id
     finally:
@@ -43,11 +50,17 @@ def listed(assignment_id):
 
 
 def overdue_titles():
-    return {a.title for a in DashboardService.get_dashboard_data()["overdue_assignments"]}
+    return {
+        entry["assignment"].title
+        for entry in DashboardService.get_dashboard_data()["overdue_assignments"]
+    }
 
 
 def today_titles():
-    return {a.title for a in DashboardService.get_dashboard_data()["today_assignments"]}
+    return {
+        entry["assignment"].title
+        for entry in DashboardService.get_dashboard_data()["today_assignments"]
+    }
 
 
 @pytest.fixture
@@ -63,10 +76,7 @@ def test_roster_leaves_out_archived_students(parent):
 
 def test_progress_total_leaves_out_archived_students(parent):
     # Ann is complete and Bob isn't. Gone is complete but archived.
-    links = listed(parent.essay).student_assignments
-
-    assert len(links) == 2
-    assert len([sa for sa in links if sa.status == "Complete"]) == 1
+    assert OccurrenceService.assignment_progress(listed(parent.essay), TODAY) == (1, 2)
 
 
 def test_assignment_with_only_archived_students_stays_listed(parent):
@@ -95,12 +105,12 @@ def test_overdue_warning_names_only_active_students(parent):
     add_assignment(w, "Late", YESTERDAY, [w.bob, w.gone])
 
     late = next(
-        a
-        for a in DashboardService.get_dashboard_data()["overdue_assignments"]
-        if a.title == "Late"
+        entry
+        for entry in DashboardService.get_dashboard_data()["overdue_assignments"]
+        if entry["assignment"].title == "Late"
     )
 
-    assert [sa.student.name for sa in late.student_assignments] == ["Bob"]
+    assert late["student_names"] == ["Bob"]
 
 
 def test_archived_student_alone_does_not_show_as_due_today(parent):
@@ -125,7 +135,7 @@ def test_archived_students_history_is_kept(parent, fetch):
 
     AssignmentService.get_current_family_assignments()
 
-    saved = fetch(StudentAssignment, w.gone_essay)
+    saved = fetch(AssignmentOccurrence, w.gone_essay_day)
     assert saved.status == "Complete"
     assert saved.completed_at == w.done_at
 

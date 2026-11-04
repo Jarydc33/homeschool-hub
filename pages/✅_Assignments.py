@@ -450,16 +450,11 @@ if assignments:
             for sa in assignment.student_assignments
         ]
 
-        completed_count = len(
-            [
-                sa
-                for sa in assignment.student_assignments
-                if sa.status == "Complete"
-            ]
-        )
-
-        total_students = len(
-            assignment.student_assignments
+        completed_count, total_count = (
+            OccurrenceService.assignment_progress(
+                assignment,
+                AuthService.get_today()
+            )
         )
 
         with st.container():
@@ -514,7 +509,7 @@ if assignments:
 
                 st.caption(
                     f"✅ Progress: "
-                    f"{completed_count}/{total_students}"
+                    f"{completed_count}/{total_count}"
                 )
 
                 if (
@@ -523,7 +518,8 @@ if assignments:
                 ):
 
                     st.caption(
-                        f"🔁 {assignment.recurrence_pattern}"
+                        f"🔁 {assignment.recurrence_pattern}, "
+                        f"{assignment.due_date} to {assignment.end_date}"
                     )
 
                 else:

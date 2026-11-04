@@ -193,13 +193,13 @@ def test_saved_login_follows_the_account_when_the_email_differs(
 def test_archived_student_cannot_check_off_work(
     world, bob_user, session_state, no_saved_login, fetch
 ):
-    from database.models import StudentAssignment
+    from database.models import AssignmentOccurrence
 
     AuthService.set_current_user(bob_user)
     set_student_active(world.bob, False)
 
-    assert StudentService.update_assignment_status(world.bob_essay, True) is None
-    assert fetch(StudentAssignment, world.bob_essay).status == "Not Started"
+    assert StudentService.update_occurrence_status(world.bob_essay_day, True) is None
+    assert fetch(AssignmentOccurrence, world.bob_essay_day).status == "Not Started"
 
 
 def test_page_guard_sends_archived_student_to_login(

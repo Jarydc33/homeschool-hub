@@ -3,10 +3,11 @@ from datetime import date
 import logging
 
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 from database.db import get_session
 from database.models import (
     Assignment,
+    AssignmentOccurrence,
     Student,
     StudentAssignment,
     Subject,
@@ -51,9 +52,10 @@ class AssignmentService:
         family_id
     ):
         """
-        Returns active assignments. Their student_assignments leave out
-        archived students, so rosters, progress, and overdue warnings
-        don't count them. The rows themselves are kept as history.
+        Returns active assignments. Their student_assignments and
+        occurrences leave out archived students, so rosters, progress, and
+        overdue warnings don't count them. The rows themselves are kept as
+        history.
         """
 
         with get_session() as db:
@@ -73,6 +75,14 @@ class AssignmentService:
                         )
                     ).joinedload(
                         StudentAssignment.student
+                    ),
+
+                    selectinload(
+                        Assignment.occurrences.and_(
+                            AssignmentOccurrence.student.has(
+                                Student.active.is_(True)
+                            )
+                        )
                     )
                 )
                 .filter(

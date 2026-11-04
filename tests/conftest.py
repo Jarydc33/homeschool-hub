@@ -6,7 +6,7 @@ the tests can't reach the Supabase project configured in .env.
 """
 import os
 import tempfile
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from types import SimpleNamespace
 from unittest import mock
 
@@ -23,6 +23,7 @@ import pytest
 from database.db import Base, SessionLocal, engine
 from database.models import (
     Assignment,
+    AssignmentOccurrence,
     DEFAULT_TIMEZONE,
     Family,
     Student,
@@ -74,7 +75,7 @@ def world():
         jones_kid=Student(family_id=jones, name="Jones kid"),
     )
 
-    due = date(2026, 12, 1)
+    due = date.today() + timedelta(days=30)
 
     work = _add(
         essay=Assignment(
@@ -125,13 +126,42 @@ def world():
         ),
     )
 
+    occurrences = _add(
+        ann_essay_day=AssignmentOccurrence(
+            assignment_id=work.essay,
+            student_id=people.ann,
+            occurrence_date=due,
+            status="Complete",
+            completed_at=done_at,
+            notes="Well done",
+        ),
+        bob_essay_day=AssignmentOccurrence(
+            assignment_id=work.essay, student_id=people.bob, occurrence_date=due
+        ),
+        gone_essay_day=AssignmentOccurrence(
+            assignment_id=work.essay,
+            student_id=people.gone,
+            occurrence_date=due,
+            status="Complete",
+            completed_at=done_at,
+        ),
+        ann_archived_day=AssignmentOccurrence(
+            assignment_id=work.archived, student_id=people.ann, occurrence_date=due
+        ),
+        jones_link_day=AssignmentOccurrence(
+            assignment_id=work.jones_work, student_id=people.jones_kid, occurrence_date=due
+        ),
+    )
+
     return SimpleNamespace(
         smith=smith,
         jones=jones,
         done_at=done_at,
+        due=due,
         **vars(people),
         **vars(work),
         **vars(links),
+        **vars(occurrences),
     )
 
 

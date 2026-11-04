@@ -12,6 +12,7 @@ from services.auth_service import (
 from services.navigation_service import (
     NavigationService
 )
+from services.occurrence_service import OccurrenceService
 from components.navigation import (
     NavigationComponent
 )
@@ -239,33 +240,25 @@ else:
             )
 
 
-student_assignments = (
-    StudentService.get_student_assignments(
+today = AuthService.get_today()
+
+groups = OccurrenceService.group_for_student(
+    StudentService.get_student_occurrences(
         selected_student.id
-    )
+    ),
+    today
 )
 
-# ------------------------------------------------------------------
-# Progress Calculation
-# ------------------------------------------------------------------
-
-total_assignments = len(student_assignments)
-
-completed_assignments = len(
-    [
-        assignment
-        for assignment in student_assignments
-        if assignment.status == "Complete"
-    ]
+overdue = groups["overdue"]
+today_assignments = groups["today"]
+upcoming = groups["upcoming"]
+missed = OccurrenceService.recently_missed(
+    groups["missed"],
+    today
 )
+completed_assignments = groups["completed"]
 
-progress = 0
-
-if total_assignments:
-    progress = (
-        completed_assignments
-        / total_assignments
-    ) * 100
+progress = OccurrenceService.progress(groups)
 
 # ------------------------------------------------------------------
 # Student Header
@@ -284,21 +277,21 @@ with col1:
 
     st.metric(
         "✅ Complete",
-        completed_assignments
+        progress["completed"]
     )
 
 with col2:
 
     st.metric(
         "📚 Remaining",
-        total_assignments - completed_assignments
+        progress["remaining"]
     )
 
 with col3:
 
     st.metric(
         "🎯 Progress",
-        f"{int(progress)}%"
+        f"{progress['percent']}%"
     )
 
 if selected_student.grade_level:
@@ -310,18 +303,18 @@ if selected_student.grade_level:
 # Progress Area
 # ------------------------------------------------------------------
 
-st.subheader("Today's Progress")
+st.subheader("Progress")
 
-st.progress(int(progress))
+st.progress(progress["percent"])
 
 st.metric(
     "Completion Rate",
-    f"{int(progress)}%"
+    f"{progress['percent']}%"
 )
 
 st.write(
-    f"{completed_assignments} of "
-    f"{total_assignments} assignments complete"
+    f"{progress['completed']} of "
+    f"{progress['total']} assignments complete so far"
 )
 
 st.divider()
@@ -333,73 +326,6 @@ st.divider()
 hide_completed = st.checkbox(
     "Hide Completed Assignments",
     value=False
-)
-
-# ------------------------------------------------------------------
-# Assignment Categorization
-# ------------------------------------------------------------------
-
-today = AuthService.get_today()
-
-completed_assignments = []
-
-overdue = []
-today_assignments = []
-upcoming = []
-no_due_date = []
-
-for student_assignment in student_assignments:
-
-    if student_assignment.status == "Complete":
-
-        completed_assignments.append(
-            student_assignment
-        )
-
-        continue
-
-    due_date = (
-        student_assignment.assignment.due_date
-    )
-
-    if due_date is None:
-
-        no_due_date.append(
-            student_assignment
-        )
-
-    elif due_date < today:
-
-        overdue.append(
-            student_assignment
-        )
-
-    elif due_date == today:
-
-        today_assignments.append(
-            student_assignment
-        )
-
-    else:
-
-        upcoming.append(
-            student_assignment
-        )
-
-# ------------------------------------------------------------------
-# Sort Buckets
-# ------------------------------------------------------------------
-
-overdue.sort(
-    key=lambda x: x.assignment.due_date
-)
-
-today_assignments.sort(
-    key=lambda x: x.assignment.due_date
-)
-
-upcoming.sort(
-    key=lambda x: x.assignment.due_date
 )
 
 # ------------------------------------------------------------------
@@ -456,31 +382,29 @@ st.divider()
 # Assignment Renderer
 # ------------------------------------------------------------------
 
-def render_assignment(
-    student_assignment
+def render_occurrence(
+    occurrence
 ):
 
     assignment = (
-        student_assignment.assignment
+        occurrence.assignment
     )
 
-    completed = (
-        student_assignment.status
-        == "Complete"
+    completed = OccurrenceService.is_complete(
+        occurrence
     )
 
     checked = st.checkbox(
         f"{assignment.title} "
         f"({assignment.subject.name})",
         value=completed,
-        key=f"assignment_"
-        f"{student_assignment.id}"
+        key=f"occurrence_{occurrence.id}"
     )
 
     if checked != completed:
 
-        updated = StudentService.update_assignment_status(
-            student_assignment.id,
+        updated = StudentService.update_occurrence_status(
+            occurrence.id,
             checked
         )
 
@@ -493,17 +417,15 @@ def render_assignment(
             "Please refresh the page and try again."
         )
 
-    if assignment.due_date:
+    st.caption(
+        f"Due: {occurrence.occurrence_date}"
+    )
+
+    if assignment.assignment_type == "Recurring":
 
         st.caption(
-            f"Due: {assignment.due_date}"
+            f"🔁 {assignment.recurrence_pattern}"
         )
-
-        if assignment.assignment_type == "Recurring":
-
-            st.caption(
-                f"🔁 {assignment.recurrence_pattern}"
-            )
 
 # ------------------------------------------------------------------
 # Overdue Assignments
@@ -513,10 +435,10 @@ if overdue:
 
     st.subheader("⚠ Overdue")
 
-    for assignment in overdue:
+    for occurrence in overdue:
 
-        render_assignment(
-            assignment
+        render_occurrence(
+            occurrence
         )
 
 # ------------------------------------------------------------------
@@ -527,10 +449,10 @@ st.subheader("📅 Today's Work")
 
 if today_assignments:
 
-    for assignment in today_assignments:
+    for occurrence in today_assignments:
 
-        render_assignment(
-            assignment
+        render_occurrence(
+            occurrence
         )
 
 else:
@@ -547,39 +469,51 @@ if upcoming:
 
     st.subheader("📚 Upcoming")
 
-    for assignment in upcoming:
+    for occurrence in upcoming:
 
-        render_assignment(
-            assignment
+        render_occurrence(
+            occurrence
         )
 
 # ------------------------------------------------------------------
-# No Due Date Assignments
+# Missed Dates
 # ------------------------------------------------------------------
 
-if no_due_date:
+if missed:
 
-    st.subheader("📝 Other Assignments")
+    with st.expander(
+        f"🕓 Missed ({len(missed)})"
+    ):
 
-    for assignment in no_due_date:
-
-        render_assignment(
-            assignment
+        st.caption(
+            "Recurring work from the last 30 days. "
+            "You can still check these off if they got done."
         )
-        
+
+        for occurrence in missed:
+
+            render_occurrence(
+                occurrence
+            )
+
 # ------------------------------------------------------------------
 # Completed Assignments
 # ------------------------------------------------------------------
 
+recently_completed = OccurrenceService.recently_completed(
+    completed_assignments,
+    today
+)
+
 if (
-    completed_assignments and
+    recently_completed and
     not hide_completed
 ):
 
-    st.subheader("✅ Completed")
+    st.subheader("✅ Completed in the Last 30 Days")
 
-    for assignment in completed_assignments:
+    for occurrence in recently_completed:
 
-        render_assignment(
-            assignment
+        render_occurrence(
+            occurrence
         )

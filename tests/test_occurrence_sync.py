@@ -8,12 +8,11 @@ import streamlit as st
 from streamlit.testing.v1 import AppTest
 
 from database.db import SessionLocal
-from database.models import Assignment, AssignmentOccurrence, StudentAssignment, User
+from database.models import Assignment, AssignmentOccurrence, User
 from services.assignment_service import AssignmentService
 from services.auth_service import AuthService
 from services.occurrence_service import OccurrenceService
 from services.session_service import SessionService
-from services.student_service import StudentService
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -281,17 +280,6 @@ def test_adding_a_student_gives_them_today_and_later(parent):
 def test_an_archived_students_link_still_follows_a_moved_due_date(parent):
     w = parent
     # The Essay link for Gone stays on edits, because the form doesn't offer them.
-    db = SessionLocal()
-    try:
-        db.add(
-            AssignmentOccurrence(
-                assignment_id=w.essay, student_id=w.gone, occurrence_date=date(2026, 12, 1)
-            )
-        )
-        db.commit()
-    finally:
-        db.close()
-
     AssignmentService.update_assignment(
         assignment_id=w.essay,
         title="Essay",
@@ -370,16 +358,6 @@ def test_refused_edit_changes_no_rows(parent):
 
 def test_another_familys_assignment_cant_be_changed(parent):
     w = parent
-    db = SessionLocal()
-    try:
-        db.add(
-            AssignmentOccurrence(
-                assignment_id=w.jones_work, student_id=w.jones_kid, occurrence_date=TWO_WEEKS
-            )
-        )
-        db.commit()
-    finally:
-        db.close()
 
     updated = AssignmentService.update_assignment(
         assignment_id=w.jones_work,
@@ -393,59 +371,8 @@ def test_another_familys_assignment_cant_be_changed(parent):
     )
 
     assert updated is None
-    assert dates_for(w.jones_work, w.jones_kid) == [TWO_WEEKS]
+    assert dates_for(w.jones_work, w.jones_kid) == [w.due]
     assert dates_for(w.jones_work, w.ann) == []
-
-
-# ----- Checking work off -----
-
-
-def _link_id(assignment_id, student_id):
-    db = SessionLocal()
-    try:
-        return (
-            db.query(StudentAssignment)
-            .filter_by(assignment_id=assignment_id, student_id=student_id)
-            .one()
-            .id
-        )
-    finally:
-        db.close()
-
-
-def test_checking_off_one_time_work_updates_its_occurrence(parent):
-    w = parent
-    work = create(w, kind="One Time", pattern=None, end=None, students=[w.ann])
-
-    StudentService.update_assignment_status(_link_id(work.id, w.ann), True)
-
-    row = rows_for(work.id)[(w.ann, TODAY)]
-    assert row.status == "Complete"
-    assert row.completed_at is not None
-
-    StudentService.update_assignment_status(_link_id(work.id, w.ann), False)
-
-    row = rows_for(work.id)[(w.ann, TODAY)]
-    assert row.status == "Not Started"
-    assert row.completed_at is None
-
-
-def test_checking_off_only_changes_that_student(parent):
-    w = parent
-    work = create(w, kind="One Time", pattern=None, end=None)
-
-    StudentService.update_assignment_status(_link_id(work.id, w.ann), True)
-
-    assert rows_for(work.id)[(w.bob, TODAY)].status == "Not Started"
-
-
-def test_checking_off_recurring_work_leaves_its_dates_alone(parent):
-    w = parent
-    work = create(w, students=[w.ann])
-
-    StudentService.update_assignment_status(_link_id(work.id, w.ann), True)
-
-    assert all(row.status == "Not Started" for row in rows_for(work.id).values())
 
 
 # ----- The Assignments page -----

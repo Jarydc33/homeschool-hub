@@ -1,4 +1,4 @@
-from database.models import StudentAssignment, Subject, UserRole
+from database.models import AssignmentOccurrence, Subject, UserRole
 from services.dashboard_service import DashboardService
 from services.student_service import StudentService
 from services.subject_service import SubjectService
@@ -7,9 +7,9 @@ from services.subject_service import SubjectService
 def test_parent_can_check_off_their_students_work(smith_parent, fetch):
     w = smith_parent
 
-    assert StudentService.update_assignment_status(w.bob_essay, True)
+    assert StudentService.update_occurrence_status(w.bob_essay_day, True)
 
-    saved = fetch(StudentAssignment, w.bob_essay)
+    saved = fetch(AssignmentOccurrence, w.bob_essay_day)
     assert saved.status == "Complete"
     assert saved.completed_at is not None
 
@@ -17,9 +17,9 @@ def test_parent_can_check_off_their_students_work(smith_parent, fetch):
 def test_unchecking_clears_completion(smith_parent, fetch):
     w = smith_parent
 
-    assert StudentService.update_assignment_status(w.ann_essay, False)
+    assert StudentService.update_occurrence_status(w.ann_essay_day, False)
 
-    saved = fetch(StudentAssignment, w.ann_essay)
+    saved = fetch(AssignmentOccurrence, w.ann_essay_day)
     assert saved.status == "Not Started"
     assert saved.completed_at is None
 
@@ -27,35 +27,35 @@ def test_unchecking_clears_completion(smith_parent, fetch):
 def test_student_can_check_off_own_work(world, login, fetch):
     login(world.smith, UserRole.STUDENT, world.bob)
 
-    assert StudentService.update_assignment_status(world.bob_essay, True)
-    assert fetch(StudentAssignment, world.bob_essay).status == "Complete"
+    assert StudentService.update_occurrence_status(world.bob_essay_day, True)
+    assert fetch(AssignmentOccurrence, world.bob_essay_day).status == "Complete"
 
 
 def test_student_cannot_change_siblings_work(world, login, fetch):
     login(world.smith, UserRole.STUDENT, world.bob)
 
-    assert StudentService.update_assignment_status(world.ann_essay, False) is None
-    assert fetch(StudentAssignment, world.ann_essay).status == "Complete"
+    assert StudentService.update_occurrence_status(world.ann_essay_day, False) is None
+    assert fetch(AssignmentOccurrence, world.ann_essay_day).status == "Complete"
 
 
 def test_cannot_check_off_archived_assignment(smith_parent, fetch):
     w = smith_parent
 
-    assert StudentService.update_assignment_status(w.ann_archived, True) is None
-    assert fetch(StudentAssignment, w.ann_archived).status == "Not Started"
+    assert StudentService.update_occurrence_status(w.ann_archived_day, True) is None
+    assert fetch(AssignmentOccurrence, w.ann_archived_day).status == "Not Started"
 
 
 def test_student_list_hides_archived_assignments(smith_parent):
     w = smith_parent
 
-    links = StudentService.get_student_assignments(w.ann)
+    links = StudentService.get_student_occurrences(w.ann)
 
     assert {link.assignment_id for link in links} == {w.essay}
 
 
 def test_student_list_can_read_assignment_and_subject(smith_parent):
     # The page reads these after the session closes.
-    link = StudentService.get_student_assignments(smith_parent.ann)[0]
+    link = StudentService.get_student_occurrences(smith_parent.ann)[0]
 
     assert link.assignment.title == "Essay"
     assert link.assignment.subject.name == "Art"

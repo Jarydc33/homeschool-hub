@@ -6,7 +6,13 @@ import pytest
 import streamlit as st
 
 from database.db import SessionLocal
-from database.models import Assignment, BannerMessage, Family, StudentAssignment
+from database.models import (
+    Assignment,
+    AssignmentOccurrence,
+    BannerMessage,
+    Family,
+    StudentAssignment,
+)
 from services.auth_provider import AuthProvider
 from services.auth_service import AuthService
 from services.banner_service import BannerService
@@ -139,6 +145,11 @@ def test_dashboard_sorts_work_by_the_familys_today(world, login):
             db.add(assignment)
             db.flush()
             db.add(StudentAssignment(assignment_id=assignment.id, student_id=world.ann))
+            db.add(
+                AssignmentOccurrence(
+                    assignment_id=assignment.id, student_id=world.ann, occurrence_date=due
+                )
+            )
         db.commit()
     finally:
         db.close()
@@ -147,7 +158,7 @@ def test_dashboard_sorts_work_by_the_familys_today(world, login):
     data = DashboardService.get_dashboard_data()
 
     assert data["today"] == NOV_4
-    assert [a.title for a in data["today_assignments"]] == ["Due Nov 4"]
+    assert [e["assignment"].title for e in data["today_assignments"]] == ["Due Nov 4"]
 
 
 def test_a_banner_starting_tomorrow_stays_hidden_in_the_familys_evening(world, login):

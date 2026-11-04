@@ -143,16 +143,12 @@ st.subheader(
 
 if overdue_assignments:
 
-    for assignment in overdue_assignments:
+    for entry in overdue_assignments:
 
-        assigned_students = (
-            ", ".join(
-                [
-                    sa.student.name
-                    for sa in assignment.student_assignments
-                    if sa.status != "Complete"
-                ]
-            )
+        assignment = entry["assignment"]
+
+        assigned_students = ", ".join(
+            entry["student_names"]
         )
 
         st.warning(
@@ -179,15 +175,12 @@ st.subheader(
 
 if today_assignments:
 
-    for assignment in today_assignments:
+    for entry in today_assignments:
 
-        assigned_students = (
-            ", ".join(
-                [
-                    sa.student.name
-                    for sa in assignment.student_assignments
-                ]
-            )
+        assignment = entry["assignment"]
+
+        assigned_students = ", ".join(
+            entry["student_names"]
         )
 
         st.write(
@@ -231,8 +224,6 @@ else:
             DashboardService
             .get_student_metrics(student)
         )
-
-        student_assignments = metrics["student_assignments"]
 
         total = metrics["total"]
 
