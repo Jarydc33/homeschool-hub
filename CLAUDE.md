@@ -9,9 +9,9 @@ A homeschool management app: parents manage students, subjects and assignments; 
 
 ## Current status
 
-- **Phase:** 0 (bug fixes and Streamlit stopgaps) is complete. Phase 1 (portable foundation) is in progress
-- **Done:** Edit Assignment dialog crash, `update_assignment` wiping completion status, family checks in the student, subject, assignment and user services, pytest suite, family and system-wide announcements, archived students left out of lists and blocked from logging in, restoring students, Create Assignment form, no database setup on page load, Alembic with a baseline migration, `users.auth_user_id`, constraints and `family_id` indexes, session context manager, registration transaction, fetching the current user once per page run, `families.timezone`, occurrences table and date generator, writing occurrences when assignments are saved, dashboards and check-offs per date, per-date notes
-- **Next up:** dropping the old `student_assignments` columns. Student Mode tables wait until its UI is being built
+- **Phase:** 0 (bug fixes and Streamlit stopgaps) is complete. Phase 1 (portable foundation) is complete, except the Student Mode tables, which wait until its UI is being built
+- **Done:** Edit Assignment dialog crash, `update_assignment` wiping completion status, family checks in the student, subject, assignment and user services, pytest suite, family and system-wide announcements, archived students left out of lists and blocked from logging in, restoring students, Create Assignment form, no database setup on page load, Alembic with a baseline migration, `users.auth_user_id`, constraints and `family_id` indexes, session context manager, registration transaction, fetching the current user once per page run, `families.timezone`, occurrences table and date generator, writing occurrences when assignments are saved, dashboards and check-offs per date, per-date notes, dropping the old `student_assignments` progress columns
+- **Next up:** Phase 2 (see the roadmap)
 - Update this section when a phase or major item is finished.
 
 ## Running it
@@ -30,7 +30,7 @@ pip install -r requirements-dev.txt
 pytest
 ```
 
-Schema changes use Alembic, run by hand from the project root against whatever `DATABASE_URL` points to. Deploys don't run them, so migrate before pushing code that needs the change:
+Schema changes use Alembic, run by hand from the project root against whatever `DATABASE_URL` points to. Deploys don't run them, so migrate before pushing code that needs the change. Dropping something is the reverse: deploy the code that stops using it first, then migrate:
 
 ```bash
 alembic revision --autogenerate -m "Describe the change"   # then read and fix the generated file
@@ -76,6 +76,7 @@ tests/                  pytest suite for the services
 - Data goes through SQLAlchemy as the `postgres` user, so **Supabase RLS does not apply to app queries**. Keeping families apart is the service layer's job. RLS is enabled with no policies only to block Supabase's REST API.
 - Supabase is used for **auth only**. The app's `users` table links to Supabase accounts by `users.auth_user_id` (UUID), which is required and unique. Identify people by it, never by email; email is only how they sign in. Anything that creates a `users` row needs the account's UUID first, including an Admin added by hand.
 - Every page starts with `NavigationComponent.render()` and then a guard from `NavigationService`.
+- `student_assignments` only says who is assigned. `assignment_occurrences` holds one row per assignment, per student, per date, with its status, completion time, notes and score. Rows are created when an assignment is saved, never on page load. "Missed" is worked out when read, never stored.
 - Announcements (`banner_messages`) belong to a family, or are system-wide when `family_id` is NULL. Parents manage their family's; Admins (`users.role = 'Admin'`, no family, a separate login) manage system-wide ones and only see the Announcements page.
 
 ## Rules (follow these on every change)
@@ -108,7 +109,6 @@ tests/                  pytest suite for the services
 - Invites and password resets depend on Supabase's email templates. "Invite user" must link to `{{ .SiteURL }}/Complete_Account?token_hash={{ .TokenHash }}&type=invite`, and "Reset Password" to the same address with `type=recovery`.
 - Changing a student's login email has to update Supabase and `users` together, because people sign in with Supabase's copy and the app shows its own. `AuthService.update_student_email` handles this. Supabase refuses an email another account already has. Parents can't change their own email yet.
 - Families can't change their time zone after signing up yet; that needs a settings screen.
-- `student_assignments.status`, `completed_at` and `notes` are no longer used and get dropped soon. Occurrences hold them now, and `student_assignments` is only the list of who is assigned.
 - Student Mode (a parent's device locked to one student, with a parent PIN to exit) and pairing codes for kids without email are designed but not built (roadmap Phase 2).
 
 ## Working style
