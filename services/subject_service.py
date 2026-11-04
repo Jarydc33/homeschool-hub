@@ -1,6 +1,6 @@
 # services/subject_service.py
 
-from database.db import SessionLocal
+from database.db import get_session
 from database.models import Subject, Assignment
 from services.auth_service import AuthService
 
@@ -9,9 +9,7 @@ class SubjectService:
     @staticmethod
     def get_subject_assignment_count(subject_id):
 
-        db = SessionLocal()
-
-        try:
+        with get_session() as db:
 
             return (
                 db.query(Assignment)
@@ -24,15 +22,10 @@ class SubjectService:
                 .count()
             )
 
-        finally:
-            db.close()
-
     @staticmethod
     def get_subject_by_id(subject_id):
 
-        db = SessionLocal()
-
-        try:
+        with get_session() as db:
 
             return (
                 db.query(Subject)
@@ -44,15 +37,10 @@ class SubjectService:
                 .first()
             )
 
-        finally:
-            db.close()
-
     @staticmethod
     def get_subjects_by_family(family_id):
 
-        db = SessionLocal()
-
-        try:
+        with get_session() as db:
             return (
                 db.query(Subject)
                 .filter(Subject.family_id == family_id)
@@ -61,9 +49,6 @@ class SubjectService:
                 )
                 .all()
             )
-
-        finally:
-            db.close()
 
     @staticmethod
     def get_current_family_subjects():
@@ -84,9 +69,7 @@ class SubjectService:
         color=None
     ):
 
-        db = SessionLocal()
-
-        try:
+        with get_session() as db:
 
             subject = Subject(
                 family_id=AuthService.get_current_family(),
@@ -100,9 +83,6 @@ class SubjectService:
 
             return subject
 
-        finally:
-            db.close()
-
     @staticmethod
     def update_subject(
         subject_id,
@@ -110,9 +90,7 @@ class SubjectService:
         color=None
     ):
 
-        db = SessionLocal()
-
-        try:
+        with get_session() as db:
 
             subject = (
                 db.query(Subject)
@@ -137,15 +115,10 @@ class SubjectService:
 
             return subject
 
-        finally:
-            db.close()
-
     @staticmethod
     def archive_subject(subject_id):
 
-        db = SessionLocal()
-
-        try:
+        with get_session() as db:
 
             subject = (
                 db.query(Subject)
@@ -165,6 +138,3 @@ class SubjectService:
             db.commit()
 
             return subject
-
-        finally:
-            db.close()

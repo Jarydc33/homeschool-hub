@@ -3,7 +3,7 @@ import logging
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload
-from database.db import SessionLocal
+from database.db import get_session
 from database.models import (
     Assignment,
     Student,
@@ -24,9 +24,7 @@ class AssignmentService:
         assignment_id
     ):
 
-        db = SessionLocal()
-
-        try:
+        with get_session() as db:
 
             return (
                 db.query(Assignment)
@@ -46,9 +44,6 @@ class AssignmentService:
                 .first()
             )
 
-        finally:
-            db.close()
-
     @staticmethod
     def get_assignments_by_family(
         family_id
@@ -59,9 +54,7 @@ class AssignmentService:
         don't count them. The rows themselves are kept as history.
         """
 
-        db = SessionLocal()
-
-        try:
+        with get_session() as db:
 
             return (
                 db.query(Assignment)
@@ -88,9 +81,6 @@ class AssignmentService:
                 )
                 .all()
             )
-
-        finally:
-            db.close()
 
     @staticmethod
     def get_current_family_assignments():
@@ -124,9 +114,7 @@ class AssignmentService:
             AuthService.get_current_family()
         )
 
-        db = SessionLocal()
-
-        try:
+        with get_session() as db:
 
             subject = (
                 db.query(Subject)
@@ -179,9 +167,6 @@ class AssignmentService:
 
             return assignment
 
-        finally:
-            db.close()
-
     @staticmethod
     def update_assignment(
         assignment_id,
@@ -207,9 +192,7 @@ class AssignmentService:
             AuthService.get_current_family()
         )
 
-        db = SessionLocal()
-
-        try:
+        with get_session() as db:
 
             assignment = (
                 db.query(Assignment)
@@ -331,17 +314,12 @@ class AssignmentService:
 
             return assignment
 
-        finally:
-            db.close()
-
     @staticmethod
     def archive_assignment(
         assignment_id
     ):
 
-        db = SessionLocal()
-
-        try:
+        with get_session() as db:
 
             assignment = (
                 db.query(Assignment)
@@ -361,6 +339,3 @@ class AssignmentService:
             db.commit()
 
             return assignment
-
-        finally:
-            db.close()

@@ -1,4 +1,4 @@
-from database.db import SessionLocal
+from database.db import get_session
 from database.models import Student, StudentAssignment, Assignment, AssignmentStatus
 from sqlalchemy.orm import joinedload
 from datetime import datetime
@@ -13,9 +13,7 @@ class StudentService:
         completed
     ):
 
-        db = SessionLocal()
-
-        try:
+        with get_session() as db:
 
             query = (
                 db.query(StudentAssignment)
@@ -65,15 +63,10 @@ class StudentService:
 
             return student_assignment
 
-        finally:
-            db.close()
-
     @staticmethod
     def get_student_assignments(student_id):
 
-        db = SessionLocal()
-
-        try:
+        with get_session() as db:
 
             student_assignments = (
                 db.query(StudentAssignment)
@@ -96,18 +89,13 @@ class StudentService:
 
             return student_assignments
 
-        finally:
-            db.close()
-
     @staticmethod
     def get_student_by_id(student_id):
         """
         Returns a single student.
         """
 
-        db = SessionLocal()
-
-        try:
+        with get_session() as db:
             student = (
                 db.query(Student)
                 .filter(
@@ -119,9 +107,6 @@ class StudentService:
             )
 
             return student
-
-        finally:
-            db.close()
 
     @staticmethod
     def get_current_family_students():
@@ -142,9 +127,7 @@ class StudentService:
         Returns all students for a family.
         """
 
-        db = SessionLocal()
-
-        try:
+        with get_session() as db:
             students = (
                 db.query(Student)
                 .filter(Student.family_id == family_id)
@@ -156,18 +139,13 @@ class StudentService:
 
             return students
 
-        finally:
-            db.close()
-
     @staticmethod
     def get_archived_students():
         """
         Returns the current family's archived students.
         """
 
-        db = SessionLocal()
-
-        try:
+        with get_session() as db:
 
             return (
                 db.query(Student)
@@ -180,9 +158,6 @@ class StudentService:
                 .all()
             )
 
-        finally:
-            db.close()
-
     @staticmethod
     def restore_student(student_id):
         """
@@ -190,9 +165,7 @@ class StudentService:
         return as they were.
         """
 
-        db = SessionLocal()
-
-        try:
+        with get_session() as db:
 
             student = (
                 db.query(Student)
@@ -213,9 +186,6 @@ class StudentService:
 
             return student
 
-        finally:
-            db.close()
-
     @staticmethod
     def create_student(
         name,
@@ -226,9 +196,7 @@ class StudentService:
         Creates a new student.
         """
 
-        db = SessionLocal()
-
-        try:
+        with get_session() as db:
 
             student = Student(
                 family_id=AuthService.get_current_family(),
@@ -243,9 +211,6 @@ class StudentService:
 
             return student
 
-        finally:
-            db.close()
-
     @staticmethod
     def update_student(
         student_id,
@@ -257,9 +222,7 @@ class StudentService:
         Updates an existing student.
         """
 
-        db = SessionLocal()
-
-        try:
+        with get_session() as db:
 
             student = (
                 db.query(Student)
@@ -287,9 +250,6 @@ class StudentService:
 
             return student
 
-        finally:
-            db.close()
-
     @staticmethod
     def archive_student(student_id):
         """
@@ -297,9 +257,7 @@ class StudentService:
         Student remains in database.
         """
 
-        db = SessionLocal()
-
-        try:
+        with get_session() as db:
 
             student = (
                 db.query(Student)
@@ -319,6 +277,3 @@ class StudentService:
             db.commit()
 
             return student
-
-        finally:
-            db.close()

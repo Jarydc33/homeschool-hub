@@ -2,7 +2,7 @@ from datetime import date
 
 from sqlalchemy import false, or_
 
-from database.db import SessionLocal
+from database.db import get_session
 from database.models import BannerMessage
 from services.auth_service import AuthService
 
@@ -37,9 +37,7 @@ class BannerService:
         Returns the banners listed on the Announcements page.
         """
 
-        db = SessionLocal()
-
-        try:
+        with get_session() as db:
 
             return (
                 db.query(BannerMessage)
@@ -53,9 +51,6 @@ class BannerService:
                 .all()
             )
 
-        finally:
-            db.close()
-
     @staticmethod
     def get_active_banners():
         """
@@ -65,9 +60,7 @@ class BannerService:
 
         family_id = AuthService.get_current_family()
 
-        db = SessionLocal()
-
-        try:
+        with get_session() as db:
 
             today = date.today()
 
@@ -88,9 +81,6 @@ class BannerService:
                 .all()
             )
 
-        finally:
-            db.close()
-
     @staticmethod
     def get_banner_by_id(
         banner_id
@@ -99,9 +89,7 @@ class BannerService:
         Returns a single banner the current user can manage.
         """
 
-        db = SessionLocal()
-
-        try:
+        with get_session() as db:
 
             return (
                 db.query(BannerMessage)
@@ -111,9 +99,6 @@ class BannerService:
                 )
                 .first()
             )
-
-        finally:
-            db.close()
 
     @staticmethod
     def create_banner(
@@ -138,9 +123,7 @@ class BannerService:
             if not AuthService.is_parent() or family_id is None:
                 return None
 
-        db = SessionLocal()
-
-        try:
+        with get_session() as db:
 
             banner = BannerMessage(
                 family_id=family_id,
@@ -158,9 +141,6 @@ class BannerService:
 
             return banner
 
-        finally:
-            db.close()
-
     @staticmethod
     def update_banner(
         banner_id,
@@ -173,9 +153,7 @@ class BannerService:
         Updates a banner the current user can manage.
         """
 
-        db = SessionLocal()
-
-        try:
+        with get_session() as db:
 
             banner = (
                 db.query(BannerMessage)
@@ -198,9 +176,6 @@ class BannerService:
 
             return banner
 
-        finally:
-            db.close()
-
     @staticmethod
     def archive_banner(
         banner_id
@@ -209,9 +184,7 @@ class BannerService:
         Soft deletes a banner the current user can manage.
         """
 
-        db = SessionLocal()
-
-        try:
+        with get_session() as db:
 
             banner = (
                 db.query(BannerMessage)
@@ -230,6 +203,3 @@ class BannerService:
             db.commit()
 
             return banner
-
-        finally:
-            db.close()

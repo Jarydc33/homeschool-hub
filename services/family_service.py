@@ -1,4 +1,4 @@
-from database.db import SessionLocal
+from database.db import get_session
 from database.models import Family
 
 
@@ -9,9 +9,7 @@ class FamilyService:
         family_name
     ):
 
-        db = SessionLocal()
-
-        try:
+        with get_session() as db:
 
             family = Family(
                 family_name=family_name
@@ -24,6 +22,3 @@ class FamilyService:
             db.refresh(family)
 
             return family
-
-        finally:
-            db.close()

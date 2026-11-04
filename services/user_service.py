@@ -1,6 +1,6 @@
 from sqlalchemy.orm import joinedload
 
-from database.db import SessionLocal
+from database.db import get_session
 from database.models import Student, User
 
 class UserService:
@@ -8,9 +8,7 @@ class UserService:
     @staticmethod
     def get_user_by_email(email):
 
-        db = SessionLocal()
-
-        try:
+        with get_session() as db:
 
             return (
                 db.query(User)
@@ -23,15 +21,10 @@ class UserService:
                 .first()
             )
 
-        finally:
-            db.close()
-
     @staticmethod
     def get_user_by_auth_id(auth_user_id):
 
-        db = SessionLocal()
-
-        try:
+        with get_session() as db:
 
             return (
                 db.query(User)
@@ -44,18 +37,13 @@ class UserService:
                 .first()
             )
 
-        finally:
-            db.close()
-
     @staticmethod
     def get_user_by_student_id(
         student_id,
         family_id
     ):
 
-        db = SessionLocal()
-
-        try:
+        with get_session() as db:
 
             return (
                 db.query(User)
@@ -66,15 +54,10 @@ class UserService:
                 .first()
             )
 
-        finally:
-            db.close()
-
     @staticmethod
     def get_user_by_id(user_id):
 
-        db = SessionLocal()
-
-        try:
+        with get_session() as db:
 
             return (
                 db.query(User)
@@ -86,9 +69,6 @@ class UserService:
                 )
                 .first()
             )
-
-        finally:
-            db.close()
 
     @staticmethod
     def update_user_email(
@@ -102,9 +82,7 @@ class UserService:
         AuthService.update_student_email, which also updates Supabase.
         """
 
-        db = SessionLocal()
-
-        try:
+        with get_session() as db:
 
             user = (
                 db.query(User)
@@ -124,9 +102,6 @@ class UserService:
 
             return user
 
-        finally:
-            db.close()
-
     @staticmethod
     def create_parent_user(
         family_id,
@@ -134,9 +109,7 @@ class UserService:
         auth_user_id
     ):
         email = email.strip().lower()
-        db = SessionLocal()
-
-        try:
+        with get_session() as db:
 
             user = User(
                 family_id=family_id,
@@ -153,9 +126,6 @@ class UserService:
 
             return user
 
-        finally:
-            db.close()
-
     @staticmethod
     def create_student_user(
         family_id,
@@ -168,9 +138,7 @@ class UserService:
         active part of this family.
         """
 
-        db = SessionLocal()
-
-        try:
+        with get_session() as db:
 
             student = (
                 db.query(Student)
@@ -200,6 +168,3 @@ class UserService:
             db.refresh(user)
 
             return user
-
-        finally:
-            db.close()
