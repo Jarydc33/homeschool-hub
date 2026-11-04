@@ -175,6 +175,55 @@ class AuthProvider:
         return user.id
 
     @staticmethod
+    def register_error_message(
+        error
+    ):
+        """
+        Returns what to show someone when signing up fails, and logs the
+        detail for us.
+        """
+
+        logger.warning(
+            "Signing up failed: %s %s",
+            type(error).__name__,
+            getattr(error, "code", None)
+        )
+
+        if isinstance(error, AuthWeakPasswordError):
+
+            return "Please choose a stronger password."
+
+        if isinstance(error, AuthApiError):
+
+            if error.status == 429:
+
+                return (
+                    "Too many sign-up attempts. "
+                    "Please wait a few minutes and try again."
+                )
+
+            if error.status < 500:
+
+                return (
+                    "We couldn't create your account. "
+                    "Please check your email and password and try again."
+                )
+
+        return (
+            "We couldn't create your account right now. "
+            "Please try again in a moment."
+        )
+
+    @staticmethod
+    def delete_auth_user(
+        auth_user_id
+    ):
+
+        SupabaseService.get_admin_client().auth.admin.delete_user(
+            auth_user_id
+        )
+
+    @staticmethod
     def get_current_auth_user():
 
         access_token = (
