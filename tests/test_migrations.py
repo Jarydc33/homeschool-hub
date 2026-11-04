@@ -58,3 +58,16 @@ def test_auth_user_id_migration_can_be_undone(empty_database):
     assert "auth_user_id" not in columns
 
     command.upgrade(_config(), "head")
+
+
+def test_constraints_migration_can_be_undone(empty_database):
+    command.upgrade(_config(), "head")
+    command.downgrade(_config(), "0002")
+
+    inspector = inspect(engine)
+    assert inspector.get_indexes("students") == []
+    assert inspector.get_unique_constraints("student_assignments") == []
+    nullable = {c["name"]: c["nullable"] for c in inspector.get_columns("students")}
+    assert nullable["family_id"] is True
+
+    command.upgrade(_config(), "head")

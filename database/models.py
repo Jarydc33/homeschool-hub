@@ -10,6 +10,7 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    UniqueConstraint,
     Uuid,
 )
 from sqlalchemy.orm import configure_mappers, relationship
@@ -93,9 +94,11 @@ class User(Base):
 
     id = Column(Integer, primary_key=True)
 
+    # NULL only for Admins, who don't belong to a family.
     family_id = Column(
         Integer,
-        ForeignKey("families.id")
+        ForeignKey("families.id"),
+        index=True
     )
 
     student_id = Column(
@@ -151,7 +154,9 @@ class Student(Base):
 
     family_id = Column(
         Integer,
-        ForeignKey("families.id")
+        ForeignKey("families.id"),
+        nullable=False,
+        index=True
     )
 
     name = Column(
@@ -190,7 +195,9 @@ class Subject(Base):
 
     family_id = Column(
         Integer,
-        ForeignKey("families.id")
+        ForeignKey("families.id"),
+        nullable=False,
+        index=True
     )
 
     name = Column(
@@ -227,12 +234,15 @@ class Assignment(Base):
 
     family_id = Column(
         Integer,
-        ForeignKey("families.id")
+        ForeignKey("families.id"),
+        nullable=False,
+        index=True
     )
 
     subject_id = Column(
         Integer,
-        ForeignKey("subjects.id")
+        ForeignKey("subjects.id"),
+        nullable=False
     )
 
     title = Column(
@@ -279,16 +289,26 @@ class Assignment(Base):
 class StudentAssignment(Base):
     __tablename__ = "student_assignments"
 
+    __table_args__ = (
+        UniqueConstraint(
+            "assignment_id",
+            "student_id",
+            name="student_assignments_assignment_id_student_id_key"
+        ),
+    )
+
     id = Column(Integer, primary_key=True)
 
     assignment_id = Column(
         Integer,
-        ForeignKey("assignments.id")
+        ForeignKey("assignments.id"),
+        nullable=False
     )
 
     student_id = Column(
         Integer,
-        ForeignKey("students.id")
+        ForeignKey("students.id"),
+        nullable=False
     )
 
     status = Column(
@@ -323,7 +343,8 @@ class BannerMessage(Base):
     family_id = Column(
         Integer,
         ForeignKey("families.id"),
-        nullable=True
+        nullable=True,
+        index=True
     )
 
     title = Column(

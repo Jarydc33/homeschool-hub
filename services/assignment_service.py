@@ -1,4 +1,7 @@
 # services/assignment_service.py
+import logging
+
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload
 from database.db import SessionLocal
 from database.models import (
@@ -10,6 +13,9 @@ from database.models import (
 )
 
 from services.auth_service import AuthService
+
+logger = logging.getLogger(__name__)
+
 
 class AssignmentService:
 
@@ -310,7 +316,17 @@ class AssignmentService:
                     )
                 )
 
-            db.commit()
+            # Another tab may have just linked the same student.
+            try:
+                db.commit()
+            except IntegrityError:
+                db.rollback()
+                logger.warning(
+                    "Assignment %s changed while saving",
+                    assignment_id
+                )
+                return None
+
             db.refresh(assignment)
 
             return assignment
