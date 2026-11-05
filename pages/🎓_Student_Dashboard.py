@@ -5,6 +5,7 @@ import streamlit as st
 from services.achievement_service import AchievementService
 from services.auth_provider import AuthProvider
 from services.banner_service import BannerService
+from services.event_service import EventService
 from services.student_service import StudentService
 from services.auth_service import (
     AuthService
@@ -331,6 +332,40 @@ st.write(
     f"{progress['completed']} of "
     f"{progress['total']} assignments complete so far"
 )
+
+st.divider()
+
+# ------------------------------------------------------------------
+# Upcoming Events
+# ------------------------------------------------------------------
+
+st.subheader("🎉 Upcoming Events")
+
+upcoming_events = EventService.get_upcoming(
+    today,
+    selected_student.id
+)
+
+if upcoming_events:
+
+    for entry in upcoming_events:
+
+        event = entry["event"]
+
+        st.write(
+            f"**{event.title}**: "
+            f"{EventService.describe_when(event, entry['date'])}"
+        )
+
+        if event.description:
+
+            st.caption(event.description)
+
+else:
+
+    st.caption(
+        "No events in the next 30 days."
+    )
 
 st.divider()
 

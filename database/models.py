@@ -12,6 +12,7 @@ from sqlalchemy import (
     Numeric,
     String,
     Text,
+    Time,
     UniqueConstraint,
     Uuid,
 )
@@ -466,6 +467,99 @@ class BannerMessage(Base):
         DateTime,
         default=datetime.utcnow
     )
+
+class Event(Base):
+    """
+    Something on a family's calendar. With no event_students it's for the
+    whole family.
+    """
+
+    __tablename__ = "events"
+
+    id = Column(Integer, primary_key=True)
+
+    family_id = Column(
+        Integer,
+        ForeignKey("families.id"),
+        nullable=False,
+        index=True
+    )
+
+    title = Column(
+        String,
+        nullable=False
+    )
+
+    description = Column(Text)
+
+    # The event's date, or its first one.
+    start_date = Column(
+        Date,
+        nullable=False
+    )
+
+    # The last day of a multi-day event. Empty otherwise.
+    end_date = Column(Date)
+
+    # Local to the family. Empty means all day.
+    start_time = Column(Time)
+
+    # How often it repeats, and the last possible date. Empty if it doesn't.
+    recurrence_pattern = Column(String)
+
+    repeat_until = Column(Date)
+
+    active = Column(
+        Boolean,
+        nullable=False,
+        default=True
+    )
+
+    created_at = Column(
+        DateTime,
+        nullable=False,
+        default=datetime.utcnow
+    )
+
+    event_students = relationship(
+        "EventStudent",
+        back_populates="event",
+        cascade="all, delete-orphan"
+    )
+
+class EventStudent(Base):
+    """Says which students an event is for."""
+
+    __tablename__ = "event_students"
+
+    __table_args__ = (
+        UniqueConstraint(
+            "event_id",
+            "student_id",
+            name="uq_event_students_event_student"
+        ),
+    )
+
+    id = Column(Integer, primary_key=True)
+
+    event_id = Column(
+        Integer,
+        ForeignKey("events.id"),
+        nullable=False
+    )
+
+    student_id = Column(
+        Integer,
+        ForeignKey("students.id"),
+        nullable=False
+    )
+
+    event = relationship(
+        "Event",
+        back_populates="event_students"
+    )
+
+    student = relationship("Student")
 
 class CurrentSession:
 

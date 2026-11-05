@@ -8,6 +8,7 @@ from services.student_service import StudentService
 from services.subject_service import SubjectService
 from services.assignment_service import AssignmentService
 from services.banner_service import BannerService
+from services.event_service import EventService
 
 from services.auth_service import (
     AuthService
@@ -369,16 +370,37 @@ else:
             st.divider()
 
 # --------------------------------------------------
-# Upcoming Events (Future)
+# Upcoming Events
 # --------------------------------------------------
 
 st.subheader(
     "🎉 Upcoming Events"
 )
 
-st.info(
-    "Event tracking coming soon."
+upcoming_events = EventService.get_upcoming(
+    dashboard["today"]
 )
+
+if upcoming_events:
+
+    for entry in upcoming_events:
+
+        event = entry["event"]
+
+        st.write(
+            f"🎉 **{event.title}**: "
+            f"{EventService.describe_when(event, entry['date'])}"
+        )
+
+        st.caption(
+            f"👨‍🎓 {EventService.audience(event)}"
+        )
+
+else:
+
+    st.info(
+        "No events in the next 30 days."
+    )
 
 st.divider()
 
