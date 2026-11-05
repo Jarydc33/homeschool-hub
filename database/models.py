@@ -15,6 +15,7 @@ from sqlalchemy import (
     Time,
     UniqueConstraint,
     Uuid,
+    false,
 )
 from sqlalchemy.orm import configure_mappers, relationship
 
@@ -289,6 +290,14 @@ class Assignment(Base):
     # The last possible date of recurring work. Empty for one-time work.
     end_date = Column(Date)
 
+    # Whether its work gets scores that count towards grades.
+    graded = Column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default=false()
+    )
+
     created_at = Column(
         DateTime,
         default=datetime.utcnow
@@ -406,6 +415,10 @@ class AssignmentOccurrence(Base):
     notes = Column(Text)
 
     score = Column(Numeric(6, 2))
+
+    # Points earned is score, and it's out of points_possible. Both are empty
+    # until it's graded.
+    points_possible = Column(Numeric(6, 2))
 
     # Which lesson this is, for curriculum work. It stays with the lesson when
     # the date moves.
@@ -647,6 +660,50 @@ class ReadingLog(Base):
     book = relationship(
         "Book",
         back_populates="logs"
+    )
+
+class GradingPeriod(Base):
+    """
+    A stretch of a family's school year, like Fall 2026. A grade belongs to
+    the period its date falls in.
+    """
+
+    __tablename__ = "grading_periods"
+
+    id = Column(Integer, primary_key=True)
+
+    family_id = Column(
+        Integer,
+        ForeignKey("families.id"),
+        nullable=False,
+        index=True
+    )
+
+    name = Column(
+        String,
+        nullable=False
+    )
+
+    start_date = Column(
+        Date,
+        nullable=False
+    )
+
+    end_date = Column(
+        Date,
+        nullable=False
+    )
+
+    active = Column(
+        Boolean,
+        nullable=False,
+        default=True
+    )
+
+    created_at = Column(
+        DateTime,
+        nullable=False,
+        default=datetime.utcnow
     )
 
 class CurrentSession:

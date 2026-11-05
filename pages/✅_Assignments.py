@@ -229,6 +229,12 @@ def edit_assignment_dialog(assignment_id):
             )
         )
 
+    graded = st.checkbox(
+        "Graded",
+        value=bool(assignment.graded),
+        help="Its scores count towards grades on the Grades page."
+    )
+
     if st.button("💾 Save Changes"):
 
         schedule_error = OccurrenceService.schedule_error(
@@ -258,7 +264,8 @@ def edit_assignment_dialog(assignment_id):
             assignment_type=assignment_type,
             recurrence_pattern=recurrence_pattern,
             end_date=end_date,
-            lesson_count=lesson_count
+            lesson_count=lesson_count,
+            graded=graded
         )
 
         if not updated:
@@ -599,6 +606,11 @@ with st.form(
             value=OccurrenceService.default_end_date(today)
         )
 
+    graded = st.checkbox(
+        "Graded",
+        help="Its scores count towards grades on the Grades page."
+    )
+
     submitted = st.form_submit_button(
         "Create Assignment"
     )
@@ -633,7 +645,8 @@ with st.form(
             assignment_type=assignment_type,
             recurrence_pattern=recurrence_pattern,
             end_date=end_date,
-            lesson_count=lesson_count
+            lesson_count=lesson_count,
+            graded=graded
         )
 
         if created:
@@ -765,6 +778,12 @@ if assignments:
                         st.caption(
                             f"📅 Due: {assignment.due_date}"
                         )
+
+                if assignment.graded:
+
+                    st.caption(
+                        "📊 Graded"
+                    )
 
                 if assignment.description:
 

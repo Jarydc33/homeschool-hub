@@ -93,6 +93,12 @@ class NavigationComponent:
                     )
 
                     st.page_link(
+                        "pages/📊_Grades.py",
+                        label="Grades",
+                        icon="📊"
+                    )
+
+                    st.page_link(
                         "pages/📢_Announcements.py",
                         label="Announcements",
                         icon="📢"
@@ -132,6 +138,12 @@ class NavigationComponent:
                         "pages/📖_Reading.py",
                         label="Reading",
                         icon="📖"
+                    )
+
+                    st.page_link(
+                        "pages/📊_Grades.py",
+                        label="Grades",
+                        icon="📊"
                     )
 
                 # -----------------

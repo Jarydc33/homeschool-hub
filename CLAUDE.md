@@ -83,6 +83,7 @@ tests/                  pytest suite for the services
 - Streaks and badges are worked out from occurrences when read, never stored (`services/achievement_service.py`). A day counts once all its work is done, whenever that happens. Days with no work don't count or break a streak.
 - Events belong to a family. With no `event_students` rows, one is for the whole family, including students added later. Repeating events' dates are worked out when read, and an edit applies to the whole series.
 - Books belong to one student, and `reading_logs` holds one row per book, per date. The reading streak is separate from the assignment streak and counts every calendar day. Reading totals and badges are worked out when read.
+- Grades: an occurrence's `score` is points earned, out of its `points_possible`, on assignments marked `graded`. Percentages and letters are worked out when read. A blank score never counts, not even as zero. A grade belongs to the `grading_periods` row its date falls in, and periods can't overlap. Archived assignments and subjects still count, as a deliberate exception to rule 3, so tidying up doesn't change a past semester.
 - Announcements (`banner_messages`) belong to a family, or are system-wide when `family_id` is NULL. Parents manage their family's; Admins (`users.role = 'Admin'`, no family, a separate login) manage system-wide ones and only see the Announcements page.
 
 ## Rules (follow these on every change)

@@ -147,7 +147,8 @@ class AssignmentService:
         assignment_type=AssignmentType.ONE_TIME.value,
         recurrence_pattern=None,
         end_date=None,
-        lesson_count=None
+        lesson_count=None,
+        graded=False
     ):
         """
         Returns the new assignment, or None if its schedule isn't valid or
@@ -219,6 +220,7 @@ class AssignmentService:
                 assignment_type=assignment_type,
                 recurrence_pattern=recurrence_pattern,
                 end_date=end_date,
+                graded=graded,
                 student_assignments=[
                     StudentAssignment(
                         student_id=student_id
@@ -254,7 +256,8 @@ class AssignmentService:
         assignment_type,
         recurrence_pattern,
         end_date=None,
-        lesson_count=None
+        lesson_count=None,
+        graded=None
     ):
         """
         Returns the updated assignment, or None if its schedule isn't valid
@@ -391,6 +394,11 @@ class AssignmentService:
             )
 
             assignment.end_date = end_date
+
+            # Leaving this out keeps it as it was. Turning it off stops scores
+            # counting but keeps them, in case it's turned back on.
+            if graded is not None:
+                assignment.graded = graded
 
             # -------------------------
             # Apply Student Changes
