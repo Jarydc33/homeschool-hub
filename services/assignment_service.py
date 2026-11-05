@@ -788,6 +788,62 @@ class AssignmentService:
             return len(moves)
 
     @staticmethod
+    def get_archived_assignments():
+        """
+        Returns the current family's archived assignments with their
+        subjects, by title, for a parent.
+        """
+
+        if not AuthService.is_parent():
+            return []
+
+        with get_session() as db:
+
+            return (
+                db.query(Assignment)
+                .options(
+                    joinedload(Assignment.subject)
+                )
+                .filter(
+                    Assignment.family_id == AuthService.get_current_family(),
+                    Assignment.active.is_(False)
+                )
+                .order_by(Assignment.title)
+                .all()
+            )
+
+    @staticmethod
+    def restore_assignment(assignment_id):
+        """
+        Unarchives an assignment. Its dates, students, check-offs, notes and
+        grades come back as they were. Returns it, or None if it isn't
+        available to this parent.
+        """
+
+        if not AuthService.is_parent():
+            return None
+
+        with get_session() as db:
+
+            assignment = (
+                db.query(Assignment)
+                .filter(
+                    Assignment.id == assignment_id,
+                    Assignment.family_id == AuthService.get_current_family()
+                )
+                .first()
+            )
+
+            if not assignment:
+                return None
+
+            assignment.active = True
+
+            db.commit()
+
+            return assignment
+
+    @staticmethod
     def archive_assignment(
         assignment_id
     ):

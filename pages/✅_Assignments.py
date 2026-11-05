@@ -834,3 +834,66 @@ else:
     st.info(
         "No assignments have been created."
     )
+
+# ==================================================
+# ARCHIVED ASSIGNMENTS
+# ==================================================
+
+archived_assignments = AssignmentService.get_archived_assignments()
+
+if archived_assignments:
+
+    with st.expander(
+        f"📦 Archived Assignments ({len(archived_assignments)})"
+    ):
+
+        st.caption(
+            "Restoring an assignment brings back its dates, students, "
+            "check-offs, notes and grades. Dates that passed while it was "
+            "archived show as overdue or missed, and Missed a Day? on the "
+            "dashboard can move curriculum lessons forward."
+        )
+
+        for assignment in archived_assignments:
+
+            col1, col2 = st.columns(
+                [5, 2]
+            )
+
+            with col1:
+
+                subject_name = assignment.subject.name
+
+                if not assignment.subject.active:
+                    subject_name += " (archived)"
+
+                st.write(
+                    f"**{assignment.title}**"
+                )
+
+                st.caption(
+                    f"{subject_name} · {assignment.assignment_type}"
+                )
+
+            with col2:
+
+                if st.button(
+                    "Restore",
+                    key=f"restore_assignment_{assignment.id}",
+                    use_container_width=True
+                ):
+
+                    if AssignmentService.restore_assignment(
+                        assignment.id
+                    ):
+
+                        st.toast(
+                            f"{assignment.title} restored."
+                        )
+
+                        st.rerun()
+
+                    st.error(
+                        "This assignment couldn't be restored. "
+                        "Please refresh the page and try again."
+                    )

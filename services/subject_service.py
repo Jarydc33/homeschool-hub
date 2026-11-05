@@ -116,6 +116,57 @@ class SubjectService:
             return subject
 
     @staticmethod
+    def get_archived_subjects():
+        """
+        Returns the current family's archived subjects, by name, for a parent.
+        """
+
+        if not AuthService.is_parent():
+            return []
+
+        with get_session() as db:
+
+            return (
+                db.query(Subject)
+                .filter(
+                    Subject.family_id == AuthService.get_current_family(),
+                    Subject.active.is_(False)
+                )
+                .order_by(Subject.name)
+                .all()
+            )
+
+    @staticmethod
+    def restore_subject(subject_id):
+        """
+        Unarchives a subject, so it can be chosen for new work again. Returns
+        it, or None if it isn't available to this parent.
+        """
+
+        if not AuthService.is_parent():
+            return None
+
+        with get_session() as db:
+
+            subject = (
+                db.query(Subject)
+                .filter(
+                    Subject.id == subject_id,
+                    Subject.family_id == AuthService.get_current_family()
+                )
+                .first()
+            )
+
+            if not subject:
+                return None
+
+            subject.active = True
+
+            db.commit()
+
+            return subject
+
+    @staticmethod
     def archive_subject(subject_id):
 
         with get_session() as db:

@@ -232,6 +232,58 @@ else:
     )
 
 # ==================================================
+# ARCHIVED SUBJECTS
+# ==================================================
+
+archived_subjects = SubjectService.get_archived_subjects()
+
+if archived_subjects:
+
+    with st.expander(
+        f"📦 Archived Subjects ({len(archived_subjects)})"
+    ):
+
+        st.caption(
+            "Restoring a subject lets you choose it for new work again. "
+            "Its assignments and grades were never removed."
+        )
+
+        for subject in archived_subjects:
+
+            col1, col2 = st.columns(
+                [5, 2]
+            )
+
+            with col1:
+
+                st.write(
+                    subject.name
+                )
+
+            with col2:
+
+                if st.button(
+                    "Restore",
+                    key=f"restore_subject_{subject.id}",
+                    use_container_width=True
+                ):
+
+                    if SubjectService.restore_subject(
+                        subject.id
+                    ):
+
+                        st.toast(
+                            f"{subject.name} restored."
+                        )
+
+                        st.rerun()
+
+                    st.error(
+                        "This subject couldn't be restored. "
+                        "Please refresh the page and try again."
+                    )
+
+# ==================================================
 # ADD SUBJECT
 # ==================================================
 
