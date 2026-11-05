@@ -649,6 +649,7 @@ def test_parent_adds_a_period_and_it_compares(world, login, page_as):
 
     assert not at.exception
     assert any(s.value == "Compare Periods" for s in at.subheader)
+    assert any("Periods are optional" in c.value for c in at.caption)
     assert "| Math | 80% (B) |" in _text(at)
     assert "**80% (B)**" in _text(at)
 

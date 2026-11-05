@@ -497,8 +497,9 @@ if is_parent:
     st.subheader("🗓️ Grading Periods")
 
     st.caption(
-        "Name them whatever fits your school year, like Fall 2026. A grade "
-        "belongs to the period its date falls in."
+        "Periods are optional. Name them whatever fits your school year, "
+        "like Fall 2026. Each grade automatically belongs to the period "
+        "covering its date, and changing a period's dates moves its grades."
     )
 
     for period in periods:
