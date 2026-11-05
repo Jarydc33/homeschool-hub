@@ -10,7 +10,7 @@ from datetime import date, datetime, timedelta
 from types import SimpleNamespace
 from unittest import mock
 
-_db_dir = tempfile.mkdtemp(prefix="homeschool_hub_tests_")
+_db_dir = tempfile.mkdtemp(prefix="tally_tests_")
 _db_path = os.path.join(_db_dir, "test.db").replace("\\", "/")
 
 os.environ["DATABASE_URL"] = f"sqlite:///{_db_path}"

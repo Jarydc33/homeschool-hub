@@ -8,7 +8,7 @@ import streamlit as st
 
 load_dotenv()
 
-#DATABASE_URL = "sqlite:///homeschool_hub.db"
+#DATABASE_URL = "sqlite:///tally.db"
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL"

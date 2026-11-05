@@ -29,7 +29,7 @@ if AuthService.is_authenticated():
 # --------------------------------------------------
 
 st.set_page_config(
-    page_title="Homeschool Hub",
+    page_title="Tally",
     page_icon="🏡",
     layout="wide"
 )
@@ -38,15 +38,15 @@ st.set_page_config(
 # Hero Section
 # --------------------------------------------------
 
-st.title("🏡 Homeschool Hub")
+st.title("🏡 Tally")
 
 st.subheader(
-    "The simplest way to manage your homeschool."
+    "Less logging, more learning."
 )
 
 st.write(
     """
-    Homeschool Hub helps parents organize students,
+    Tally helps parents organize students,
     assignments, schedules, and educational progress
     while giving students a simple daily dashboard
     focused on completing their work.
@@ -59,7 +59,7 @@ st.divider()
 # Key Features
 # --------------------------------------------------
 
-st.header("Why Families Use Homeschool Hub")
+st.header("Why Families Use Tally")
 
 col1, col2, col3 = st.columns(3)
 

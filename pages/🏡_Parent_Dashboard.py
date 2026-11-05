@@ -138,7 +138,7 @@ active_banners = (
 # --------------------------------------------------
 
 st.set_page_config(
-    page_title="Homeschool Hub",
+    page_title="Tally",
     page_icon="🏡",
     layout="wide"
 )

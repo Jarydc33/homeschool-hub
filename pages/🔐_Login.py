@@ -38,7 +38,7 @@ if AuthService.is_authenticated():
 st.title("🔐 Login")
 
 st.write(
-    "Sign in to Homeschool Hub."
+    "Sign in to Tally."
 )
 
 INACTIVE_MESSAGE = (
@@ -102,7 +102,7 @@ if submitted:
         if not user:
 
             st.error(
-                "We couldn't find a Homeschool Hub account for this email."
+                "We couldn't find a Tally account for this email."
             )
 
         elif AuthService.is_archived_student(user):

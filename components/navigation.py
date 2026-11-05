@@ -24,7 +24,9 @@ class NavigationComponent:
 
         with st.sidebar:
 
-            st.title("🏡 Homeschool Hub")
+            st.title("🏡 Tally")
+
+            st.caption("Less logging, more learning")
 
             current_user = (
                 AuthService.get_current_user()
