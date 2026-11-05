@@ -152,11 +152,47 @@ class EventService:
 
         if event.start_time:
 
-            clock = f"{event.start_time:%I:%M %p}".lstrip("0")
-
-            text += f" at {clock}"
+            text += f" at {EventService.clock(event.start_time)}"
 
         return text
+
+    @staticmethod
+    def clock(value):
+        """
+        Returns a time for reading, such as "2:00 PM".
+        """
+
+        return f"{value:%I:%M %p}".lstrip("0")
+
+    @staticmethod
+    def dates_in_range(
+        event,
+        first,
+        last
+    ):
+        """
+        Returns every date an event happens on from first through last.
+        """
+
+        if event.recurrence_pattern:
+
+            return [
+                day
+                for day in EventService._repeat_dates(
+                    event.start_date,
+                    event.recurrence_pattern,
+                    event.repeat_until
+                )
+                if first <= day <= last
+            ]
+
+        start = max(event.start_date, first)
+        end = min(event.end_date or event.start_date, last)
+
+        return [
+            start + timedelta(days=offset)
+            for offset in range((end - start).days + 1)
+        ]
 
     @staticmethod
     def audience(event):

@@ -79,6 +79,12 @@ class NavigationComponent:
                     )
 
                     st.page_link(
+                        "pages/📆_Calendar.py",
+                        label="Calendar",
+                        icon="📆"
+                    )
+
+                    st.page_link(
                         "pages/📢_Announcements.py",
                         label="Announcements",
                         icon="📢"
@@ -106,6 +112,12 @@ class NavigationComponent:
                         "pages/📅_Events.py",
                         label="Events",
                         icon="📅"
+                    )
+
+                    st.page_link(
+                        "pages/📆_Calendar.py",
+                        label="Calendar",
+                        icon="📆"
                     )
 
                 # -----------------
