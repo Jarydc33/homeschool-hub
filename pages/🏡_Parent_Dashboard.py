@@ -36,6 +36,97 @@ dashboard = (
     DashboardService.get_dashboard_data()
 )
 
+
+@st.dialog("🤒 Missed a Day?")
+def missed_day_dialog():
+
+    today = AuthService.get_today()
+
+    st.write(
+        "Unfinished curriculum lessons pick up on the day you choose, "
+        "and the rest follow in order on their school days. Other "
+        "assignments stay as they are."
+    )
+
+    students = dashboard["students"]
+
+    behind = AssignmentService.get_students_behind(today)
+
+    chosen = st.multiselect(
+        "Who missed?",
+        students,
+        default=[
+            student
+            for student in students
+            if student.id in behind
+        ],
+        format_func=lambda student: student.name,
+        key="missed_day_students"
+    )
+
+    resume_on = st.date_input(
+        "Pick Up On",
+        value=today,
+        min_value=today,
+        key="missed_day_resume"
+    )
+
+    student_ids = [
+        student.id
+        for student in chosen
+    ]
+
+    plan = AssignmentService.get_recovery_plan(
+        student_ids,
+        resume_on
+    )
+
+    if not plan:
+
+        st.info(
+            "Nothing needs to move for that choice."
+        )
+
+        return
+
+    for change in plan:
+
+        st.write(
+            f"**{change['student_name']}: {change['title']}**"
+        )
+
+        st.caption(
+            f"Lesson {change['next_lesson']} moves to "
+            f"{change['next_date']:%a, %b} {change['next_date'].day}. "
+            f"Finish: {change['old_finish']} → {change['new_finish']}"
+        )
+
+    if st.button(
+        "Shift Schedule",
+        type="primary"
+    ):
+
+        moved = AssignmentService.shift_lessons(
+            student_ids,
+            resume_on
+        )
+
+        if moved is None:
+
+            st.error(
+                "The schedule couldn't be shifted. "
+                "Please refresh the page and try again."
+            )
+
+            return
+
+        st.toast(
+            "Schedule shifted."
+        )
+
+        st.rerun()
+
+
 active_banners = (
     BannerService.get_active_banners()
 )
@@ -140,6 +231,15 @@ st.divider()
 st.subheader(
     "🚨 Needs Attention"
 )
+
+if AssignmentService.has_curriculum():
+
+    if st.button(
+        "🤒 Missed a Day?",
+        help="Move unfinished curriculum lessons forward"
+    ):
+
+        missed_day_dialog()
 
 if overdue_assignments:
 

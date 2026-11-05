@@ -429,6 +429,64 @@ class OccurrenceService:
         )
 
     @staticmethod
+    def step_aside(
+        db,
+        rows
+    ):
+        """
+        Gives rows about to move a temporary far-off date. A lesson can't take
+        a date another lesson still holds, even for a moment. Adds to the
+        caller's transaction without committing.
+        """
+
+        for offset, row in enumerate(rows):
+
+            row.occurrence_date = (
+                date(9000, 1, 1) + timedelta(days=offset)
+            )
+
+        db.flush()
+
+    @staticmethod
+    def recovery_moves(
+        rows,
+        school_days,
+        resume_on
+    ):
+        """
+        Returns [(row, new date)] for picking one student's curriculum back up
+        on resume_on. Every lesson not started is laid out again in order,
+        including late ones, around the lessons that stay. Rows whose date
+        wouldn't change are left out.
+        """
+
+        pending = sorted(
+            (
+                row
+                for row in rows
+                if not OccurrenceService._is_started(row)
+            ),
+            key=lambda row: row.lesson_number
+        )
+
+        dates = OccurrenceService.lesson_dates(
+            school_days,
+            resume_on,
+            len(pending),
+            {
+                row.occurrence_date
+                for row in rows
+                if OccurrenceService._is_started(row)
+            }
+        )
+
+        return [
+            (row, day)
+            for row, day in zip(pending, dates)
+            if row.occurrence_date != day
+        ]
+
+    @staticmethod
     def _sync_curriculum(
         db,
         assignment,
@@ -532,16 +590,10 @@ class OccurrenceService:
             for (number, row), day in zip(lessons, dates):
                 placements.append((student_id, number, row, day))
 
-        # A lesson can't take a date another lesson still holds, even for a
-        # moment, so moving ones step aside first.
-        for offset, (_, _, row, _) in enumerate(placements):
-
-            if row is not None:
-                row.occurrence_date = (
-                    date(9000, 1, 1) + timedelta(days=offset)
-                )
-
-        db.flush()
+        OccurrenceService.step_aside(
+            db,
+            [row for _, _, row, _ in placements if row is not None]
+        )
 
         for student_id, number, row, day in placements:
 

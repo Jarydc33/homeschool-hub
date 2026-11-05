@@ -1,4 +1,5 @@
 # services/assignment_service.py
+from collections import defaultdict
 from datetime import date
 import logging
 
@@ -9,6 +10,7 @@ from database.db import get_session
 from database.models import (
     Assignment,
     AssignmentOccurrence,
+    AssignmentStatus,
     Student,
     StudentAssignment,
     Subject,
@@ -527,6 +529,255 @@ class AssignmentService:
             db.commit()
 
             return len(saved)
+
+    @staticmethod
+    def _recovery_moves(
+        db,
+        family_id,
+        student_ids,
+        resume_on
+    ):
+        """
+        Returns what shifting these students would do, as a list with one
+        {"student", "assignment", "rows", "moves"} per curriculum that would
+        change. Leaves out archived work and students, students no longer
+        assigned, and any other family's. A curriculum that hasn't reached
+        its start date keeps it.
+        """
+
+        rows = (
+            db.query(AssignmentOccurrence)
+            .join(AssignmentOccurrence.assignment)
+            .join(AssignmentOccurrence.student)
+            .join(
+                StudentAssignment,
+                and_(
+                    StudentAssignment.assignment_id
+                    == AssignmentOccurrence.assignment_id,
+                    StudentAssignment.student_id
+                    == AssignmentOccurrence.student_id
+                )
+            )
+            .options(
+                joinedload(AssignmentOccurrence.assignment),
+                joinedload(AssignmentOccurrence.student)
+            )
+            .filter(
+                AssignmentOccurrence.student_id.in_(student_ids),
+                Assignment.family_id == family_id,
+                Assignment.active.is_(True),
+                Assignment.assignment_type
+                == AssignmentType.CURRICULUM.value,
+                Student.family_id == family_id,
+                Student.active.is_(True)
+            )
+            .all()
+        )
+
+        grouped = defaultdict(list)
+
+        for row in rows:
+            grouped[(row.student_id, row.assignment_id)].append(row)
+
+        changes = []
+
+        for group in grouped.values():
+
+            assignment = group[0].assignment
+
+            moves = OccurrenceService.recovery_moves(
+                group,
+                assignment.recurrence_pattern,
+                max(resume_on, assignment.due_date)
+            )
+
+            if moves:
+
+                changes.append(
+                    {
+                        "student": group[0].student,
+                        "assignment": assignment,
+                        "rows": group,
+                        "moves": moves,
+                    }
+                )
+
+        return sorted(
+            changes,
+            key=lambda change: (
+                change["student"].name,
+                change["assignment"].title
+            )
+        )
+
+    @staticmethod
+    def get_recovery_plan(
+        student_ids,
+        resume_on
+    ):
+        """
+        Returns what shift_lessons would do, without changing anything: one
+        {"student_name", "title", "next_lesson", "next_date", "old_finish",
+        "new_finish"} per curriculum that would change.
+        """
+
+        if not AuthService.is_parent():
+            return []
+
+        family_id = (
+            AuthService.get_current_family()
+        )
+
+        with get_session() as db:
+
+            plan = []
+
+            for change in AssignmentService._recovery_moves(
+                db,
+                family_id,
+                student_ids,
+                resume_on
+            ):
+
+                moved = dict(change["moves"])
+
+                first, first_date = min(
+                    change["moves"],
+                    key=lambda move: move[0].lesson_number
+                )
+
+                plan.append(
+                    {
+                        "student_name": change["student"].name,
+                        "title": change["assignment"].title,
+                        "next_lesson": first.lesson_number,
+                        "next_date": first_date,
+                        "old_finish": max(
+                            row.occurrence_date
+                            for row in change["rows"]
+                        ),
+                        "new_finish": max(
+                            moved.get(row, row.occurrence_date)
+                            for row in change["rows"]
+                        ),
+                    }
+                )
+
+            return plan
+
+    @staticmethod
+    def get_students_behind(
+        today
+    ):
+        """
+        Returns the ids of this family's students with a curriculum lesson
+        dated before today that isn't done.
+        """
+
+        if not AuthService.is_parent():
+            return set()
+
+        family_id = (
+            AuthService.get_current_family()
+        )
+
+        with get_session() as db:
+
+            return {
+                student_id
+                for (student_id,) in (
+                    db.query(AssignmentOccurrence.student_id)
+                    .join(AssignmentOccurrence.assignment)
+                    .join(AssignmentOccurrence.student)
+                    .join(
+                        StudentAssignment,
+                        and_(
+                            StudentAssignment.assignment_id
+                            == AssignmentOccurrence.assignment_id,
+                            StudentAssignment.student_id
+                            == AssignmentOccurrence.student_id
+                        )
+                    )
+                    .filter(
+                        AssignmentOccurrence.occurrence_date < today,
+                        AssignmentOccurrence.status
+                        != AssignmentStatus.COMPLETE.value,
+                        Assignment.family_id == family_id,
+                        Assignment.active.is_(True),
+                        Assignment.assignment_type
+                        == AssignmentType.CURRICULUM.value,
+                        Student.active.is_(True)
+                    )
+                )
+            }
+
+    @staticmethod
+    def has_curriculum():
+        """
+        True if this family has any active curriculum.
+        """
+
+        with get_session() as db:
+
+            return (
+                db.query(Assignment.id)
+                .filter(
+                    Assignment.family_id
+                    == AuthService.get_current_family(),
+                    Assignment.active.is_(True),
+                    Assignment.assignment_type
+                    == AssignmentType.CURRICULUM.value
+                )
+                .first()
+                is not None
+            )
+
+    @staticmethod
+    def shift_lessons(
+        student_ids,
+        resume_on
+    ):
+        """
+        Picks the chosen students' curricula back up on resume_on, in one
+        commit. Each student only moves their own lessons, and lessons
+        they've started stay where they are. Returns how many lessons moved,
+        or None if a parent can't do this or the date has already passed.
+        """
+
+        if not AuthService.is_parent():
+            return None
+
+        if resume_on < AuthService.get_today():
+            return None
+
+        family_id = (
+            AuthService.get_current_family()
+        )
+
+        with get_session() as db:
+
+            moves = [
+                move
+                for change in AssignmentService._recovery_moves(
+                    db,
+                    family_id,
+                    student_ids,
+                    resume_on
+                )
+                for move in change["moves"]
+            ]
+
+            OccurrenceService.step_aside(
+                db,
+                [row for row, _ in moves]
+            )
+
+            for row, day in moves:
+                row.occurrence_date = day
+
+            db.commit()
+
+            return len(moves)
 
     @staticmethod
     def archive_assignment(
