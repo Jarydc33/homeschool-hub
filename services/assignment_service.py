@@ -24,6 +24,30 @@ logger = logging.getLogger(__name__)
 class AssignmentService:
 
     @staticmethod
+    def _schedule_fields(
+        assignment_type,
+        recurrence_pattern,
+        end_date
+    ):
+        """
+        Returns the recurrence_pattern and end_date to save for this type.
+        """
+
+        if assignment_type == AssignmentType.RECURRING.value:
+            return recurrence_pattern, end_date
+
+        if assignment_type == AssignmentType.CURRICULUM.value:
+
+            return (
+                OccurrenceService.school_days_value(
+                    recurrence_pattern.split(",")
+                ),
+                None
+            )
+
+        return None, None
+
+    @staticmethod
     def get_assignment_by_id(
         assignment_id
     ):
@@ -38,6 +62,9 @@ class AssignmentService:
                     ),
                     joinedload(
                         Assignment.student_assignments
+                    ),
+                    selectinload(
+                        Assignment.occurrences
                     )
                 )
                 .filter(
@@ -117,25 +144,34 @@ class AssignmentService:
         due_date=None,
         assignment_type=AssignmentType.ONE_TIME.value,
         recurrence_pattern=None,
-        end_date=None
+        end_date=None,
+        lesson_count=None
     ):
         """
         Returns the new assignment, or None if its schedule isn't valid or
         the subject or any student is not an active part of this family.
         Its student links and occurrences are saved in the same commit.
+
+        A curriculum passes lesson_count, with its school days as
+        recurrence_pattern and its first day as due_date.
         """
 
         if OccurrenceService.schedule_error(
             assignment_type,
             recurrence_pattern,
             due_date,
-            end_date
+            end_date,
+            lesson_count
         ):
             return None
 
-        if assignment_type != AssignmentType.RECURRING.value:
-            recurrence_pattern = None
-            end_date = None
+        recurrence_pattern, end_date = (
+            AssignmentService._schedule_fields(
+                assignment_type,
+                recurrence_pattern,
+                end_date
+            )
+        )
 
         family_id = (
             AuthService.get_current_family()
@@ -196,7 +232,8 @@ class AssignmentService:
                 db,
                 assignment,
                 requested_ids,
-                date.min
+                date.min,
+                lesson_count
             )
 
             db.commit()
@@ -214,12 +251,16 @@ class AssignmentService:
         student_ids,
         assignment_type,
         recurrence_pattern,
-        end_date=None
+        end_date=None,
+        lesson_count=None
     ):
         """
         Returns the updated assignment, or None if its schedule isn't valid
         or the assignment, subject, or any student is not available to this
-        family.
+        family. Other work can't become a curriculum, or the reverse.
+
+        A curriculum's lessons only get new dates if its start date or school
+        days changed, so saving a new title leaves any moved lessons alone.
 
         Only student links that changed are added or removed, so
         everyone else keeps their status, completion date, and notes.
@@ -231,13 +272,18 @@ class AssignmentService:
             assignment_type,
             recurrence_pattern,
             due_date,
-            end_date
+            end_date,
+            lesson_count
         ):
             return None
 
-        if assignment_type != AssignmentType.RECURRING.value:
-            recurrence_pattern = None
-            end_date = None
+        recurrence_pattern, end_date = (
+            AssignmentService._schedule_fields(
+                assignment_type,
+                recurrence_pattern,
+                end_date
+            )
+        )
 
         family_id = (
             AuthService.get_current_family()
@@ -256,6 +302,19 @@ class AssignmentService:
 
             if not assignment:
                 return None
+
+            curriculum = AssignmentType.CURRICULUM.value
+
+            if (
+                (assignment.assignment_type == curriculum)
+                != (assignment_type == curriculum)
+            ):
+                return None
+
+            reschedule = (
+                due_date != assignment.due_date
+                or recurrence_pattern != assignment.recurrence_pattern
+            )
 
             # -------------------------
             # Validate Subject
@@ -361,7 +420,9 @@ class AssignmentService:
                 db,
                 assignment,
                 kept_ids,
-                AuthService.get_today()
+                AuthService.get_today(),
+                lesson_count,
+                reschedule
             )
 
             # Another tab may have just linked the same student.

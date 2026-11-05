@@ -19,6 +19,9 @@ RECENT_DAYS = 30
 
 MONDAY_TO_FRIDAY = {0, 1, 2, 3, 4}
 
+# In weekday order, so Monday is 0 like date.weekday().
+SCHOOL_DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
 WEEKDAY_OF_PATTERN = {
     RecurrencePattern.EVERY_MONDAY.value: 0,
     RecurrencePattern.EVERY_TUESDAY.value: 1,
@@ -43,7 +46,8 @@ class OccurrenceService:
         assignment_type,
         recurrence_pattern,
         start_date,
-        end_date=None
+        end_date=None,
+        lesson_count=None
     ):
         """
         Returns what's wrong with a schedule for showing to a parent, or
@@ -52,6 +56,14 @@ class OccurrenceService:
 
         if start_date is None:
             return "Please choose a date."
+
+        if assignment_type == AssignmentType.CURRICULUM.value:
+
+            return OccurrenceService._curriculum_error(
+                recurrence_pattern,
+                start_date,
+                lesson_count
+            )
 
         if assignment_type != AssignmentType.RECURRING.value:
             return None
@@ -82,6 +94,127 @@ class OccurrenceService:
             return "This frequency doesn't fall on any date in that range."
 
         return None
+
+    @staticmethod
+    def _curriculum_error(
+        school_days,
+        start_date,
+        lesson_count
+    ):
+
+        if not lesson_count or lesson_count < 1:
+            return "Please enter how many lessons there are."
+
+        if not OccurrenceService.parse_school_days(school_days):
+            return "Please choose at least one school day."
+
+        too_long = (
+            "At this pace the lessons would run more than two years. "
+            "Try more school days or fewer lessons."
+        )
+
+        if lesson_count > MAX_SCHEDULE_DAYS:
+            return too_long
+
+        last = OccurrenceService.lesson_dates(
+            school_days,
+            start_date,
+            lesson_count
+        )[-1]
+
+        if (last - start_date).days > MAX_SCHEDULE_DAYS:
+            return too_long
+
+        return None
+
+    @staticmethod
+    def parse_school_days(school_days):
+        """
+        Returns the weekday numbers in a value like "Mon,Tue", leaving out
+        anything that isn't a day.
+        """
+
+        return {
+            SCHOOL_DAY_NAMES.index(name.strip())
+            for name in (school_days or "").split(",")
+            if name.strip() in SCHOOL_DAY_NAMES
+        }
+
+    @staticmethod
+    def school_days_value(days):
+        """
+        Returns chosen day names as saved, in weekday order: "Mon,Tue".
+        """
+
+        return ",".join(
+            name
+            for name in SCHOOL_DAY_NAMES
+            if name in days
+        )
+
+    @staticmethod
+    def lesson_dates(
+        school_days,
+        start_date,
+        count,
+        taken=()
+    ):
+        """
+        Returns the next count school days from start_date on, skipping any
+        dates in taken. Needs at least one valid school day.
+        """
+
+        weekdays = OccurrenceService.parse_school_days(school_days)
+
+        if not weekdays:
+            raise ValueError("A curriculum needs school days.")
+
+        dates = []
+        day = start_date
+
+        while len(dates) < count:
+
+            if day.weekday() in weekdays and day not in taken:
+                dates.append(day)
+
+            day += timedelta(days=1)
+
+        return dates
+
+    @staticmethod
+    def lesson_count(assignment):
+        """
+        Returns how many lessons a curriculum has. Needs its occurrences
+        loaded.
+        """
+
+        return max(
+            (row.lesson_number or 0 for row in assignment.occurrences),
+            default=0
+        )
+
+    @staticmethod
+    def last_lesson_date(assignment):
+        """
+        Returns when a curriculum finishes, going by whichever student
+        finishes last. Needs its occurrences loaded.
+        """
+
+        return max(
+            (row.occurrence_date for row in assignment.occurrences),
+            default=None
+        )
+
+    @staticmethod
+    def work_title(row):
+        """
+        Returns what to call an occurrence's work. Needs its assignment loaded.
+        """
+
+        if row.lesson_number:
+            return f"{row.assignment.title}: Lesson {row.lesson_number}"
+
+        return row.assignment.title
 
     @staticmethod
     def is_complete(row):
@@ -283,11 +416,158 @@ class OccurrenceService:
         )
 
     @staticmethod
+    def _is_started(row):
+        """
+        True if a student has worked on this lesson. A note alone doesn't
+        count, since a parent's note on a lesson should move with it.
+        """
+
+        return (
+            row.status != AssignmentStatus.NOT_STARTED.value
+            or row.completed_at is not None
+            or row.score is not None
+        )
+
+    @staticmethod
+    def _sync_curriculum(
+        db,
+        assignment,
+        student_ids,
+        changes_from,
+        lesson_count,
+        reschedule
+    ):
+        """
+        Brings a curriculum's lessons in line with its schedule, for each
+        student separately. Adds to the caller's transaction without
+        committing.
+
+        Lessons a student has started never move. When reschedule is True,
+        the rest from changes_from on are laid out again, in order. Otherwise
+        dates stay as they are, and any new lessons go after the student's
+        last one. Lowering the lesson count only removes untouched lessons.
+        """
+
+        rows_by_student = defaultdict(list)
+
+        for row in (
+            db.query(AssignmentOccurrence)
+            .filter(
+                AssignmentOccurrence.assignment_id == assignment.id
+            )
+        ):
+            rows_by_student[row.student_id].append(row)
+
+        placements = []
+
+        for student_id, rows in rows_by_student.items():
+
+            if student_id not in student_ids:
+
+                for row in rows:
+
+                    if (
+                        OccurrenceService.is_untouched(row)
+                        and row.occurrence_date >= changes_from
+                    ):
+                        db.delete(row)
+
+        for student_id in student_ids:
+
+            kept = []
+
+            for row in rows_by_student[student_id]:
+
+                if (
+                    row.lesson_number > lesson_count
+                    and OccurrenceService.is_untouched(row)
+                ):
+                    db.delete(row)
+
+                else:
+                    kept.append(row)
+
+            moving = [
+                row
+                for row in kept
+                if reschedule
+                and not OccurrenceService._is_started(row)
+                and row.occurrence_date >= changes_from
+            ]
+
+            staying = [
+                row
+                for row in kept
+                if row not in moving
+            ]
+
+            start = max(assignment.due_date, changes_from)
+
+            if not reschedule and kept:
+
+                start = max(
+                    start,
+                    max(row.occurrence_date for row in kept)
+                    + timedelta(days=1)
+                )
+
+            new_numbers = set(range(1, lesson_count + 1)) - {
+                row.lesson_number
+                for row in kept
+            }
+
+            lessons = sorted(
+                [(row.lesson_number, row) for row in moving]
+                + [(number, None) for number in new_numbers],
+                key=lambda lesson: lesson[0]
+            )
+
+            dates = OccurrenceService.lesson_dates(
+                assignment.recurrence_pattern,
+                start,
+                len(lessons),
+                {row.occurrence_date for row in staying}
+            )
+
+            for (number, row), day in zip(lessons, dates):
+                placements.append((student_id, number, row, day))
+
+        # A lesson can't take a date another lesson still holds, even for a
+        # moment, so moving ones step aside first.
+        for offset, (_, _, row, _) in enumerate(placements):
+
+            if row is not None:
+                row.occurrence_date = (
+                    date(9000, 1, 1) + timedelta(days=offset)
+                )
+
+        db.flush()
+
+        for student_id, number, row, day in placements:
+
+            if row is not None:
+
+                row.occurrence_date = day
+
+            else:
+
+                db.add(
+                    AssignmentOccurrence(
+                        assignment_id=assignment.id,
+                        student_id=student_id,
+                        occurrence_date=day,
+                        lesson_number=number
+                    )
+                )
+
+    @staticmethod
     def sync(
         db,
         assignment,
         student_ids,
-        changes_from
+        changes_from,
+        lesson_count=None,
+        reschedule=False
     ):
         """
         Brings an assignment's occurrences in line with its schedule and
@@ -302,7 +582,23 @@ class OccurrenceService:
         keeping any progress. Work that was recurring may have several rows,
         and only touched ones stay, since unfinished one-time work stays
         overdue and old dates would all look late.
+
+        A curriculum goes by lesson instead of by date, so lesson_count and
+        reschedule only apply to it. See _sync_curriculum.
         """
+
+        if assignment.assignment_type == AssignmentType.CURRICULUM.value:
+
+            OccurrenceService._sync_curriculum(
+                db,
+                assignment,
+                student_ids,
+                changes_from,
+                lesson_count,
+                reschedule
+            )
+
+            return
 
         one_time = (
             assignment.assignment_type

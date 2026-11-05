@@ -13,7 +13,10 @@ from services.auth_service import (
 )
 
 from services.navigation_service import NavigationService
-from services.occurrence_service import OccurrenceService
+from services.occurrence_service import (
+    OccurrenceService,
+    SCHOOL_DAY_NAMES
+)
 from components.navigation import (
     NavigationComponent
 )
@@ -85,19 +88,32 @@ def edit_assignment_dialog(assignment_id):
         value=assignment.description or ""
     )
 
-    assignment_type = st.selectbox(
-        "Assignment Type",
-        [
-            AssignmentType.ONE_TIME.value,
-            AssignmentType.RECURRING.value
-        ],
-        index=(
-            0
-            if assignment.assignment_type
-            == AssignmentType.ONE_TIME.value
-            else 1
-        )
+    is_curriculum = (
+        assignment.assignment_type
+        == AssignmentType.CURRICULUM.value
     )
+
+    # A curriculum's lessons can't become other work, or the reverse.
+
+    if is_curriculum:
+
+        assignment_type = assignment.assignment_type
+
+    else:
+
+        assignment_type = st.selectbox(
+            "Assignment Type",
+            [
+                AssignmentType.ONE_TIME.value,
+                AssignmentType.RECURRING.value
+            ],
+            index=(
+                0
+                if assignment.assignment_type
+                == AssignmentType.ONE_TIME.value
+                else 1
+            )
+        )
 
     recurrence_pattern = None
 
@@ -168,9 +184,36 @@ def edit_assignment_dialog(assignment_id):
     )
 
     due_date = st.date_input(
-        "Starts On" if is_recurring else "Due Date",
+        "Starts On" if is_recurring or is_curriculum else "Due Date",
         value=assignment.due_date
     )
+
+    lesson_count = None
+
+    if is_curriculum:
+
+        lesson_count = st.number_input(
+            "Number of Lessons",
+            min_value=1,
+            step=1,
+            value=max(
+                OccurrenceService.lesson_count(assignment),
+                1
+            )
+        )
+
+        recurrence_pattern = OccurrenceService.school_days_value(
+            st.multiselect(
+                "School Days",
+                SCHOOL_DAY_NAMES,
+                default=(assignment.recurrence_pattern or "").split(",")
+            )
+        )
+
+        st.caption(
+            "Changing the start date or school days gives every lesson "
+            "that hasn't been started a new date, from today on."
+        )
 
     end_date = None
 
@@ -192,7 +235,8 @@ def edit_assignment_dialog(assignment_id):
             assignment_type,
             recurrence_pattern,
             due_date,
-            end_date
+            end_date,
+            lesson_count
         )
 
         if schedule_error:
@@ -213,7 +257,8 @@ def edit_assignment_dialog(assignment_id):
             ],
             assignment_type=assignment_type,
             recurrence_pattern=recurrence_pattern,
-            end_date=end_date
+            end_date=end_date,
+            lesson_count=lesson_count
         )
 
         if not updated:
@@ -411,10 +456,75 @@ assignment_type = st.selectbox(
     "Assignment Type",
     [
         AssignmentType.ONE_TIME.value,
-        AssignmentType.RECURRING.value
+        AssignmentType.RECURRING.value,
+        AssignmentType.CURRICULUM.value
     ],
     key="create_assignment_type"
 )
+
+is_curriculum = (
+    assignment_type
+    == AssignmentType.CURRICULUM.value
+)
+
+today = AuthService.get_today()
+
+lesson_count = None
+school_days = None
+
+# Also outside the form, so the finish date updates as these change.
+
+if is_curriculum:
+
+    lesson_count = st.number_input(
+        "Number of Lessons",
+        min_value=1,
+        step=1,
+        value=None,
+        placeholder="For example, 120",
+        key="create_lesson_count"
+    )
+
+    school_days = OccurrenceService.school_days_value(
+        st.multiselect(
+            "School Days",
+            SCHOOL_DAY_NAMES,
+            default=SCHOOL_DAY_NAMES[:5],
+            key="create_school_days"
+        )
+    )
+
+    curriculum_start = st.date_input(
+        "Starts On",
+        value=today,
+        key="create_curriculum_start"
+    )
+
+    if lesson_count and school_days:
+
+        curriculum_error = OccurrenceService.schedule_error(
+            assignment_type,
+            school_days,
+            curriculum_start,
+            lesson_count=lesson_count
+        )
+
+        if curriculum_error:
+
+            st.warning(curriculum_error)
+
+        else:
+
+            last_lesson = OccurrenceService.lesson_dates(
+                school_days,
+                curriculum_start,
+                lesson_count
+            )[-1]
+
+            st.info(
+                f"Lesson {lesson_count} lands on "
+                f"{last_lesson:%A, %B} {last_lesson.day}, {last_lesson.year}."
+            )
 
 with st.form(
     "assignment_form",
@@ -468,12 +578,17 @@ with st.form(
         == AssignmentType.RECURRING.value
     )
 
-    today = AuthService.get_today()
+    if is_curriculum:
 
-    due_date = st.date_input(
-        "Starts On" if is_recurring else "Due Date",
-        value=today
-    )
+        recurrence_pattern = school_days
+        due_date = curriculum_start
+
+    else:
+
+        due_date = st.date_input(
+            "Starts On" if is_recurring else "Due Date",
+            value=today
+        )
 
     end_date = None
 
@@ -493,7 +608,8 @@ with st.form(
             assignment_type,
             recurrence_pattern,
             due_date,
-            end_date
+            end_date,
+            lesson_count
         )
         if submitted
         else None
@@ -516,7 +632,8 @@ with st.form(
             due_date=due_date,
             assignment_type=assignment_type,
             recurrence_pattern=recurrence_pattern,
-            end_date=end_date
+            end_date=end_date,
+            lesson_count=lesson_count
         )
 
         if created:
@@ -623,6 +740,22 @@ if assignments:
                     st.caption(
                         f"🔁 {assignment.recurrence_pattern}, "
                         f"{assignment.due_date} to {assignment.end_date}"
+                    )
+
+                elif (
+                    assignment.assignment_type
+                    == AssignmentType.CURRICULUM.value
+                ):
+
+                    school_days_shown = (
+                        assignment.recurrence_pattern.replace(",", ", ")
+                    )
+
+                    st.caption(
+                        f"📖 {OccurrenceService.lesson_count(assignment)} "
+                        f"lessons, {school_days_shown}, "
+                        f"{assignment.due_date} to "
+                        f"{OccurrenceService.last_lesson_date(assignment)}"
                     )
 
                 else:

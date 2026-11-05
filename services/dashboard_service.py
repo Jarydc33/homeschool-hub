@@ -68,9 +68,12 @@ class DashboardService:
                 overdue_assignments.append(
                     {
                         "assignment": assignment,
+                        # A curriculum can have several late lessons each.
                         "student_names": sorted(
-                            names[row.student_id]
-                            for row in late
+                            {
+                                names[row.student_id]
+                                for row in late
+                            }
                         ),
                     }
                 )

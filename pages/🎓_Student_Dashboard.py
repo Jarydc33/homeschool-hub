@@ -353,7 +353,7 @@ else:
 if next_assignment:
 
     st.info(
-        f"Next Task: {next_assignment.assignment.title}"
+        f"Next Task: {OccurrenceService.work_title(next_assignment)}"
     )
 
 col1, col2, col3 = st.columns(3)
@@ -395,7 +395,7 @@ def render_occurrence(
     )
 
     checked = st.checkbox(
-        f"{assignment.title} "
+        f"{OccurrenceService.work_title(occurrence)} "
         f"({assignment.subject.name})",
         value=completed,
         key=f"occurrence_{occurrence.id}"

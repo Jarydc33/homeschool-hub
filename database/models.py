@@ -37,6 +37,7 @@ class AssignmentStatus(str, Enum):
 class AssignmentType(str, Enum):
     ONE_TIME = "One Time"
     RECURRING = "Recurring"
+    CURRICULUM = "Curriculum"
 
 class RecurrencePattern(Enum):
 
@@ -274,6 +275,8 @@ class Assignment(Base):
         default=AssignmentType.ONE_TIME.value
     )
 
+    # How often recurring work happens, or a curriculum's school days, such
+    # as "Mon,Tue,Wed,Thu".
     recurrence_pattern = Column(String)
 
     # When one-time work is due, or the first date of recurring work.
@@ -402,6 +405,10 @@ class AssignmentOccurrence(Base):
     notes = Column(Text)
 
     score = Column(Numeric(6, 2))
+
+    # Which lesson this is, for curriculum work. It stays with the lesson when
+    # the date moves.
+    lesson_number = Column(Integer)
 
     assignment = relationship(
         "Assignment",
