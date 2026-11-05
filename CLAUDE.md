@@ -10,8 +10,8 @@ A homeschool management app: parents manage students, subjects and assignments; 
 ## Current status
 
 - **Phase:** 0 (bug fixes and Streamlit stopgaps) is complete. Phase 1 (portable foundation) is complete
-- **Done:** Edit Assignment dialog crash, `update_assignment` wiping completion status, family checks in the student, subject, assignment and user services, pytest suite, family and system-wide announcements, archived students left out of lists and blocked from logging in, restoring students, Create Assignment form, no database setup on page load, Alembic with a baseline migration, `users.auth_user_id`, constraints and `family_id` indexes, session context manager, registration transaction, fetching the current user once per page run, `families.timezone`, occurrences table and date generator, writing occurrences when assignments are saved, dashboards and check-offs per date, per-date notes, dropping the old `student_assignments` progress columns, curriculum schedules
-- **Next up:** Phase 2 (see the roadmap). Chosen differentiators, in build order: curriculum-to-schedule (done), missed-day recovery, then streaks and badges. State reports wait until later
+- **Done:** Edit Assignment dialog crash, `update_assignment` wiping completion status, family checks in the student, subject, assignment and user services, pytest suite, family and system-wide announcements, archived students left out of lists and blocked from logging in, restoring students, Create Assignment form, no database setup on page load, Alembic with a baseline migration, `users.auth_user_id`, constraints and `family_id` indexes, session context manager, registration transaction, fetching the current user once per page run, `families.timezone`, occurrences table and date generator, writing occurrences when assignments are saved, dashboards and check-offs per date, per-date notes, dropping the old `student_assignments` progress columns, curriculum schedules, missed-day recovery
+- **Next up:** Phase 2 (see the roadmap). Chosen differentiators, in build order: curriculum-to-schedule (done), missed-day recovery (done), then streaks and badges, followed by the opt-in family leaderboard. State reports wait until later
 - Update this section when a phase or major item is finished.
 
 ## Running it
@@ -78,6 +78,7 @@ tests/                  pytest suite for the services
 - Every page starts with `NavigationComponent.render()` and then a guard from `NavigationService`.
 - `student_assignments` only says who is assigned. `assignment_occurrences` holds one row per assignment, per student, per date, with its status, completion time, notes and score. Rows are created when an assignment is saved, never on page load. "Missed" is worked out when read, never stored.
 - A curriculum is an assignment of type "Curriculum" with one row per lesson, per student. `lesson_number` stays with the lesson when its date moves, `recurrence_pattern` holds the school days ("Mon,Tue"), and the lesson count and finish date come from the rows. Unfinished lessons stay overdue. Each student's dates can differ. "Missed a Day?" on the parent dashboard moves only unfinished lessons, for the chosen students; other assignment types don't shift.
+- Streaks and badges are worked out from occurrences when read, never stored (`services/achievement_service.py`). A day counts once all its work is done, whenever that happens. Days with no work don't count or break a streak.
 - Announcements (`banner_messages`) belong to a family, or are system-wide when `family_id` is NULL. Parents manage their family's; Admins (`users.role = 'Admin'`, no family, a separate login) manage system-wide ones and only see the Announcements page.
 
 ## Rules (follow these on every change)

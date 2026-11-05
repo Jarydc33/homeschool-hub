@@ -2,6 +2,7 @@
 
 import streamlit as st
 
+from services.achievement_service import AchievementService
 from services.auth_provider import AuthProvider
 from services.banner_service import BannerService
 from services.student_service import StudentService
@@ -242,10 +243,17 @@ else:
 
 today = AuthService.get_today()
 
+occurrence_rows = StudentService.get_student_occurrences(
+    selected_student.id
+)
+
 groups = OccurrenceService.group_for_student(
-    StudentService.get_student_occurrences(
-        selected_student.id
-    ),
+    occurrence_rows,
+    today
+)
+
+achievements = AchievementService.summary(
+    occurrence_rows,
     today
 )
 
@@ -266,9 +274,16 @@ progress = OccurrenceService.progress(groups)
 
 st.header(selected_student.name)
 
+streak = achievements["streak"]
+
 st.metric(
     "🔥 Streak",
-    "Coming Soon"
+    f"{streak} day" if streak == 1 else f"{streak} days"
+)
+
+st.caption(
+    f"Personal best: {achievements['best_streak']}. "
+    "Days with no work don't break a streak, and catching up repairs it."
 )
 
 col1, col2, col3 = st.columns(3)
@@ -316,6 +331,57 @@ st.write(
     f"{progress['completed']} of "
     f"{progress['total']} assignments complete so far"
 )
+
+st.divider()
+
+# ------------------------------------------------------------------
+# Badges
+# ------------------------------------------------------------------
+
+earned_badges = [
+    badge
+    for badge in achievements["badges"]
+    if badge["earned"]
+]
+
+unearned_badges = [
+    badge
+    for badge in achievements["badges"]
+    if not badge["earned"]
+]
+
+st.subheader(
+    f"🏅 Badges ({len(earned_badges)} of "
+    f"{len(achievements['badges'])})"
+)
+
+if earned_badges:
+
+    for badge in earned_badges:
+
+        st.write(
+            f"{badge['icon']} **{badge['name']}**: "
+            f"{badge['description']}"
+        )
+
+else:
+
+    st.caption(
+        "Finish your first piece of work to earn your first badge."
+    )
+
+if unearned_badges:
+
+    with st.expander(
+        "Badges to earn"
+    ):
+
+        for badge in unearned_badges:
+
+            st.write(
+                f"{badge['icon']} {badge['name']}: "
+                f"{badge['description']}"
+            )
 
 st.divider()
 
@@ -409,6 +475,21 @@ def render_occurrence(
         )
 
         if updated:
+
+            for badge in AchievementService.newly_earned(
+                achievements,
+                AchievementService.summary(
+                    StudentService.get_student_occurrences(
+                        selected_student.id
+                    ),
+                    today
+                )
+            ):
+
+                st.toast(
+                    f"New badge: {badge['name']}!",
+                    icon=badge["icon"]
+                )
 
             st.rerun()
 
