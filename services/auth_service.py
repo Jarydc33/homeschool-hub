@@ -596,6 +596,14 @@ class AuthService:
         logged out have no family, so they get UTC's date.
         """
 
+        return datetime.now(AuthService.get_zone()).date()
+
+    @staticmethod
+    def get_zone():
+        """
+        Returns the current family's time zone, or UTC if there isn't one.
+        """
+
         user = AuthService.get_current_user()
 
         name = (
@@ -614,7 +622,7 @@ class AuthService:
 
             zone = ZoneInfo("UTC")
 
-        return datetime.now(zone).date()
+        return zone
 
     @staticmethod
     def get_current_student():

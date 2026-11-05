@@ -5,6 +5,7 @@ import streamlit as st
 from services.achievement_service import AchievementService
 from services.auth_provider import AuthProvider
 from services.banner_service import BannerService
+from services.daily_message_service import DailyMessageService
 from services.event_service import EventService
 from services.student_service import StudentService
 from services.auth_service import (
@@ -280,6 +281,11 @@ progress = OccurrenceService.progress(groups)
 # ------------------------------------------------------------------
 
 st.header(selected_student.name)
+
+st.info(
+    DailyMessageService.get_message(today),
+    icon="💬"
+)
 
 streak = achievements["streak"]
 

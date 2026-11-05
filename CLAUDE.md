@@ -10,8 +10,8 @@ A homeschool management app: parents manage students, subjects and assignments; 
 ## Current status
 
 - **Phase:** 0 (bug fixes and Streamlit stopgaps) is complete. Phase 1 (portable foundation) is complete
-- **Done:** Edit Assignment dialog crash, `update_assignment` wiping completion status, family checks in the student, subject, assignment and user services, pytest suite, family and system-wide announcements, archived students left out of lists and blocked from logging in, restoring students, Create Assignment form, no database setup on page load, Alembic with a baseline migration, `users.auth_user_id`, constraints and `family_id` indexes, session context manager, registration transaction, fetching the current user once per page run, `families.timezone`, occurrences table and date generator, writing occurrences when assignments are saved, dashboards and check-offs per date, per-date notes, dropping the old `student_assignments` progress columns, curriculum schedules, missed-day recovery, streaks and badges, events, calendar view
-- **Next up:** Phase 2 (see the roadmap). Chosen differentiators, in build order: curriculum-to-schedule, missed-day recovery, and streaks and badges are done. Still to come: the opt-in family leaderboard, after the sister's family's test week State reports wait until later
+- **Done:** Edit Assignment dialog crash, `update_assignment` wiping completion status, family checks in the student, subject, assignment and user services, pytest suite, family and system-wide announcements, archived students left out of lists and blocked from logging in, restoring students, Create Assignment form, no database setup on page load, Alembic with a baseline migration, `users.auth_user_id`, constraints and `family_id` indexes, session context manager, registration transaction, fetching the current user once per page run, `families.timezone`, occurrences table and date generator, writing occurrences when assignments are saved, dashboards and check-offs per date, per-date notes, dropping the old `student_assignments` progress columns, curriculum schedules, missed-day recovery, streaks and badges, events, calendar view, reading tracker, recent activity, daily message
+- **Next up:** Phase 2 (see the roadmap). Chosen differentiators, in build order: curriculum-to-schedule, missed-day recovery, and streaks and badges are done. Next, the sister's family's test week, which decides the rest: scores and grades, P.E. tracker, bulk creator and importer, accessibility options, and the opt-in family leaderboard State reports wait until later
 - Update this section when a phase or major item is finished.
 
 ## Running it
@@ -62,7 +62,7 @@ services/               All business logic and DB access (static-method classes)
   auth_service.py       Current user, role, and family from session state
   session_service.py    Access token in browser localStorage (via components/browser_session)
   navigation_service.py Page guards: require_authentication / require_parent / require_student
-  *_service.py          One service per entity
+  *_service.py          One service per entity or feature
 database/db.py          Engine, SessionLocal, Base
 database/models.py      ORM models + enums (UserRole, AssignmentStatus, AssignmentType, RecurrencePattern)
 migrations/             Alembic environment and migration files

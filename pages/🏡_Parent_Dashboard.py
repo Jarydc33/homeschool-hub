@@ -7,7 +7,9 @@ import streamlit as st
 from services.student_service import StudentService
 from services.subject_service import SubjectService
 from services.assignment_service import AssignmentService
+from services.activity_service import ActivityService
 from services.banner_service import BannerService
+from services.daily_message_service import DailyMessageService
 from services.event_service import EventService
 
 from services.auth_service import (
@@ -153,6 +155,11 @@ st.caption(
 
 st.write(
     "Welcome back! Here's an overview of your homeschool."
+)
+
+st.info(
+    DailyMessageService.get_message(dashboard["today"]),
+    icon="💬"
 )
 
 if active_banners:
@@ -405,14 +412,32 @@ else:
 st.divider()
 
 # --------------------------------------------------
-# Recent Activity (Future)
+# Recent Activity
 # --------------------------------------------------
 
 st.subheader(
     "📝 Recent Activity"
 )
 
-st.info(
-    "Activity tracking coming soon."
+recent_activity = ActivityService.get_recent(
+    dashboard["today"]
 )
+
+if recent_activity:
+
+    for day, entries in recent_activity:
+
+        st.markdown(
+            f"**{ActivityService.day_label(day, dashboard['today'])}**"
+        )
+
+        for entry in entries:
+
+            st.write(entry)
+
+else:
+
+    st.info(
+        "Nothing has been finished in the last 7 days yet."
+    )
 

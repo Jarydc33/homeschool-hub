@@ -606,6 +606,8 @@ class Book(Base):
         default=datetime.utcnow
     )
 
+    student = relationship("Student")
+
     logs = relationship(
         "ReadingLog",
         back_populates="book"
