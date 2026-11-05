@@ -689,3 +689,29 @@ def test_new_assignment_can_be_marked_graded_from_the_form(world, page_as):
         db.close()
 
     assert any("Graded" in caption.value for caption in at.caption)
+
+
+def test_each_row_says_whether_its_completed(world, login, page_as):
+    _setup(world, login, done=True, student=world.ann, title="Finished")
+    _setup(world, login, student=world.ann, title="Not finished")
+
+    at = page_as("Grades", "Parent").run()
+    at.selectbox(key="grades_student").set_value(world.ann).run()
+
+    assert not at.exception
+    captions = [caption.value for caption in at.caption]
+    assert any("✅ Completed" in caption for caption in captions)
+    assert any("⬜ Not completed" in caption for caption in captions)
+    assert any("the next 7 days" in caption for caption in captions)
+
+
+def test_student_sees_completion_on_their_grades(world, login, page_as):
+    _, row_id = _setup(world, login, student=world.bob)
+    login(world.smith)
+    GradeService.set_grade(row_id, 45, 50)
+    mock.patch.stopall()
+
+    at = page_as("Grades", "Student", student_id=world.bob).run()
+
+    assert not at.exception
+    assert any("⬜ Not completed" in caption.value for caption in at.caption)

@@ -108,6 +108,18 @@ rows_shown = GradeService.rows_in_period(
 )
 
 
+def status_text(row):
+    """
+    Says whether a piece of work is checked off.
+    """
+
+    return (
+        "✅ Completed"
+        if OccurrenceService.is_complete(row)
+        else "⬜ Not completed"
+    )
+
+
 def table_text(value):
     """
     Keeps a name from breaking a Markdown table.
@@ -224,7 +236,8 @@ def render_row(
     st.write(f"**{title}**")
 
     st.caption(
-        f"{row.assignment.subject.name} · {row.occurrence_date}"
+        f"{row.assignment.subject.name} · {row.occurrence_date} · "
+        f"{status_text(row)}"
     )
 
     col1, col2, col3 = st.columns(3)
@@ -345,7 +358,9 @@ if is_parent:
         ):
 
             st.caption(
-                "Grading doesn't check it off, and blank scores never count."
+                "This shows work from the last 30 days and the next 7 days, "
+                "so you can grade something early. Grading doesn't check it "
+                "off, and blank scores never count."
             )
 
             for row in work["unfinished"]:
@@ -378,6 +393,7 @@ if rows_shown:
                 st.caption(
                     f"{row.assignment.subject.name} · "
                     f"{row.occurrence_date} · "
+                    f"{status_text(row)} · "
                     f"{float(row.score):g} out of "
                     f"{float(row.points_possible):g}"
                 )
