@@ -561,6 +561,92 @@ class EventStudent(Base):
 
     student = relationship("Student")
 
+class Book(Base):
+    """A book one student is reading or has read."""
+
+    __tablename__ = "books"
+
+    id = Column(Integer, primary_key=True)
+
+    family_id = Column(
+        Integer,
+        ForeignKey("families.id"),
+        nullable=False,
+        index=True
+    )
+
+    student_id = Column(
+        Integer,
+        ForeignKey("students.id"),
+        nullable=False,
+        index=True
+    )
+
+    title = Column(
+        String,
+        nullable=False
+    )
+
+    author = Column(String)
+
+    total_pages = Column(Integer)
+
+    # Empty means still reading.
+    finished_on = Column(Date)
+
+    active = Column(
+        Boolean,
+        nullable=False,
+        default=True
+    )
+
+    created_at = Column(
+        DateTime,
+        nullable=False,
+        default=datetime.utcnow
+    )
+
+    logs = relationship(
+        "ReadingLog",
+        back_populates="book"
+    )
+
+class ReadingLog(Base):
+    """How many pages of a book were read on one date."""
+
+    __tablename__ = "reading_logs"
+
+    __table_args__ = (
+        UniqueConstraint(
+            "book_id",
+            "log_date",
+            name="uq_reading_logs_book_date"
+        ),
+    )
+
+    id = Column(Integer, primary_key=True)
+
+    book_id = Column(
+        Integer,
+        ForeignKey("books.id"),
+        nullable=False
+    )
+
+    log_date = Column(
+        Date,
+        nullable=False
+    )
+
+    pages = Column(
+        Integer,
+        nullable=False
+    )
+
+    book = relationship(
+        "Book",
+        back_populates="logs"
+    )
+
 class CurrentSession:
 
     user_id = None

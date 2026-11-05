@@ -5,7 +5,7 @@ A homeschool management app: parents manage students, subjects and assignments; 
 - **Stack:** Python, Streamlit (multipage), SQLAlchemy 2.x, Supabase (Postgres + Auth)
 - **Live app:** https://homeschool-app.streamlit.app (Streamlit Community Cloud)
 - **Roadmap:** https://claude.ai/artifact/GJHnbvYc9TdaodQxVeD1dM
-- **Long-term plan:** move off Streamlit to our own site and domain (roadmap Phase 2). Prefer work that carries over: schema, services, tests. Keep Streamlit-specific plumbing minimal.
+- **Long-term plan:** move off Streamlit to our own site and domain (roadmap Phase 5, possibly Django). Android and iOS app store releases come later, so weigh that when choosing the new stack. Prefer work that carries over: schema, services, tests. Keep Streamlit-specific plumbing minimal. A full visual redesign happens with that move, so don't spend effort on polishing the look in Streamlit.
 
 ## Current status
 
@@ -80,6 +80,7 @@ tests/                  pytest suite for the services
 - A curriculum is an assignment of type "Curriculum" with one row per lesson, per student. `lesson_number` stays with the lesson when its date moves, `recurrence_pattern` holds the school days ("Mon,Tue"), and the lesson count and finish date come from the rows. Unfinished lessons stay overdue. Each student's dates can differ. "Missed a Day?" on the parent dashboard moves only unfinished lessons, for the chosen students; other assignment types don't shift.
 - Streaks and badges are worked out from occurrences when read, never stored (`services/achievement_service.py`). A day counts once all its work is done, whenever that happens. Days with no work don't count or break a streak.
 - Events belong to a family. With no `event_students` rows, one is for the whole family, including students added later. Repeating events' dates are worked out when read, and an edit applies to the whole series.
+- Books belong to one student, and `reading_logs` holds one row per book, per date. The reading streak is separate from the assignment streak and counts every calendar day. Reading totals and badges are worked out when read.
 - Announcements (`banner_messages`) belong to a family, or are system-wide when `family_id` is NULL. Parents manage their family's; Admins (`users.role = 'Admin'`, no family, a separate login) manage system-wide ones and only see the Announcements page.
 
 ## Rules (follow these on every change)

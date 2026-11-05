@@ -15,6 +15,7 @@ from services.navigation_service import (
     NavigationService
 )
 from services.occurrence_service import OccurrenceService
+from services.reading_service import ReadingService
 from components.navigation import (
     NavigationComponent
 )
@@ -258,6 +259,11 @@ achievements = AchievementService.summary(
     today
 )
 
+reading = ReadingService.summary(
+    ReadingService.get_books(selected_student.id),
+    today
+)
+
 overdue = groups["overdue"]
 today_assignments = groups["today"]
 upcoming = groups["upcoming"]
@@ -285,6 +291,11 @@ st.metric(
 st.caption(
     f"Personal best: {achievements['best_streak']}. "
     "Days with no work don't break a streak, and catching up repairs it."
+)
+
+st.write(
+    f"📖 {reading['streak']}-day reading streak · "
+    f"{reading['pages_this_week']} pages this week"
 )
 
 col1, col2, col3 = st.columns(3)
@@ -373,21 +384,23 @@ st.divider()
 # Badges
 # ------------------------------------------------------------------
 
+all_badges = achievements["badges"] + reading["badges"]
+
 earned_badges = [
     badge
-    for badge in achievements["badges"]
+    for badge in all_badges
     if badge["earned"]
 ]
 
 unearned_badges = [
     badge
-    for badge in achievements["badges"]
+    for badge in all_badges
     if not badge["earned"]
 ]
 
 st.subheader(
     f"🏅 Badges ({len(earned_badges)} of "
-    f"{len(achievements['badges'])})"
+    f"{len(all_badges)})"
 )
 
 if earned_badges:
