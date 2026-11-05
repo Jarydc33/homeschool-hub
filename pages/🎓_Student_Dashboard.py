@@ -16,6 +16,7 @@ from services.navigation_service import (
     NavigationService
 )
 from services.occurrence_service import OccurrenceService
+from services.pe_service import PEService
 from services.reading_service import ReadingService
 from components.navigation import (
     NavigationComponent
@@ -265,6 +266,11 @@ reading = ReadingService.summary(
     today
 )
 
+pe = PEService.summary(
+    PEService.get_logs(selected_student.id),
+    today
+)
+
 overdue = groups["overdue"]
 today_assignments = groups["today"]
 upcoming = groups["upcoming"]
@@ -302,6 +308,11 @@ st.caption(
 st.write(
     f"📖 {reading['streak']}-day reading streak · "
     f"{reading['pages_this_week']} pages this week"
+)
+
+st.write(
+    f"🏃 {PEService.describe_minutes(pe['minutes_this_week'])} of P.E. "
+    f"this week · {pe['active_days_this_week']} of 7 days active"
 )
 
 col1, col2, col3 = st.columns(3)
@@ -390,7 +401,11 @@ st.divider()
 # Badges
 # ------------------------------------------------------------------
 
-all_badges = achievements["badges"] + reading["badges"]
+all_badges = (
+    achievements["badges"]
+    + reading["badges"]
+    + pe["badges"]
+)
 
 earned_badges = [
     badge

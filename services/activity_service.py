@@ -8,6 +8,7 @@ from database.db import get_session
 from database.models import (
     Assignment,
     AssignmentOccurrence,
+    ActivityLog,
     AssignmentStatus,
     Book,
     ReadingLog,
@@ -163,6 +164,42 @@ class ActivityService:
         return entries
 
     @staticmethod
+    def _pe(
+        db,
+        family_id,
+        first_day
+    ):
+        """
+        Returns (day, "", text) for P.E. logged since first_day. It has a date
+        but no time.
+        """
+
+        logs = (
+            db.query(ActivityLog)
+            .join(ActivityLog.student)
+            .options(
+                joinedload(ActivityLog.student)
+            )
+            .filter(
+                ActivityLog.log_date >= first_day,
+                ActivityLog.family_id == family_id,
+                Student.active.is_(True)
+            )
+            .all()
+        )
+
+        return [
+            (
+                log.log_date,
+                "",
+                f"🏃 {log.student.name} did {log.minutes} "
+                f"minute{'' if log.minutes == 1 else 's'} of "
+                f"**{log.activity}**"
+            )
+            for log in logs
+        ]
+
+    @staticmethod
     def get_recent(today):
         """
         Returns [(day, [text])] for what this family's students did in the
@@ -188,6 +225,11 @@ class ActivityService:
                     AuthService.get_zone()
                 )
                 + ActivityService._reading(
+                    db,
+                    family_id,
+                    first_day
+                )
+                + ActivityService._pe(
                     db,
                     family_id,
                     first_day

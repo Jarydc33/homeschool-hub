@@ -706,6 +706,51 @@ class GradingPeriod(Base):
         default=datetime.utcnow
     )
 
+class ActivityLog(Base):
+    """One P.E. activity a student did on one date."""
+
+    __tablename__ = "activity_logs"
+
+    __table_args__ = (
+        Index(
+            "ix_activity_logs_student_date",
+            "student_id",
+            "log_date"
+        ),
+    )
+
+    id = Column(Integer, primary_key=True)
+
+    family_id = Column(
+        Integer,
+        ForeignKey("families.id"),
+        nullable=False,
+        index=True
+    )
+
+    student_id = Column(
+        Integer,
+        ForeignKey("students.id"),
+        nullable=False
+    )
+
+    log_date = Column(
+        Date,
+        nullable=False
+    )
+
+    activity = Column(
+        String,
+        nullable=False
+    )
+
+    minutes = Column(
+        Integer,
+        nullable=False
+    )
+
+    student = relationship("Student")
+
 class CurrentSession:
 
     user_id = None
