@@ -1,11 +1,11 @@
 # Tally
 
-Full name Tally Homeschool, shown as Tally in the app. Tagline: Less logging, more learning. Formerly Homeschool Hub, which remains in the browser storage keys on purpose, since changing them would log everyone out, and in the repo and Streamlit addresses.
+Full name Tally Homeschool, shown as Tally in the app. Tagline: Less logging, more learning. Formerly Homeschool Hub, which remains in the browser storage keys on purpose, since changing them would log everyone out, and in the repo address.
 
 A homeschool management app: parents manage students, subjects and assignments; students see a daily dashboard and check off their work.
 
 - **Stack:** Python, Streamlit (multipage), SQLAlchemy 2.x, Supabase (Postgres + Auth)
-- **Live app:** https://homeschool-app.streamlit.app (Streamlit Community Cloud)
+- **Live app:** https://tally-homeschool.streamlit.app (Streamlit Community Cloud)
 - **Roadmap:** https://claude.ai/artifact/GJHnbvYc9TdaodQxVeD1dM
 - **Long-term plan:** move off Streamlit to our own site and domain (roadmap Phase 5, possibly Django). Android and iOS app store releases come later, so weigh that when choosing the new stack. Prefer work that carries over: schema, services, tests. Keep Streamlit-specific plumbing minimal. A full visual redesign happens with that move, so don't spend effort on polishing the look in Streamlit.
 

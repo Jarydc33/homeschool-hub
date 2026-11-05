@@ -327,7 +327,7 @@ class AuthProvider:
                 email,
                 {
                     "redirect_to":
-                    "https://homeschool-app.streamlit.app/Complete_Account"
+                    "https://tally-homeschool.streamlit.app/Complete_Account"
                 }
             )
         )
