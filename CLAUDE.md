@@ -12,8 +12,8 @@ A homeschool management app: parents manage students, subjects and assignments; 
 ## Current status
 
 - **Phase:** 0 (bug fixes and Streamlit stopgaps) is complete. Phase 1 (portable foundation) is complete
-- **Done:** Edit Assignment dialog crash, `update_assignment` wiping completion status, family checks in the student, subject, assignment and user services, pytest suite, family and system-wide announcements, archived students left out of lists and blocked from logging in, restoring students, Create Assignment form, no database setup on page load, Alembic with a baseline migration, `users.auth_user_id`, constraints and `family_id` indexes, session context manager, registration transaction, fetching the current user once per page run, `families.timezone`, occurrences table and date generator, writing occurrences when assignments are saved, dashboards and check-offs per date, per-date notes, dropping the old `student_assignments` progress columns, curriculum schedules, missed-day recovery, streaks and badges, events, calendar view, reading tracker, recent activity, daily message, scores and grades (not the subject health score)
-- **Next up:** Phase 2 (see the roadmap). Chosen differentiators, in build order: curriculum-to-schedule, missed-day recovery, and streaks and badges are done. Next, the sister's family's test week, which decides the rest: subject health score, P.E. tracker, bulk creator and importer, accessibility options, and the opt-in family leaderboard State reports wait until later
+- **Done:** Edit Assignment dialog crash, `update_assignment` wiping completion status, family checks in the student, subject, assignment and user services, pytest suite, family and system-wide announcements, archived students left out of lists and blocked from logging in, restoring students, Create Assignment form, no database setup on page load, Alembic with a baseline migration, `users.auth_user_id`, constraints and `family_id` indexes, session context manager, registration transaction, fetching the current user once per page run, `families.timezone`, occurrences table and date generator, writing occurrences when assignments are saved, dashboards and check-offs per date, per-date notes, dropping the old `student_assignments` progress columns, curriculum schedules, missed-day recovery, streaks and badges, events, calendar view, reading tracker, recent activity, daily message, scores and grades (not the subject health score), P.E. tracker, family settings (name and time zone), grouped sidebar
+- **Next up:** Phase 2 (see the roadmap). Chosen differentiators, in build order: curriculum-to-schedule, missed-day recovery, and streaks and badges are done. Next, the sister's family's test week, which decides the rest: subject health score, bulk creator and importer, accessibility options, and the opt-in family leaderboard State reports wait until later
 - Update this section when a phase or major item is finished.
 
 ## Running it
@@ -58,7 +58,7 @@ Never print, log, or commit any of these values.
 ```
 app.py                  Router: sends users to the landing page or a dashboard
 pages/                  One file per Streamlit page (emoji filenames, e.g. "✅_Assignments.py")
-components/navigation.py  Sidebar nav + logout
+components/navigation.py  Sidebar nav (grouped links per role) + logout
 services/               All business logic and DB access (static-method classes)
   auth_provider.py      Supabase Auth calls (login, register, invite, set password)
   auth_service.py       Current user, role, and family from session state
@@ -116,7 +116,6 @@ tests/                  pytest suite for the services
 - Archived students can't log in (`AuthService.get_current_user` blocks them) until a parent restores them on the Students page. Subjects and assignments can't be restored from the app yet.
 - Invites and password resets depend on Supabase's email templates. "Invite user" must link to `{{ .SiteURL }}/Complete_Account?token_hash={{ .TokenHash }}&type=invite`, and "Reset Password" to the same address with `type=recovery`.
 - Changing a student's login email has to update Supabase and `users` together, because people sign in with Supabase's copy and the app shows its own. `AuthService.update_student_email` handles this. Supabase refuses an email another account already has. Parents can't change their own email yet.
-- Families can't change their time zone after signing up yet; that needs a settings screen.
 - Student Mode (a parent's device locked to one student, with a parent PIN to exit) and pairing codes for kids without email are designed but not built (roadmap Phase 3). Their tables get added then, alongside the UI.
 
 ## Working style

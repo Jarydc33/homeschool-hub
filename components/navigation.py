@@ -4,8 +4,107 @@ from services.auth_service import (
     AuthService
 )
 
+# Each group is (heading, [(page, label, icon)]). A heading of None means the
+# links sit above the groups.
+
+PARENT_LINKS = [
+    (
+        None,
+        [
+            ("pages/🏡_Parent_Dashboard.py", "Dashboard", "🏡"),
+            ("pages/🎓_Student_Dashboard.py", "Student View", "🎓"),
+        ],
+    ),
+    (
+        "Plan",
+        [
+            ("pages/📆_Calendar.py", "Calendar", "📆"),
+            ("pages/✅_Assignments.py", "Assignments", "✅"),
+            ("pages/📅_Events.py", "Events", "📅"),
+            ("pages/📚_Subjects.py", "Subjects", "📚"),
+        ],
+    ),
+    (
+        "Track",
+        [
+            ("pages/📊_Grades.py", "Grades", "📊"),
+            ("pages/📖_Reading.py", "Reading", "📖"),
+            ("pages/🏃_PE.py", "P.E.", "🏃"),
+        ],
+    ),
+    (
+        "Family",
+        [
+            ("pages/👨‍🎓_Students.py", "Students", "👨‍🎓"),
+            ("pages/📢_Announcements.py", "Announcements", "📢"),
+            ("pages/⚙️_Settings.py", "Settings", "⚙️"),
+        ],
+    ),
+]
+
+STUDENT_LINKS = [
+    (
+        None,
+        [
+            ("pages/🎓_Student_Dashboard.py", "Dashboard", "🎓"),
+        ],
+    ),
+    (
+        "Plan",
+        [
+            ("pages/📆_Calendar.py", "Calendar", "📆"),
+            ("pages/📅_Events.py", "Events", "📅"),
+        ],
+    ),
+    (
+        "Track",
+        [
+            ("pages/📊_Grades.py", "Grades", "📊"),
+            ("pages/📖_Reading.py", "Reading", "📖"),
+            ("pages/🏃_PE.py", "P.E.", "🏃"),
+        ],
+    ),
+]
+
+ADMIN_LINKS = [
+    (
+        None,
+        [
+            ("pages/📢_Announcements.py", "Announcements", "📢"),
+        ],
+    ),
+]
+
+LOGGED_OUT_LINKS = [
+    (
+        None,
+        [
+            ("pages/🏡_Landing_Page.py", "Home", "🏡"),
+            ("pages/🔐_Login.py", "Login", "🔐"),
+            ("pages/📝_Register.py", "Register", "📝"),
+        ],
+    ),
+]
+
 
 class NavigationComponent:
+
+    @staticmethod
+    def _render_links(groups):
+
+        for heading, links in groups:
+
+            if heading:
+
+                st.caption(heading.upper())
+
+            for page, label, icon in links:
+
+                st.page_link(
+                    page,
+                    label=label,
+                    icon=icon
+                )
 
     @staticmethod
     def render():
@@ -44,131 +143,17 @@ class NavigationComponent:
 
                 st.divider()
 
-                # -----------------
-                # Parent Navigation
-                # -----------------
-
                 if AuthService.is_parent():
 
-                    st.page_link(
-                        "pages/🏡_Parent_Dashboard.py",
-                        label="Dashboard",
-                        icon="🏡"
-                    )
-
-                    st.page_link(
-                        "pages/👨‍🎓_Students.py",
-                        label="Students",
-                        icon="👨‍🎓"
-                    )
-
-                    st.page_link(
-                        "pages/📚_Subjects.py",
-                        label="Subjects",
-                        icon="📚"
-                    )
-
-                    st.page_link(
-                        "pages/✅_Assignments.py",
-                        label="Assignments",
-                        icon="✅"
-                    )
-
-                    st.page_link(
-                        "pages/📅_Events.py",
-                        label="Events",
-                        icon="📅"
-                    )
-
-                    st.page_link(
-                        "pages/📆_Calendar.py",
-                        label="Calendar",
-                        icon="📆"
-                    )
-
-                    st.page_link(
-                        "pages/📖_Reading.py",
-                        label="Reading",
-                        icon="📖"
-                    )
-
-                    st.page_link(
-                        "pages/🏃_PE.py",
-                        label="P.E.",
-                        icon="🏃"
-                    )
-
-                    st.page_link(
-                        "pages/📊_Grades.py",
-                        label="Grades",
-                        icon="📊"
-                    )
-
-                    st.page_link(
-                        "pages/📢_Announcements.py",
-                        label="Announcements",
-                        icon="📢"
-                    )
-
-                    st.page_link(
-                        "pages/🎓_Student_Dashboard.py",
-                        label="Student Dashboard",
-                        icon="🎓"
-                    )
-
-                # -----------------
-                # Student Navigation
-                # -----------------
+                    NavigationComponent._render_links(PARENT_LINKS)
 
                 elif AuthService.is_student():
 
-                    st.page_link(
-                        "pages/🎓_Student_Dashboard.py",
-                        label="Dashboard",
-                        icon="🎓"
-                    )
-
-                    st.page_link(
-                        "pages/📅_Events.py",
-                        label="Events",
-                        icon="📅"
-                    )
-
-                    st.page_link(
-                        "pages/📆_Calendar.py",
-                        label="Calendar",
-                        icon="📆"
-                    )
-
-                    st.page_link(
-                        "pages/📖_Reading.py",
-                        label="Reading",
-                        icon="📖"
-                    )
-
-                    st.page_link(
-                        "pages/🏃_PE.py",
-                        label="P.E.",
-                        icon="🏃"
-                    )
-
-                    st.page_link(
-                        "pages/📊_Grades.py",
-                        label="Grades",
-                        icon="📊"
-                    )
-
-                # -----------------
-                # Admin Navigation
-                # -----------------
+                    NavigationComponent._render_links(STUDENT_LINKS)
 
                 elif AuthService.is_admin():
 
-                    st.page_link(
-                        "pages/📢_Announcements.py",
-                        label="Announcements",
-                        icon="📢"
-                    )
+                    NavigationComponent._render_links(ADMIN_LINKS)
 
                 st.divider()
 
@@ -181,20 +166,4 @@ class NavigationComponent:
                 st.caption("Version 0.4.1")
             else:
 
-                st.page_link(
-                    "pages/🏡_Landing_Page.py",
-                    label="Home",
-                    icon="🏡"
-                )
-
-                st.page_link(
-                    "pages/🔐_Login.py",
-                    label="Login",
-                    icon="🔐"
-                )
-
-                st.page_link(
-                    "pages/📝_Register.py",
-                    label="Register",
-                    icon="📝"
-                )
+                NavigationComponent._render_links(LOGGED_OUT_LINKS)

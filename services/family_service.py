@@ -17,6 +17,9 @@ COMMON_TIMEZONES = {
 }
 
 
+MAX_FAMILY_NAME_LENGTH = 100
+
+
 class FamilyService:
 
     @staticmethod
@@ -52,6 +55,64 @@ class FamilyService:
             return browser_timezone
 
         return DEFAULT_TIMEZONE
+
+    @staticmethod
+    def settings_error(
+        family_name,
+        timezone
+    ):
+        """
+        Returns what's wrong with a family's settings for showing, or None.
+        """
+
+        if not (family_name or "").strip():
+            return "Please enter a family name."
+
+        if len(family_name.strip()) > MAX_FAMILY_NAME_LENGTH:
+            return "Please use a shorter family name."
+
+        if timezone not in available_timezones():
+            return "Please choose a time zone from the list."
+
+        return None
+
+    @staticmethod
+    def update_settings(
+        family_name,
+        timezone
+    ):
+        """
+        Saves the current family's name and time zone. Returns the family, or
+        None if they aren't valid or the current user isn't a parent. Saved
+        dates don't change; only what counts as today does.
+        """
+
+        # Imported here because AuthService imports this module.
+        from services.auth_service import AuthService
+
+        if (
+            not AuthService.is_parent()
+            or FamilyService.settings_error(family_name, timezone)
+        ):
+            return None
+
+        with get_session() as db:
+
+            family = db.get(
+                Family,
+                AuthService.get_current_family()
+            )
+
+            if not family:
+                return None
+
+            family.family_name = family_name.strip()
+            family.timezone = timezone
+
+            db.commit()
+            db.refresh(family)
+
+            return family
 
     @staticmethod
     def create_family_with_parent(
