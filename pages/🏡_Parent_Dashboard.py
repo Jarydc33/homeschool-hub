@@ -11,6 +11,7 @@ from services.activity_service import ActivityService
 from services.banner_service import BannerService
 from services.daily_message_service import DailyMessageService
 from services.event_service import EventService
+from services.student_mode_service import StudentModeService
 
 from services.auth_service import (
     AuthService
@@ -130,6 +131,66 @@ def missed_day_dialog():
         st.rerun()
 
 
+@st.dialog("🔒 Start Student Mode")
+def student_mode_dialog():
+
+    st.write(
+        "This device switches to one student's view. They can see and check "
+        "off their own work, but can't open parent pages or log out. "
+        "Leaving Student Mode needs the family PIN."
+    )
+
+    if not StudentModeService.has_pin():
+
+        st.info(
+            "First, set a family PIN in Settings."
+        )
+
+        st.page_link(
+            "pages/⚙️_Settings.py",
+            label="Go to Settings",
+            icon="⚙️"
+        )
+
+        return
+
+    students = dashboard["students"]
+
+    if not students:
+
+        st.info(
+            "Add a student first."
+        )
+
+        return
+
+    student = st.selectbox(
+        "Student",
+        students,
+        format_func=lambda student: student.name,
+        key="student_mode_student"
+    )
+
+    if st.button(
+        "Start Student Mode",
+        type="primary"
+    ):
+
+        started, message = StudentModeService.start(
+            student.id
+        )
+
+        if not started:
+
+            st.error(message)
+
+            return
+
+        st.switch_page(
+            "pages/🎓_Student_Dashboard.py"
+        )
+
+
 active_banners = (
     BannerService.get_active_banners()
 )
@@ -161,6 +222,13 @@ st.info(
     DailyMessageService.get_message(dashboard["today"]),
     icon="💬"
 )
+
+if st.button(
+    "🔒 Start Student Mode",
+    help="Hand this device to a student"
+):
+
+    student_mode_dialog()
 
 if active_banners:
 

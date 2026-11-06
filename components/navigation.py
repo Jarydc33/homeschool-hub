@@ -3,6 +3,7 @@ from services.session_service import SessionService
 from services.auth_service import (
     AuthService
 )
+from services.student_mode_service import StudentModeService
 
 # Each group is (heading, [(page, label, icon)]). A heading of None means the
 # links sit above the groups.
@@ -87,6 +88,43 @@ LOGGED_OUT_LINKS = [
 ]
 
 
+@st.dialog("🔒 Exit Student Mode")
+def exit_student_mode_dialog():
+
+    # A password box outside a form can lose its value; see CLAUDE.md.
+
+    with st.form("exit_student_mode_form"):
+
+        pin = st.text_input(
+            "Parent PIN",
+            type="password",
+            max_chars=4
+        )
+
+        if st.form_submit_button("🔓 Exit Student Mode"):
+
+            exited, message = StudentModeService.exit(pin)
+
+            if exited:
+
+                st.switch_page(
+                    "pages/🏡_Parent_Dashboard.py"
+                )
+
+            st.error(message)
+
+    st.caption(
+        "Forgot the PIN? Log out, then sign back in with the parent "
+        "password. You can set a new PIN in Settings."
+    )
+
+    if st.button("Log out instead"):
+
+        AuthService.logout()
+
+        st.rerun()
+
+
 class NavigationComponent:
 
     @staticmethod
@@ -131,7 +169,36 @@ class NavigationComponent:
                 AuthService.get_current_user()
             )
 
-            if current_user:
+            student_mode = (
+                AuthService.get_student_mode()
+                if current_user
+                else None
+            )
+
+            if student_mode:
+
+                # No Logout button here: leaving Student Mode needs the PIN,
+                # and the exit dialog offers logging out instead.
+
+                st.success(
+                    f"🎓 {student_mode.student.name}"
+                )
+
+                st.caption("Student Mode")
+
+                st.divider()
+
+                NavigationComponent._render_links(STUDENT_LINKS)
+
+                st.divider()
+
+                if st.button("🔒 Exit Student Mode"):
+
+                    exit_student_mode_dialog()
+
+                st.caption("Version 0.4.1")
+
+            elif current_user:
 
                 st.success(
                     f"👤 {current_user.email}"

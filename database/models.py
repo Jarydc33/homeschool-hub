@@ -79,6 +79,13 @@ class Family(Base):
         server_default=DEFAULT_TIMEZONE
     )
 
+    # The bcrypt hash of the 4-digit PIN that ends Student Mode. Empty until
+    # a parent sets one, and Student Mode can't start without it.
+    parent_pin_hash = Column(
+        String,
+        nullable=True
+    )
+
     created_at = Column(
         DateTime,
         default=datetime.utcnow
@@ -750,6 +757,84 @@ class ActivityLog(Base):
     )
 
     student = relationship("Student")
+
+class DeviceMode(str, Enum):
+    STUDENT_MODE = "student_mode"
+
+
+class DeviceSession(Base):
+    """
+    A parent's login switched to one student's view. It's tied to the
+    Supabase session in the login token, so the server decides the mode and
+    the browser can't change it. Ending it sets revoked_at; rows are kept.
+    """
+
+    __tablename__ = "device_sessions"
+
+    id = Column(Integer, primary_key=True)
+
+    family_id = Column(
+        Integer,
+        ForeignKey("families.id"),
+        nullable=False,
+        index=True
+    )
+
+    student_id = Column(
+        Integer,
+        ForeignKey("students.id"),
+        nullable=False
+    )
+
+    mode = Column(
+        String,
+        nullable=False
+    )
+
+    # The session_id claim from the parent's Supabase access token.
+    auth_session_id = Column(
+        String,
+        nullable=False,
+        index=True
+    )
+
+    created_by = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False
+    )
+
+    created_at = Column(
+        DateTime,
+        nullable=False,
+        default=datetime.utcnow
+    )
+
+    last_seen_at = Column(
+        DateTime,
+        nullable=False,
+        default=datetime.utcnow
+    )
+
+    revoked_at = Column(
+        DateTime,
+        nullable=True
+    )
+
+    failed_pin_attempts = Column(
+        Integer,
+        nullable=False,
+        default=0,
+        server_default="0"
+    )
+
+    locked_until = Column(
+        DateTime,
+        nullable=True
+    )
+
+    student = relationship("Student")
+
 
 class CurrentSession:
 

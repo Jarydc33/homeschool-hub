@@ -1,3 +1,5 @@
+import base64
+import json
 import logging
 
 import streamlit as st
@@ -260,6 +262,38 @@ class AuthProvider:
             # Probably a network problem, so keep the login for next time.
 
             return None
+
+    @staticmethod
+    def session_id_from_token(
+        access_token
+    ):
+        """
+        Returns the session_id claim in a Supabase access token, or None.
+        It stays the same when the token is refreshed and changes with each
+        new login. The signature isn't checked here, so use it only once
+        Supabase has accepted the token, as finding the current user does.
+        """
+
+        if not access_token:
+            return None
+
+        try:
+
+            payload = access_token.split(".")[1]
+
+            claims = json.loads(
+                base64.urlsafe_b64decode(
+                    payload + "=" * (-len(payload) % 4)
+                )
+            )
+
+        except (IndexError, ValueError):
+
+            return None
+
+        session_id = claims.get("session_id")
+
+        return str(session_id) if session_id else None
 
     @staticmethod
     def _refresh_saved_login(

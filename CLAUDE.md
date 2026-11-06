@@ -85,6 +85,7 @@ tests/                  pytest suite for the services
 - Books belong to one student, and `reading_logs` holds one row per book, per date. The reading streak is separate from the assignment streak and counts every calendar day. Reading totals and badges are worked out when read.
 - Grades: an occurrence's `score` is points earned, out of its `points_possible`, on assignments marked `graded`. Percentages and letters are worked out when read. A blank score never counts, not even as zero. A grade belongs to the `grading_periods` row its date falls in, and periods can't overlap. Archived assignments and subjects still count, as a deliberate exception to rule 3, so tidying up doesn't change a past semester.
 - P.E.: `activity_logs` holds one row per activity, per student, per date, and several can share a date. A mistaken entry is deleted, not archived, as a deliberate exception to rule 3, since it's a correction, not a record. There's no P.E. streak; totals, active days and hour badges are worked out when read.
+- Student Mode: a parent's login switched to one student's view. `device_sessions` ties it to the Supabase `session_id` claim in the login token, so the server decides the mode and clearing the browser can't end it. While a row is active (`revoked_at` empty), `AuthService.is_student()` is true, `is_parent()` is false, and `get_current_student()` returns that student, so pages and services need no special cases. Leaving needs the family PIN (`families.parent_pin_hash`, bcrypt, exactly 4 digits); 5 wrong tries lock it for 5 minutes. Logging out ends it without the PIN, since getting back in needs the parent's password. Students in Student Mode have no `users` row.
 - Announcements (`banner_messages`) belong to a family, or are system-wide when `family_id` is NULL. Parents manage their family's; Admins (`users.role = 'Admin'`, no family, a separate login) manage system-wide ones and only see the Announcements page.
 
 ## Rules (follow these on every change)
@@ -116,7 +117,7 @@ tests/                  pytest suite for the services
 - Archived students can't log in (`AuthService.get_current_user` blocks them) until a parent restores them on the Students page. Subjects and assignments are restored on their own pages. Books and events can't be restored yet.
 - Invites and password resets depend on Supabase's email templates. "Invite user" must link to `{{ .SiteURL }}/Complete_Account?token_hash={{ .TokenHash }}&type=invite`, and "Reset Password" to the same address with `type=recovery`.
 - Changing a student's login email has to update Supabase and `users` together, because people sign in with Supabase's copy and the app shows its own. `AuthService.update_student_email` handles this. Supabase refuses an email another account already has. Parents can't change their own email yet.
-- Student Mode (a parent's device locked to one student, with a parent PIN to exit) and pairing codes for kids without email are designed but not built (roadmap Phase 3). Their tables get added then, alongside the UI.
+- Pairing codes (a kid's own device, no email) are designed but not built (roadmap Phase 3). They'd add a hashed device token to `device_sessions`.
 
 ## Working style
 

@@ -10,6 +10,7 @@ from services.user_service import UserService
 from database.models import DEFAULT_TIMEZONE, UserRole
 
 from services.auth_provider import AuthProvider
+from services.student_mode_service import StudentModeService
 from services.session_service import (
     SessionService
 )
@@ -44,6 +45,9 @@ INVITE_FAILED_MESSAGE = (
 # Holds the current user for one page run. Having no user is saved too, since
 # looking that up can mean a call to Supabase.
 USER_THIS_RUN = "current_user_this_run"
+
+# Holds this login's Student Mode row, or None, for one page run.
+MODE_THIS_RUN = "student_mode_this_run"
 
 
 class AuthService:
@@ -429,6 +433,61 @@ class AuthService:
             None
         )
 
+        AuthService.forget_student_mode()
+
+    @staticmethod
+    def forget_student_mode():
+        """
+        Makes the next check look up Student Mode fresh, after it starts or
+        ends.
+        """
+
+        st.session_state.pop(
+            MODE_THIS_RUN,
+            None
+        )
+
+    @staticmethod
+    def get_auth_session_id():
+        """
+        Returns the Supabase session behind this login, or None.
+        """
+
+        return AuthProvider.session_id_from_token(
+            SessionService.get_known_token()
+        )
+
+    @staticmethod
+    def get_student_mode():
+        """
+        Returns this login's Student Mode row, with its student, or None.
+        Only a parent's login can be in Student Mode. Looked up once per
+        page run.
+        """
+
+        if MODE_THIS_RUN not in st.session_state:
+
+            st.session_state[
+                MODE_THIS_RUN
+            ] = AuthService._load_student_mode()
+
+        return st.session_state[
+            MODE_THIS_RUN
+        ]
+
+    @staticmethod
+    def _load_student_mode():
+
+        user = AuthService.get_current_user()
+
+        if not user or user.role != UserRole.PARENT.value:
+            return None
+
+        return StudentModeService.find_active(
+            user.family_id,
+            AuthService.get_auth_session_id()
+        )
+
     @staticmethod
     def set_current_user(user_id):
 
@@ -545,6 +604,7 @@ class AuthService:
         return (
             user.role
             == UserRole.PARENT.value
+            and not AuthService.get_student_mode()
         )
 
     @staticmethod
@@ -557,9 +617,14 @@ class AuthService:
         if not user:
             return False
 
+        if user.role == UserRole.STUDENT.value:
+            return True
+
+        # A parent's login in Student Mode counts as that student.
+
         return (
-            user.role
-            == UserRole.STUDENT.value
+            user.role == UserRole.PARENT.value
+            and AuthService.get_student_mode() is not None
         )
 
     @staticmethod
@@ -634,6 +699,12 @@ class AuthService:
         if not user:
             return None
 
+        if user.role == UserRole.PARENT.value:
+
+            mode = AuthService.get_student_mode()
+
+            return mode.student_id if mode else None
+
         return user.student_id
 
     @staticmethod
@@ -642,6 +713,11 @@ class AuthService:
         Ends the session in Supabase and here, and queues removing the token
         from the browser. Follow this with st.rerun().
         """
+
+        # Logging out of Student Mode is allowed without the PIN, since
+        # getting back in needs the parent's password.
+
+        StudentModeService.end_current_for_logout()
 
         access_token = (
             SessionService.get_known_token()
