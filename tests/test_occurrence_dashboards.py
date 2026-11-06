@@ -168,6 +168,28 @@ def test_progress_with_nothing_due_is_zero():
     assert OccurrenceService.progress(empty)["percent"] == 0
 
 
+def _row(day):
+    return SimpleNamespace(occurrence_date=day)
+
+
+def test_today_progress_counts_only_work_dated_today():
+    groups = {
+        "completed": [_row(TODAY), _row(YESTERDAY), _row(TOMORROW)],
+        "overdue": [_row(LAST_WEEK)],
+        "today": [_row(TODAY), _row(TODAY)],
+        "upcoming": [_row(TOMORROW)],
+        "missed": [_row(YESTERDAY)],
+    }
+
+    assert OccurrenceService.today_progress(groups, TODAY) == (1, 3)
+
+
+def test_today_progress_with_nothing_today_is_zero():
+    empty = dict(completed=[], overdue=[], today=[], upcoming=[], missed=[])
+
+    assert OccurrenceService.today_progress(empty, TODAY) == (0, 0)
+
+
 def test_assignment_progress_counts_recurring_dates_so_far(parent):
     w = parent
     work = daily(w, start=YESTERDAY, end=NEXT_WEEK)
@@ -438,7 +460,7 @@ def test_student_page_shows_todays_date_and_checks_it_off(smith_parent, page_as,
 
     assert not at.exception
     subheaders = [s.value for s in at.subheader]
-    assert "📅 Today's Work" in subheaders
+    assert "📅 Today's Work (1)" in subheaders
     assert any("Missed (2)" in e.label for e in at.expander)
     math = [c for c in at.checkbox if c.label.startswith("Math")]
     # Today, the next upcoming date, and two missed dates.
@@ -474,10 +496,8 @@ def test_student_page_only_lists_recent_completed_work(smith_parent, page_as):
     at = page_as("Student_Dashboard", w.smith, "Student", w.bob).run()
 
     assert not at.exception
-    assert "✅ Completed in the Last 30 Days" in [s.value for s in at.subheader]
+    assert any("Completed in the Last 30 Days (1)" in e.label for e in at.expander)
     assert len([c for c in at.checkbox if c.label.startswith("Math") and c.value]) == 1
-    # Both still count toward progress.
-    assert at.metric[1].value == "2"
 
 
 def test_student_page_only_lists_recent_missed_dates(smith_parent, page_as):
@@ -522,3 +542,20 @@ def test_assignments_page_shows_recurring_dates_and_progress(smith_parent, page_
     captions = " ".join(c.value for c in at.caption)
     assert "Every Day" in captions
     assert "Progress: 0/3" in captions
+
+
+def test_student_page_puts_work_first_and_tucks_away_the_parents_login_tools(
+    smith_parent, page_as
+):
+    w = smith_parent
+    _add_work(w, date.today())
+    mock.patch.stopall()
+
+    at = page_as("Student_Dashboard", w.smith, "Parent").run()
+
+    assert not at.exception
+    assert any("Student Login" in e.label for e in at.expander)
+    subheaders = [s.value for s in at.subheader]
+    assert subheaders.index("🔥 Streaks") > max(
+        i for i, s in enumerate(subheaders) if "Today's Work" in s
+    )

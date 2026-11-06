@@ -517,6 +517,6 @@ def test_student_dashboard_shows_reading_and_its_badges(world, login, page_as):
     at = page_as("Student_Dashboard", "Student", student_id=world.bob).run()
 
     assert not at.exception
-    assert "1-day reading streak" in _text(at)
-    assert "15 pages this week" in _text(at)
+    assert next(m for m in at.metric if "Reading" in m.label).value == "1 day"
+    assert any("15 pages this week" in c.value for c in at.caption)
     assert any("Week of Reading" in item.value for item in at.markdown)

@@ -1,4 +1,4 @@
-# pages/student_view.py
+# pages/🎓_Student_Dashboard.py
 
 import streamlit as st
 
@@ -140,7 +140,7 @@ for banner in BannerService.get_active_banners():
 # ------------------------------------------------------------------
 # Student Selection
 # ------------------------------------------------------------------
-    
+
 if AuthService.is_student():
 
     student_id = (
@@ -163,9 +163,7 @@ if AuthService.is_student():
 
         st.stop()
 
-    st.success(
-        f"Welcome back, {selected_student.name}!"
-    )
+    greeting = f"Hi, {selected_student.name}!"
 
 else:
 
@@ -187,62 +185,67 @@ else:
         format_func=lambda x: x.name
     )
 
-    st.info(
-        "Parent Viewing Student Dashboard"
-    )
+    greeting = selected_student.name
+
+    # Login management is for parents only, so it stays tucked away
+    # instead of pushing the student's work down the page.
 
     student_user = UserService.get_user_by_student_id(
         selected_student.id,
         AuthService.get_current_family()
     )
 
-    if student_user:
+    with st.expander(
+        "🔐 Student Login"
+    ):
 
-        st.success(
-            "✅ Student Login Enabled"
-        )
+        if student_user:
 
-        st.caption(
-            f"Email: {student_user.email}"
-        )
-
-        if st.button(
-            "📧 Resend Invitation"
-        ):
-
-            try:
-
-                AuthProvider.create_student_account(
-                    student_user.email
-                )
-
-                st.success(
-                    f"Invitation sent to {student_user.email}."
-                )
-
-            except Exception as ex:
-
-                st.error(
-                    AuthProvider.resend_invite_error_message(ex)
-                )
-
-        if st.button(
-            "✏️ Update Email"
-        ):
-
-            update_student_login_dialog(
-                selected_student
+            st.write(
+                f"✅ Login enabled for {student_user.email}"
             )
 
-    else:
+            if st.button(
+                "📧 Resend Invitation"
+            ):
 
-        if st.button(
-            "🔐 Create Student Login"
-        ):
+                try:
 
-            create_student_login_dialog(
-                selected_student
+                    AuthProvider.create_student_account(
+                        student_user.email
+                    )
+
+                    st.success(
+                        f"Invitation sent to {student_user.email}."
+                    )
+
+                except Exception as ex:
+
+                    st.error(
+                        AuthProvider.resend_invite_error_message(ex)
+                    )
+
+            if st.button(
+                "✏️ Update Email"
+            ):
+
+                update_student_login_dialog(
+                    selected_student
+                )
+
+        else:
+
+            st.write(
+                f"{selected_student.name} doesn't have a login yet."
             )
+
+            if st.button(
+                "🔐 Create Student Login"
+            ):
+
+                create_student_login_dialog(
+                    selected_student
+                )
 
 
 today = AuthService.get_today()
@@ -278,240 +281,51 @@ missed = OccurrenceService.recently_missed(
     groups["missed"],
     today
 )
-completed_assignments = groups["completed"]
-
-progress = OccurrenceService.progress(groups)
+recently_completed = OccurrenceService.recently_completed(
+    groups["completed"],
+    today
+)
 
 # ------------------------------------------------------------------
-# Student Header
+# Header and Today's Progress
 # ------------------------------------------------------------------
 
-st.header(selected_student.name)
+st.header(greeting)
+
+if selected_student.grade_level:
+
+    st.caption(
+        selected_student.grade_level
+    )
 
 st.info(
     DailyMessageService.get_message(today),
     icon="💬"
 )
 
-streak = achievements["streak"]
-
-st.metric(
-    "🔥 Streak",
-    f"{streak} day" if streak == 1 else f"{streak} days"
+done_today, total_today = OccurrenceService.today_progress(
+    groups,
+    today
 )
 
-st.caption(
-    f"Personal best: {achievements['best_streak']}. "
-    "Days with no work don't break a streak, and catching up repairs it."
-)
+if total_today:
 
-st.write(
-    f"📖 {reading['streak']}-day reading streak · "
-    f"{reading['pages_this_week']} pages this week"
-)
+    if done_today == total_today:
 
-st.write(
-    f"🏃 {PEService.describe_minutes(pe['minutes_this_week'])} of P.E. "
-    f"this week · {pe['active_days_this_week']} of 7 days active"
-)
-
-col1, col2, col3 = st.columns(3)
-
-with col1:
-
-    st.metric(
-        "✅ Complete",
-        progress["completed"]
-    )
-
-with col2:
-
-    st.metric(
-        "📚 Remaining",
-        progress["remaining"]
-    )
-
-with col3:
-
-    st.metric(
-        "🎯 Progress",
-        f"{progress['percent']}%"
-    )
-
-if selected_student.grade_level:
-    st.caption(
-        selected_student.grade_level
-    )
-
-# ------------------------------------------------------------------
-# Progress Area
-# ------------------------------------------------------------------
-
-st.subheader("Progress")
-
-st.progress(progress["percent"])
-
-st.metric(
-    "Completion Rate",
-    f"{progress['percent']}%"
-)
-
-st.write(
-    f"{progress['completed']} of "
-    f"{progress['total']} assignments complete so far"
-)
-
-st.divider()
-
-# ------------------------------------------------------------------
-# Upcoming Events
-# ------------------------------------------------------------------
-
-st.subheader("🎉 Upcoming Events")
-
-upcoming_events = EventService.get_upcoming(
-    today,
-    selected_student.id
-)
-
-if upcoming_events:
-
-    for entry in upcoming_events:
-
-        event = entry["event"]
-
-        st.write(
-            f"**{event.title}**: "
-            f"{EventService.describe_when(event, entry['date'])}"
+        progress_text = (
+            f"Today: all {total_today} done! 🎉"
         )
 
-        if event.description:
+    else:
 
-            st.caption(event.description)
-
-else:
-
-    st.caption(
-        "No events in the next 30 days."
-    )
-
-st.divider()
-
-# ------------------------------------------------------------------
-# Badges
-# ------------------------------------------------------------------
-
-all_badges = (
-    achievements["badges"]
-    + reading["badges"]
-    + pe["badges"]
-)
-
-earned_badges = [
-    badge
-    for badge in all_badges
-    if badge["earned"]
-]
-
-unearned_badges = [
-    badge
-    for badge in all_badges
-    if not badge["earned"]
-]
-
-st.subheader(
-    f"🏅 Badges ({len(earned_badges)} of "
-    f"{len(all_badges)})"
-)
-
-if earned_badges:
-
-    for badge in earned_badges:
-
-        st.write(
-            f"{badge['icon']} **{badge['name']}**: "
-            f"{badge['description']}"
+        progress_text = (
+            f"Today: {done_today} of {total_today} done"
         )
 
-else:
-
-    st.caption(
-        "Finish your first piece of work to earn your first badge."
+    st.progress(
+        done_today / total_today,
+        text=progress_text
     )
-
-if unearned_badges:
-
-    with st.expander(
-        "Badges to earn"
-    ):
-
-        for badge in unearned_badges:
-
-            st.write(
-                f"{badge['icon']} {badge['name']}: "
-                f"{badge['description']}"
-            )
-
-st.divider()
-
-# ------------------------------------------------------------------
-# Hide Completed Toggle
-# ------------------------------------------------------------------
-
-hide_completed = st.checkbox(
-    "Hide Completed Assignments",
-    value=False
-)
-
-# ------------------------------------------------------------------
-# Dashboard Metrics
-# ------------------------------------------------------------------
-
-st.subheader("🎯 Today's Focus")
-
-if overdue:
-
-    next_assignment = overdue[0]
-
-elif today_assignments:
-
-    next_assignment = today_assignments[0]
-
-elif upcoming:
-
-    next_assignment = upcoming[0]
-
-else:
-
-    next_assignment = None
-
-if next_assignment:
-
-    st.info(
-        f"Next Task: {OccurrenceService.work_title(next_assignment)}"
-    )
-
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    st.metric(
-        "⚠ Overdue",
-        len(overdue)
-    )
-
-with col2:
-    st.metric(
-        "📅 Due Today",
-        len(today_assignments)
-    )
-
-with col3:
-    st.metric(
-        "📚 Upcoming",
-        len(upcoming)
-    )
-
-st.divider()
 
 # ------------------------------------------------------------------
 # Assignment Renderer
@@ -596,7 +410,7 @@ def render_occurrence(
 
 if overdue:
 
-    st.subheader("⚠ Overdue")
+    st.subheader(f"⚠ Overdue ({len(overdue)})")
 
     for occurrence in overdue:
 
@@ -608,9 +422,9 @@ if overdue:
 # Today's Work
 # ------------------------------------------------------------------
 
-st.subheader("📅 Today's Work")
-
 if today_assignments:
+
+    st.subheader(f"📅 Today's Work ({len(today_assignments)})")
 
     for occurrence in today_assignments:
 
@@ -620,8 +434,12 @@ if today_assignments:
 
 else:
 
+    st.subheader("📅 Today's Work")
+
     st.success(
-        "Nothing due today!"
+        "Nothing left for today!"
+        if done_today
+        else "Nothing due today!"
     )
 
 # ------------------------------------------------------------------
@@ -630,7 +448,7 @@ else:
 
 if upcoming:
 
-    st.subheader("📚 Upcoming")
+    st.subheader(f"📚 Coming Up ({len(upcoming)})")
 
     for occurrence in upcoming:
 
@@ -659,24 +477,162 @@ if missed:
                 occurrence
             )
 
+st.divider()
+
+# ------------------------------------------------------------------
+# Streaks
+# ------------------------------------------------------------------
+
+st.subheader("🔥 Streaks")
+
+streak = achievements["streak"]
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+
+    st.metric(
+        "🔥 Streak",
+        f"{streak} day" if streak == 1 else f"{streak} days"
+    )
+
+    st.caption(
+        f"Personal best: {achievements['best_streak']}"
+    )
+
+with col2:
+
+    reading_streak = reading["streak"]
+
+    st.metric(
+        "📖 Reading Streak",
+        f"{reading_streak} day"
+        if reading_streak == 1
+        else f"{reading_streak} days"
+    )
+
+    st.caption(
+        f"{reading['pages_this_week']} pages this week"
+    )
+
+with col3:
+
+    st.metric(
+        "🏃 P.E. This Week",
+        PEService.describe_minutes(pe["minutes_this_week"])
+    )
+
+    st.caption(
+        f"{pe['active_days_this_week']} of 7 days active"
+    )
+
+st.caption(
+    "Days with no work don't break a streak, and catching up repairs it."
+)
+
+# ------------------------------------------------------------------
+# Badges
+# ------------------------------------------------------------------
+
+all_badges = (
+    achievements["badges"]
+    + reading["badges"]
+    + pe["badges"]
+)
+
+earned_badges = [
+    badge
+    for badge in all_badges
+    if badge["earned"]
+]
+
+unearned_badges = [
+    badge
+    for badge in all_badges
+    if not badge["earned"]
+]
+
+st.subheader(
+    f"🏅 Badges ({len(earned_badges)} of "
+    f"{len(all_badges)})"
+)
+
+if earned_badges:
+
+    for badge in earned_badges:
+
+        st.write(
+            f"{badge['icon']} **{badge['name']}**: "
+            f"{badge['description']}"
+        )
+
+else:
+
+    st.caption(
+        "Finish your first piece of work to earn your first badge."
+    )
+
+if unearned_badges:
+
+    with st.expander(
+        "Badges to earn"
+    ):
+
+        for badge in unearned_badges:
+
+            st.write(
+                f"{badge['icon']} {badge['name']}: "
+                f"{badge['description']}"
+            )
+
+st.divider()
+
+# ------------------------------------------------------------------
+# Upcoming Events
+# ------------------------------------------------------------------
+
+st.subheader("🎉 Upcoming Events")
+
+upcoming_events = EventService.get_upcoming(
+    today,
+    selected_student.id
+)
+
+if upcoming_events:
+
+    for entry in upcoming_events:
+
+        event = entry["event"]
+
+        st.write(
+            f"**{event.title}**: "
+            f"{EventService.describe_when(event, entry['date'])}"
+        )
+
+        if event.description:
+
+            st.caption(event.description)
+
+else:
+
+    st.caption(
+        "No events in the next 30 days."
+    )
+
 # ------------------------------------------------------------------
 # Completed Assignments
 # ------------------------------------------------------------------
 
-recently_completed = OccurrenceService.recently_completed(
-    completed_assignments,
-    today
-)
+if recently_completed:
 
-if (
-    recently_completed and
-    not hide_completed
-):
+    st.divider()
 
-    st.subheader("✅ Completed in the Last 30 Days")
+    with st.expander(
+        f"✅ Completed in the Last 30 Days ({len(recently_completed)})"
+    ):
 
-    for occurrence in recently_completed:
+        for occurrence in recently_completed:
 
-        render_occurrence(
-            occurrence
-        )
+            render_occurrence(
+                occurrence
+            )

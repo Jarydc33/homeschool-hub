@@ -362,6 +362,6 @@ def test_student_dashboard_shows_pe_and_its_badges(world, login, page_as):
     at = page_as("Student_Dashboard", "Student", student_id=world.bob).run()
 
     assert not at.exception
-    assert "45 min of P.E. this week" in _text(at)
-    assert "1 of 7 days active" in _text(at)
+    assert next(m for m in at.metric if "P.E." in m.label).value == "45 min"
+    assert any("1 of 7 days active" in c.value for c in at.caption)
     assert any("On the Move" in item.value for item in at.markdown)

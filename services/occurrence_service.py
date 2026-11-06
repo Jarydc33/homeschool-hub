@@ -349,6 +349,25 @@ class OccurrenceService:
         }
 
     @staticmethod
+    def today_progress(
+        groups,
+        today
+    ):
+        """
+        Returns (done, total) for work dated today, from group_for_student.
+        Overdue and missed work isn't counted, so one old item can't keep
+        the day from ever filling up; the dashboard lists those separately.
+        """
+
+        done = sum(
+            1
+            for row in groups["completed"]
+            if row.occurrence_date == today
+        )
+
+        return done, done + len(groups["today"])
+
+    @staticmethod
     def assignment_progress(
         assignment,
         today
