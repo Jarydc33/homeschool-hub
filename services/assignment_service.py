@@ -159,6 +159,11 @@ class AssignmentService:
         recurrence_pattern and its first day as due_date.
         """
 
+        # Only parents change this, even if a page guard is ever missed.
+
+        if not AuthService.is_parent():
+            return None
+
         if OccurrenceService.schedule_error(
             assignment_type,
             recurrence_pattern,
@@ -272,6 +277,11 @@ class AssignmentService:
         Links to archived students are left alone, since archived
         students aren't offered as choices on the edit form.
         """
+
+        # Only parents change this, even if a page guard is ever missed.
+
+        if not AuthService.is_parent():
+            return None
 
         if OccurrenceService.schedule_error(
             assignment_type,
@@ -847,6 +857,11 @@ class AssignmentService:
     def archive_assignment(
         assignment_id
     ):
+
+        # Only parents change this, even if a page guard is ever missed.
+
+        if not AuthService.is_parent():
+            return None
 
         with get_session() as db:
 

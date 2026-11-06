@@ -162,10 +162,8 @@ if subjects:
 
             with col1:
 
-                color = (
+                color = SubjectService.display_color(
                     subject.color
-                    if subject.color
-                    else "#2196F3"
                 )
 
                 st.markdown(

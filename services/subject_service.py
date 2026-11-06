@@ -1,10 +1,29 @@
 # services/subject_service.py
 
+import re
+
 from database.db import get_session
 from database.models import Subject, Assignment
 from services.auth_service import AuthService
 
+DEFAULT_COLOR = "#2196F3"
+
+COLOR_PATTERN = re.compile(r"^#[0-9A-Fa-f]{6}$")
+
+
 class SubjectService:
+
+    @staticmethod
+    def display_color(color):
+        """
+        Returns a saved color that's safe to put in a page's HTML: a hex
+        color like "#2196F3", or the default for anything else.
+        """
+
+        if color and COLOR_PATTERN.match(color):
+            return color
+
+        return DEFAULT_COLOR
 
     @staticmethod
     def get_subject_assignment_count(subject_id):
@@ -69,12 +88,17 @@ class SubjectService:
         color=None
     ):
 
+        # Only parents change this, even if a page guard is ever missed.
+
+        if not AuthService.is_parent():
+            return None
+
         with get_session() as db:
 
             subject = Subject(
                 family_id=AuthService.get_current_family(),
                 name=name,
-                color=color
+                color=SubjectService.display_color(color)
             )
 
             db.add(subject)
@@ -89,6 +113,11 @@ class SubjectService:
         name=None,
         color=None
     ):
+
+        # Only parents change this, even if a page guard is ever missed.
+
+        if not AuthService.is_parent():
+            return None
 
         with get_session() as db:
 
@@ -109,7 +138,7 @@ class SubjectService:
                 subject.name = name
 
             if color is not None:
-                subject.color = color
+                subject.color = SubjectService.display_color(color)
 
             db.commit()
 
@@ -168,6 +197,11 @@ class SubjectService:
 
     @staticmethod
     def archive_subject(subject_id):
+
+        # Only parents change this, even if a page guard is ever missed.
+
+        if not AuthService.is_parent():
+            return None
 
         with get_session() as db:
 

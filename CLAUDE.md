@@ -91,7 +91,7 @@ tests/                  pytest suite for the services
 ## Rules (follow these on every change)
 
 1. **Scope everything to the family.** Every service function that reads or changes a row by ID must also filter by the current family's `family_id`, e.g. `filter(Student.id == student_id, Student.family_id == family_id)`. Creates must check that referenced subjects and students belong to the same family. Never call or add unscoped helpers (like the removed `get_all_*`) for pages to use.
-2. **Never trust the page for identity.** Get the role, family, and student from `AuthService`, not from widget values or query params.
+2. **Never trust the page for identity.** Get the role, family, and student from `AuthService`, not from widget values or query params. Parent-only changes also check `AuthService.is_parent()` in the service, so a missing page guard can't let a student (or Student Mode) make them.
 3. **Archive, don't delete.** Entities use `active` / `is_active` soft deletes. Every list a user sees filters out archived rows, including joined ones such as archived assignments on the student dashboard.
 4. **Keep completion history.** Never delete and recreate `StudentAssignment` rows (or occurrence rows) to apply an edit; add and remove only what changed.
 5. **One transaction per user action.** Multi-step writes (registration, creating an assignment with its student links) commit once.

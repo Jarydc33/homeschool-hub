@@ -702,10 +702,8 @@ if assignments:
                     f"### 📋 {assignment.title}"
                 )
 
-                subject_color = (
+                subject_color = SubjectService.display_color(
                     assignment.subject.color
-                    if assignment.subject.color
-                    else "#2196F3"
                 )
 
                 col_subject1, col_subject2 = (

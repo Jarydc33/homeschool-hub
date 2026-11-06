@@ -121,8 +121,14 @@ class StudentService:
     @staticmethod
     def get_student_by_id(student_id):
         """
-        Returns a single student.
+        Returns a single student. A student can only get their own.
         """
+
+        if (
+            AuthService.is_student()
+            and student_id != AuthService.get_current_student()
+        ):
+            return None
 
         with get_session() as db:
             student = (
@@ -174,6 +180,11 @@ class StudentService:
         Returns the current family's archived students.
         """
 
+        # Only parents change this, even if a page guard is ever missed.
+
+        if not AuthService.is_parent():
+            return []
+
         with get_session() as db:
 
             return (
@@ -193,6 +204,11 @@ class StudentService:
         Unarchives a student. Their assignments, progress, and login
         return as they were.
         """
+
+        # Only parents change this, even if a page guard is ever missed.
+
+        if not AuthService.is_parent():
+            return None
 
         with get_session() as db:
 
@@ -225,6 +241,11 @@ class StudentService:
         Creates a new student.
         """
 
+        # Only parents change this, even if a page guard is ever missed.
+
+        if not AuthService.is_parent():
+            return None
+
         with get_session() as db:
 
             student = Student(
@@ -250,6 +271,11 @@ class StudentService:
         """
         Updates an existing student.
         """
+
+        # Only parents change this, even if a page guard is ever missed.
+
+        if not AuthService.is_parent():
+            return None
 
         with get_session() as db:
 
@@ -285,6 +311,11 @@ class StudentService:
         Soft delete.
         Student remains in database.
         """
+
+        # Only parents change this, even if a page guard is ever missed.
+
+        if not AuthService.is_parent():
+            return None
 
         with get_session() as db:
 

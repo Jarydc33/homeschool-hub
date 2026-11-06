@@ -49,6 +49,21 @@ class AuthProvider:
         )
 
     @staticmethod
+    def is_wrong_password(
+        error
+    ):
+        """
+        True when Supabase refused the email and password themselves, not
+        for an outage, a rate limit, or an unconfirmed email.
+        """
+
+        return (
+            isinstance(error, AuthApiError)
+            and error.status == 400
+            and error.code == "invalid_credentials"
+        )
+
+    @staticmethod
     def login_error_message(
         error
     ):

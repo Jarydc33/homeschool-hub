@@ -4,6 +4,10 @@ from services.user_service import UserService
 from services.auth_service import AuthService
 from services.auth_provider import AuthProvider
 from services.session_service import SessionService
+from services.login_limit_service import (
+    LOCKED_MESSAGE as LOGIN_LOCKED_MESSAGE,
+    LoginLimitService
+)
 from components.navigation import (
     NavigationComponent
 )
@@ -82,7 +86,13 @@ with st.form("login_form"):
         use_container_width=True
     )
 
-if submitted:
+if submitted and LoginLimitService.is_locked(email):
+
+    st.error(
+        LOGIN_LOCKED_MESSAGE
+    )
+
+elif submitted:
 
     try:
 
@@ -92,6 +102,8 @@ if submitted:
                 password
             )
         )
+
+        LoginLimitService.record_success(email)
 
         user = (
             UserService.get_user_by_auth_id(
@@ -127,6 +139,10 @@ if submitted:
             st.rerun()
 
     except Exception as ex:
+
+        if AuthProvider.is_wrong_password(ex):
+
+            LoginLimitService.record_failure(email)
 
         st.error(
             AuthProvider.login_error_message(ex)
