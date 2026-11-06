@@ -11,9 +11,23 @@ A homeschool management app: parents manage students, subjects and assignments; 
 
 ## Current status
 
-- **Phase:** 0 (bug fixes and Streamlit stopgaps) is complete. Phase 1 (portable foundation) is complete
-- **Done:** Edit Assignment dialog crash, `update_assignment` wiping completion status, family checks in the student, subject, assignment and user services, pytest suite, family and system-wide announcements, archived students left out of lists and blocked from logging in, restoring students, Create Assignment form, no database setup on page load, Alembic with a baseline migration, `users.auth_user_id`, constraints and `family_id` indexes, session context manager, registration transaction, fetching the current user once per page run, `families.timezone`, occurrences table and date generator, writing occurrences when assignments are saved, dashboards and check-offs per date, per-date notes, dropping the old `student_assignments` progress columns, curriculum schedules, missed-day recovery, streaks and badges, events, calendar view, reading tracker, recent activity, daily message, scores and grades (not the subject health score), P.E. tracker, family settings (name and time zone), grouped sidebar, restoring subjects and assignments
-- **Next up:** Phase 2 (see the roadmap). Chosen differentiators, in build order: curriculum-to-schedule, missed-day recovery, and streaks and badges are done. Next, the sister's family's test week, which decides the rest: subject health score, bulk creator and importer, accessibility options, and the opt-in family leaderboard State reports wait until later
+### Next step: hours tracking
+
+The sister's family started using the app on 2026-11-06, and logging hours is the feature most likely needed next. Only P.E. logs time today (`activity_logs.minutes`), while the landing banner promises "homeschool hours and records that keep themselves". Agreed approach (schema still needs Jaryd's OK before the migration):
+
+1. **Record on the assignment, report by subject.** A subject gets an optional usual time per day; an assignment can override it.
+2. **Checking off saves the minutes** on that occurrence (`assignment_occurrences`), using the assignment's time or the subject's. They're stored at check-off, not worked out on read, so changing a subject's usual time later doesn't rewrite past hours (the same idea as grades). Parents can adjust a day's minutes; unchecking clears them.
+3. **Totals** per student, subject, week, grading period and year, with a "core subject" flag on subjects, since some states count core hours separately (Missouri: 1,000 hours, 600 core). These feed the state report export later.
+4. **Later, if needed:** a manual "Log time" entry (student, subject, date, minutes, note) for co-op classes or field trips. P.E. minutes count toward the P.E. subject so nothing is entered twice.
+
+Build 1 to 3 first. Before starting, ask Jaryd what the sister said: her state's hours rules (including core subjects), and whether parents should trust the defaults or confirm minutes.
+
+### Where things stand
+
+- **Phase:** 0, 1 and 2 are complete. Phase 3 (launch-ready auth and private beta) is in progress, with the sister's family as the first beta family.
+- **Done:** Edit Assignment dialog crash, `update_assignment` wiping completion status, family checks in the student, subject, assignment and user services, pytest suite, family and system-wide announcements, archived students left out of lists and blocked from logging in, restoring students, Create Assignment form, no database setup on page load, Alembic with a baseline migration, `users.auth_user_id`, constraints and `family_id` indexes, session context manager, registration transaction, fetching the current user once per page run, `families.timezone`, occurrences table and date generator, writing occurrences when assignments are saved, dashboards and check-offs per date, per-date notes, dropping the old `student_assignments` progress columns, curriculum schedules, missed-day recovery, streaks and badges, events, calendar view, reading tracker, recent activity, daily message, scores and grades (not the subject health score), P.E. tracker, family settings (name and time zone), grouped sidebar, restoring subjects and assignments, Student Dashboard redesign (work first, today-only progress bar), Student Mode, pairing codes, security review and fixes (login limit, parent checks in services), version 1.0.0, branding (logo, colours, Inter, lowercase "tally"), parent feedback link
+- **After hours tracking:** the second parent invite (Jaryd's wife joins his family), then whatever the sister's feedback asks for. Waiting on feedback: subject health score and bulk assignment creator. Moved later: opt-in leaderboard (Phase 3), accessibility options (Phase 5 redesign), spreadsheet importer (after Phase 5), state report export (pre-launch).
+- **Questions for the sister's feedback:** was the Grades page clear, is the sidebar easy to use on a phone, did she use Student Mode or only pairing, and does her state require an hours log.
 - Update this section when a phase or major item is finished.
 
 ## Running it
