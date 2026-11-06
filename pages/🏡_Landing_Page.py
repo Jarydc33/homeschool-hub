@@ -29,8 +29,7 @@ if AuthService.is_authenticated():
 # --------------------------------------------------
 
 st.set_page_config(
-    page_title="Tally",
-    page_icon="🏡",
+    page_title="tally",
     layout="wide"
 )
 
@@ -38,15 +37,18 @@ st.set_page_config(
 # Hero Section
 # --------------------------------------------------
 
-st.title("🏡 Tally")
+# The banner already has the name and tagline, so it stands in for the
+# title.
 
-st.subheader(
-    "Less logging, more learning."
+st.image(
+    "assets/tally-large-image.png",
+    width="stretch",
+    alt="tally homeschool. Less logging, more learning."
 )
 
 st.write(
     """
-    Tally helps parents organize students,
+    tally helps parents organize students,
     assignments, schedules, and educational progress
     while giving students a simple daily dashboard
     focused on completing their work.
@@ -59,7 +61,7 @@ st.divider()
 # Key Features
 # --------------------------------------------------
 
-st.header("Why Families Use Tally")
+st.header("Why Families Use tally")
 
 col1, col2, col3 = st.columns(3)
 

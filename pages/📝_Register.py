@@ -16,7 +16,7 @@ if AuthService.is_parent():
 st.title("📝 Create Account")
 
 st.write(
-    "Create a Tally account and family."
+    "Create a tally account and family."
 )
 
 with st.form(

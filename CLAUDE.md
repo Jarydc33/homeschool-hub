@@ -1,6 +1,6 @@
 # Tally
 
-Full name Tally Homeschool, shown as Tally in the app. Tagline: Less logging, more learning. Formerly Homeschool Hub, which remains in the browser storage keys on purpose, since changing them would log everyone out, and in the repo address.
+Full name Tally Homeschool, shown as lowercase "tally" in the app, as in the brand design (logo and colours in `assets/` and `.streamlit/config.toml`). Tagline: Less logging, more learning. Formerly Homeschool Hub, which remains in the browser storage keys on purpose, since changing them would log everyone out, and in the repo address.
 
 A homeschool management app: parents manage students, subjects and assignments; students see a daily dashboard and check off their work.
 

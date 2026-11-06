@@ -199,8 +199,7 @@ active_banners = (
 # --------------------------------------------------
 
 st.set_page_config(
-    page_title="Tally",
-    page_icon="🏡",
+    page_title="tally",
     layout="wide"
 )
 

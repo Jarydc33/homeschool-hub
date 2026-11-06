@@ -160,7 +160,7 @@ def pair_device_dialog():
         st.markdown(f"## {code['code'][:3]} {code['code'][3:]}")
 
         st.caption(
-            "On their device, open Tally and enter this code on the Login "
+            "On their device, open tally and enter this code on the Login "
             "page, under Have a Pairing Code. It works once and expires at "
             f"{StudentModeService.describe_time(code['expires_at'], AuthService.get_zone())}."
         )

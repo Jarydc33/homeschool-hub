@@ -44,7 +44,7 @@ if AuthService.is_authenticated():
 st.title("🔐 Login")
 
 st.write(
-    "Sign in to Tally."
+    "Sign in to tally."
 )
 
 INACTIVE_MESSAGE = (
@@ -125,7 +125,7 @@ elif submitted:
         if not user:
 
             st.error(
-                "We couldn't find a Tally account for this email."
+                "We couldn't find a tally account for this email."
             )
 
         elif AuthService.is_archived_student(user):

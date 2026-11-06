@@ -1,2 +1,26 @@
 [client]
 showSidebarNavigation = false
+
+# Tally's colours, from the logo: navy #1B2540, orange #E2672F, and a soft
+# blue-grey #C9CFDC. Pages are light for everyday reading, with a navy
+# sidebar like the logo's background.
+
+[theme]
+base = "light"
+primaryColor = "#E2672F"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F2F4F8"
+textColor = "#1B2540"
+# A darker orange, so links are readable as small text on white.
+linkColor = "#B84E1C"
+borderColor = "#DDE1EA"
+font = "Inter:https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+baseRadius = "0.6rem"
+
+[theme.sidebar]
+backgroundColor = "#1B2540"
+secondaryBackgroundColor = "#26314F"
+textColor = "#EEF1F6"
+primaryColor = "#E2672F"
+linkColor = "#F08A55"
+borderColor = "#323D5C"

@@ -10,7 +10,6 @@ from services.student_service import StudentService
 
 st.set_page_config(
     page_title="Calendar",
-    page_icon="📆",
     layout="wide"
 )
 

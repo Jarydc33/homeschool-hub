@@ -6,6 +6,11 @@ from services.auth_service import (
 from services.pairing_service import PairingService
 from services.student_mode_service import StudentModeService
 
+# The square logo for browser tabs, and the mark without its background for
+# the navy sidebar.
+FAVICON = "assets/tally-logo.png"
+SIDEBAR_LOGO = "assets/tally-mark.png"
+
 # Each group is (heading, [(page, label, icon)]). A heading of None means the
 # links sit above the groups.
 
@@ -184,6 +189,20 @@ class NavigationComponent:
 
         AuthService.start_page_run()
 
+        # Calls to set_page_config add up, so this only sets the tab icon
+        # and leaves each page's own title and layout alone.
+
+        st.set_page_config(page_icon=FAVICON)
+
+        # Collapsed, the sidebar's icon sits on the white page, so it uses
+        # the square logo with its own navy background.
+
+        st.logo(
+            SIDEBAR_LOGO,
+            size="large",
+            icon_image=FAVICON
+        )
+
         # Finish any login or logout write before drawing the page.
 
         if SessionService.sync_browser() == "clear":
@@ -196,7 +215,7 @@ class NavigationComponent:
 
         with st.sidebar:
 
-            st.title("🏡 Tally")
+            st.title("tally")
 
             st.caption("Less logging, more learning")
 
