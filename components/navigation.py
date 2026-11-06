@@ -196,7 +196,7 @@ class NavigationComponent:
 
                     exit_student_mode_dialog()
 
-                st.caption("Version 0.4.1")
+                st.caption("Version 1.0.0")
 
             elif current_user:
 
@@ -230,7 +230,7 @@ class NavigationComponent:
 
                     st.rerun()
 
-                st.caption("Version 0.4.1")
+                st.caption("Version 1.0.0")
             else:
 
                 NavigationComponent._render_links(LOGGED_OUT_LINKS)
