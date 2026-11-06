@@ -24,10 +24,13 @@ class FakeBrowser:
     def __init__(self, token=None):
         self.token = token
         self.refresh_token = None
+        self.device_token = None
         self.connected = True
         self.calls = []
 
-    def __call__(self, action, token, refresh_token, request, key, default):
+    def __call__(
+        self, action, token, refresh_token, request, key, default, device_token=None
+    ):
         self.calls.append((action, key))
         if not self.connected:
             return default
@@ -37,10 +40,15 @@ class FakeBrowser:
         elif action == "clear":
             self.token = None
             self.refresh_token = None
+        elif action == "save_device":
+            self.device_token = device_token
+        elif action == "clear_device":
+            self.device_token = None
         return {
             "request": request,
             "token": self.token,
             "refresh_token": self.refresh_token,
+            "device_token": self.device_token,
         }
 
 
@@ -290,3 +298,32 @@ def test_failure_log_does_not_include_the_token(state, browser, caplog):
         AuthProvider.sign_out("token-value-here")
 
     assert "token-value-here" not in caplog.text
+
+
+# ----- Paired device key -----
+
+
+def test_the_device_key_is_read_with_the_login(state, browser):
+    browser.device_token = "device-key"
+
+    assert SessionService.get_access_token() is None
+    assert SessionService.get_device_token() == "device-key"
+
+
+def test_device_key_writes_wait_for_sync_and_survive_logout(state, browser):
+    SessionService.save_device_token("device-key")
+    assert browser.device_token is None
+
+    assert SessionService.sync_browser() == "save_device"
+    assert browser.device_token == "device-key"
+
+    # Logging out of a parent login leaves the pairing alone.
+    SessionService.clear_session()
+    SessionService.sync_browser()
+    assert browser.device_token == "device-key"
+
+    SessionService.clear_device_token()
+    assert SessionService.get_device_token() is None
+    assert SessionService.sync_browser() == "clear_device"
+    assert browser.device_token is None
+

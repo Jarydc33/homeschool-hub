@@ -11,6 +11,7 @@ from database.models import DEFAULT_TIMEZONE, UserRole
 
 from services.auth_provider import AuthProvider
 from services.student_mode_service import StudentModeService
+from services.pairing_service import PairedUser, PairingService
 from services.session_service import (
     SessionService
 )
@@ -567,7 +568,12 @@ class AuthService:
         )
 
         if not auth_user:
-            return None
+
+            # No one's logged in, so this may be a student's paired device.
+
+            return PairingService.find_paired(
+                SessionService.get_device_token()
+            )
 
         user = AuthService._allow_login(
             UserService.get_user_by_auth_id(
@@ -582,6 +588,17 @@ class AuthService:
             )
 
         return user
+
+    @staticmethod
+    def is_paired_device():
+        """
+        True on a student's paired device, which has no login.
+        """
+
+        return isinstance(
+            AuthService.get_current_user(),
+            PairedUser
+        )
 
     @staticmethod
     def is_authenticated():

@@ -3,6 +3,7 @@ from services.session_service import SessionService
 from services.auth_service import (
     AuthService
 )
+from services.pairing_service import PairingService
 from services.student_mode_service import StudentModeService
 
 # Each group is (heading, [(page, label, icon)]). A heading of None means the
@@ -125,6 +126,40 @@ def exit_student_mode_dialog():
         st.rerun()
 
 
+@st.dialog("🔒 Unpair This Device")
+def unpair_device_dialog():
+
+    st.write(
+        "Unpairing signs this device out. Pairing it again needs a new code "
+        "from a parent."
+    )
+
+    with st.form("unpair_device_form"):
+
+        pin = st.text_input(
+            "Parent PIN",
+            type="password",
+            max_chars=4
+        )
+
+        if st.form_submit_button("🔓 Unpair"):
+
+            unpaired, message = PairingService.unpair(pin)
+
+            if unpaired:
+
+                st.session_state["device_unpaired"] = True
+
+                st.rerun()
+
+            st.error(message)
+
+    st.caption(
+        "Forgot the PIN? A parent can end this device from Settings, "
+        "under Devices, on their own phone or computer."
+    )
+
+
 class NavigationComponent:
 
     @staticmethod
@@ -195,6 +230,29 @@ class NavigationComponent:
                 if st.button("🔒 Exit Student Mode"):
 
                     exit_student_mode_dialog()
+
+                st.caption("Version 1.0.0")
+
+            elif AuthService.is_paired_device():
+
+                # No Logout: a paired device stays this student's until a
+                # parent unpairs it with the PIN or ends it from Settings.
+
+                st.success(
+                    f"🎓 {current_user.student.name}"
+                )
+
+                st.caption("Paired device")
+
+                st.divider()
+
+                NavigationComponent._render_links(STUDENT_LINKS)
+
+                st.divider()
+
+                if st.button("🔒 Unpair This Device"):
+
+                    unpair_device_dialog()
 
                 st.caption("Version 1.0.0")
 

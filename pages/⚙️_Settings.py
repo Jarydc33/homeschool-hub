@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import streamlit as st
 
 from components.navigation import (
@@ -6,7 +8,10 @@ from components.navigation import (
 from services.auth_service import AuthService
 from services.family_service import FamilyService
 from services.navigation_service import NavigationService
+from services.pairing_service import PairingService
 from services.student_mode_service import StudentModeService
+from services.student_service import StudentService
+from database.models import DeviceMode
 
 NavigationComponent.render()
 NavigationService.require_parent()
@@ -119,12 +124,109 @@ with st.form("family_pin_form", clear_on_submit=True):
         st.error(message)
 
 # ------------------------------------------------------------------
-# Devices in Student Mode
+# Devices
 # ------------------------------------------------------------------
+
+@st.dialog("📱 Pair a Device")
+def pair_device_dialog():
+
+    st.write(
+        "Pair a student's own phone, tablet or computer. It will show only "
+        "their view, with no email or password on it."
+    )
+
+    if not StudentModeService.has_pin():
+
+        st.info(
+            "First, set a family PIN above. It's what unpairs a device."
+        )
+
+        return
+
+    students = StudentService.get_current_family_students()
+
+    if not students:
+
+        st.info("Add a student first.")
+
+        return
+
+    code = st.session_state.get("pairing_code")
+
+    if code:
+
+        st.write(f"Pairing code for **{code['name']}**:")
+
+        st.markdown(f"## {code['code'][:3]} {code['code'][3:]}")
+
+        st.caption(
+            "On their device, open Tally and enter this code on the Login "
+            "page, under Have a Pairing Code. It works once and expires at "
+            f"{StudentModeService.describe_time(code['expires_at'], AuthService.get_zone())}."
+        )
+
+        if st.button("Done"):
+
+            st.session_state.pop("pairing_code", None)
+
+            st.rerun()
+
+        return
+
+    student = st.selectbox(
+        "Student",
+        students,
+        format_func=lambda student: student.name,
+        key="pairing_student"
+    )
+
+    if st.button(
+        "Make a Code",
+        type="primary"
+    ):
+
+        new_code, expires_at, message = PairingService.create_code(
+            student.id
+        )
+
+        if not new_code:
+
+            st.error(message)
+
+            return
+
+        # Kept for this dialog only, so closing it and reopening shows the
+        # same code instead of making another.
+
+        st.session_state["pairing_code"] = {
+            "code": new_code,
+            "expires_at": expires_at,
+            "name": student.name,
+        }
+
+        st.rerun(scope="fragment")
+
 
 st.divider()
 
-st.subheader("📱 Devices in Student Mode")
+st.subheader("📱 Devices")
+
+st.caption(
+    "Devices showing a student's view: paired devices, and parent devices "
+    "in Student Mode. Ending one sends it back to the Login page."
+)
+
+# A code from an earlier visit is only shown while it can still be used.
+
+shown_code = st.session_state.get("pairing_code")
+
+if shown_code and shown_code["expires_at"] <= datetime.utcnow():
+
+    st.session_state.pop("pairing_code", None)
+
+if st.button("➕ Pair a Device"):
+
+    pair_device_dialog()
 
 device_sessions = StudentModeService.list_sessions()
 
@@ -134,12 +236,18 @@ if device_sessions:
 
     for device in device_sessions:
 
+        kind = (
+            "Paired device"
+            if device.mode == DeviceMode.PAIRED.value
+            else "Student Mode"
+        )
+
         col1, col2 = st.columns([4, 1])
 
         with col1:
 
             st.write(
-                f"**{device.student.name}**"
+                f"**{device.student.name}** · {kind}"
             )
 
             st.caption(
@@ -154,13 +262,13 @@ if device_sessions:
             if st.button(
                 "End",
                 key=f"end_device_{device.id}",
-                help="End Student Mode on this device"
+                help="Send this device back to the Login page"
             ):
 
                 if StudentModeService.end_session(device.id):
 
                     st.toast(
-                        f"Student Mode ended for {device.student.name}."
+                        f"{kind} ended for {device.student.name}."
                     )
 
                     st.rerun()
@@ -173,5 +281,6 @@ if device_sessions:
 else:
 
     st.caption(
-        "No devices are in Student Mode. Start it from the Dashboard."
+        "No devices yet. Pair one above, or start Student Mode from the "
+        "Dashboard."
     )

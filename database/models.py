@@ -760,13 +760,16 @@ class ActivityLog(Base):
 
 class DeviceMode(str, Enum):
     STUDENT_MODE = "student_mode"
+    PAIRED = "paired"
 
 
 class DeviceSession(Base):
     """
-    A parent's login switched to one student's view. It's tied to the
-    Supabase session in the login token, so the server decides the mode and
-    the browser can't change it. Ending it sets revoked_at; rows are kept.
+    A device showing one student's view. In Student Mode it's a parent's
+    login, tied to the Supabase session in the login token. A paired device
+    has no login: it holds a random key, and only the key's hash is kept
+    here. Either way the server decides, not the browser. Ending it sets
+    revoked_at; rows are kept.
     """
 
     __tablename__ = "device_sessions"
@@ -791,11 +794,18 @@ class DeviceSession(Base):
         nullable=False
     )
 
-    # The session_id claim from the parent's Supabase access token.
+    # Student Mode: the session_id claim from the parent's access token.
     auth_session_id = Column(
         String,
-        nullable=False,
+        nullable=True,
         index=True
+    )
+
+    # Paired: the SHA-256 of the device's key.
+    token_hash = Column(
+        String,
+        nullable=True,
+        unique=True
     )
 
     created_by = Column(
@@ -834,6 +844,58 @@ class DeviceSession(Base):
     )
 
     student = relationship("Student")
+
+
+class PairingCode(Base):
+    """
+    A one-time 6-digit code a parent makes to pair a student's device. Only
+    its hash is kept. Used and expired codes stay as history.
+    """
+
+    __tablename__ = "pairing_codes"
+
+    id = Column(Integer, primary_key=True)
+
+    family_id = Column(
+        Integer,
+        ForeignKey("families.id"),
+        nullable=False,
+        index=True
+    )
+
+    student_id = Column(
+        Integer,
+        ForeignKey("students.id"),
+        nullable=False
+    )
+
+    code_hash = Column(
+        String,
+        nullable=False,
+        index=True
+    )
+
+    created_by = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False
+    )
+
+    created_at = Column(
+        DateTime,
+        nullable=False,
+        default=datetime.utcnow
+    )
+
+    expires_at = Column(
+        DateTime,
+        nullable=False
+    )
+
+    used_at = Column(
+        DateTime,
+        nullable=True
+    )
 
 
 class CurrentSession:

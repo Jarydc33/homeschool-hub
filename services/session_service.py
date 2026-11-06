@@ -24,11 +24,12 @@ class SessionService:
 
     TOKEN_STATE = "browser_session_token"
     REFRESH_TOKEN_STATE = "browser_session_refresh_token"
+    DEVICE_TOKEN_STATE = "browser_session_device_token"
     PENDING_STATE = "browser_session_pending"
     REQUEST_STATE = "browser_session_request"
 
     @staticmethod
-    def _perform(action, token=None, refresh_token=None):
+    def _perform(action, token=None, refresh_token=None, device_token=None):
         """
         Runs an action in the browser and returns what's saved there.
         Stops the script until the browser has replied.
@@ -43,6 +44,7 @@ class SessionService:
             action=action,
             token=token,
             refresh_token=refresh_token,
+            device_token=device_token,
             request=request,
             key=f"browser_session_{request}",
             default=None
@@ -74,6 +76,10 @@ class SessionService:
             st.session_state[
                 SessionService.REFRESH_TOKEN_STATE
             ] = saved.get("refresh_token")
+
+            st.session_state[
+                SessionService.DEVICE_TOKEN_STATE
+            ] = saved.get("device_token")
 
         return st.session_state[
             SessionService.TOKEN_STATE
@@ -155,6 +161,52 @@ class SessionService:
         ] = None
 
     @staticmethod
+    def get_device_token():
+        """
+        Returns a paired device's key, if it's known. It's read from the
+        browser with the login tokens, so call this after get_access_token,
+        as looking up the current user does.
+        """
+
+        return st.session_state.get(
+            SessionService.DEVICE_TOKEN_STATE
+        )
+
+    @staticmethod
+    def save_device_token(device_token):
+        """
+        Queues saving a paired device's key. Like save_session, follow this
+        with st.rerun() or a page change.
+        """
+
+        st.session_state[
+            SessionService.DEVICE_TOKEN_STATE
+        ] = device_token
+
+        st.session_state[
+            SessionService.PENDING_STATE
+        ] = {
+            "action": "save_device",
+            "device_token": device_token
+        }
+
+    @staticmethod
+    def clear_device_token():
+        """
+        Queues removing a paired device's key. Follow this with st.rerun().
+        """
+
+        st.session_state[
+            SessionService.DEVICE_TOKEN_STATE
+        ] = None
+
+        st.session_state[
+            SessionService.PENDING_STATE
+        ] = {
+            "action": "clear_device"
+        }
+
+    @staticmethod
     def sync_browser():
         """
         Finishes any queued write, stopping the script until it's confirmed.
@@ -171,7 +223,8 @@ class SessionService:
         SessionService._perform(
             pending["action"],
             pending.get("token"),
-            pending.get("refresh_token")
+            pending.get("refresh_token"),
+            pending.get("device_token")
         )
 
         del st.session_state[

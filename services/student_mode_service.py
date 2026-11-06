@@ -29,7 +29,7 @@ WRONG_PIN_MESSAGE = "That PIN isn't right. Please try again."
 
 LOCKED_MESSAGE = (
     "Too many wrong tries, so the PIN is locked for a few minutes. "
-    "Please wait, or log out and sign back in with the parent password."
+    "Please wait and try again."
 )
 
 FAILED_MESSAGE = (
@@ -251,6 +251,33 @@ class StudentModeService:
         if not mode:
             return False, FAILED_MESSAGE
 
+        exited, message = StudentModeService.end_with_pin(
+            mode.id,
+            mode.family_id,
+            pin,
+            now
+        )
+
+        if not exited:
+            return False, message
+
+        AuthService.forget_student_mode()
+
+        return True, "Student Mode is off."
+
+    @staticmethod
+    def end_with_pin(
+        device_session_id,
+        family_id,
+        pin,
+        now=None
+    ):
+        """
+        Ends one device's student view if the family PIN is right, for
+        Student Mode or a paired device. Returns (ended, message). Too many
+        wrong tries lock that device's PIN for a while.
+        """
+
         now = now or datetime.utcnow()
 
         with get_session() as db:
@@ -258,14 +285,14 @@ class StudentModeService:
             row = (
                 db.query(DeviceSession)
                 .filter(
-                    DeviceSession.id == mode.id,
-                    DeviceSession.family_id == mode.family_id,
+                    DeviceSession.id == device_session_id,
+                    DeviceSession.family_id == family_id,
                     DeviceSession.revoked_at.is_(None)
                 )
                 .first()
             )
 
-            family = db.get(Family, mode.family_id)
+            family = db.get(Family, family_id)
 
             if not row or not family or not family.parent_pin_hash:
                 return False, FAILED_MESSAGE
@@ -284,9 +311,7 @@ class StudentModeService:
 
                 db.commit()
 
-                AuthService.forget_student_mode()
-
-                return True, "Student Mode is off."
+                return True, None
 
             row.failed_pin_attempts += 1
 
@@ -324,8 +349,8 @@ class StudentModeService:
     @staticmethod
     def list_sessions():
         """
-        Returns the family's devices in Student Mode, newest first, with
-        their students. Parents only.
+        Returns the family's devices in Student Mode or paired, newest
+        first, with their students. Parents only.
         """
 
         from services.auth_service import AuthService
@@ -341,7 +366,6 @@ class StudentModeService:
                 .filter(
                     DeviceSession.family_id
                     == AuthService.get_current_family(),
-                    DeviceSession.mode == DeviceMode.STUDENT_MODE.value,
                     DeviceSession.revoked_at.is_(None)
                 )
                 .order_by(DeviceSession.created_at.desc())
@@ -351,8 +375,8 @@ class StudentModeService:
     @staticmethod
     def end_session(device_session_id):
         """
-        Ends Student Mode on another device. Returns True if it was ended.
-        Parents only.
+        Ends Student Mode or a pairing on another device. Returns True if
+        it was ended. Parents only.
         """
 
         from services.auth_service import AuthService

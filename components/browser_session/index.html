@@ -9,6 +9,8 @@
     <script>
       var TOKEN_KEY = "homeschoolhub_session";
       var REFRESH_TOKEN_KEY = "homeschoolhub_refresh";
+      // A paired device's key. Logging out doesn't remove it; unpairing does.
+      var DEVICE_TOKEN_KEY = "homeschoolhub_device";
       // Left behind by the storage library this replaced.
       var OLD_TOKEN_KEY = "homeschoolhub_access_token";
       var lastRequest = null;
@@ -31,6 +33,7 @@
       function run(args) {
         var token = null;
         var refreshToken = null;
+        var deviceToken = null;
 
         try {
           localStorage.removeItem(OLD_TOKEN_KEY);
@@ -41,14 +44,20 @@
           } else if (args.action === "clear") {
             store(TOKEN_KEY, null);
             store(REFRESH_TOKEN_KEY, null);
+          } else if (args.action === "save_device") {
+            store(DEVICE_TOKEN_KEY, args.device_token);
+          } else if (args.action === "clear_device") {
+            store(DEVICE_TOKEN_KEY, null);
           }
 
           token = localStorage.getItem(TOKEN_KEY);
           refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+          deviceToken = localStorage.getItem(DEVICE_TOKEN_KEY);
         } catch (error) {
           // Storage is blocked, so treat this browser as having no saved login.
           token = null;
           refreshToken = null;
+          deviceToken = null;
         }
 
         send("streamlit:setComponentValue", {
@@ -57,6 +66,7 @@
             request: args.request,
             token: token,
             refresh_token: refreshToken,
+            device_token: deviceToken,
           },
         });
       }

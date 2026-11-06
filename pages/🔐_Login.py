@@ -8,6 +8,7 @@ from services.login_limit_service import (
     LOCKED_MESSAGE as LOGIN_LOCKED_MESSAGE,
     LoginLimitService
 )
+from services.pairing_service import PairingService
 from components.navigation import (
     NavigationComponent
 )
@@ -20,6 +21,7 @@ NavigationComponent.render()
 if (
     st.session_state.pop("switch_account", False)
     and AuthService.is_authenticated()
+    and not AuthService.is_paired_device()
 ):
 
     AuthService.logout()
@@ -66,6 +68,15 @@ if st.session_state.pop(
 
     st.success(
         "You have been logged out."
+    )
+
+if st.session_state.pop(
+    "device_unpaired",
+    False
+):
+
+    st.success(
+        "This device is unpaired."
     )
 
 # In a form so tabbing past the password box's eye icon can't lose the password.
@@ -152,3 +163,44 @@ st.page_link(
     "pages/Forgot_Password.py",
     label="Forgot your password?"
 )
+
+# ------------------------------------------------------------------
+# Pairing a student's own device
+# ------------------------------------------------------------------
+
+st.divider()
+
+st.subheader("📱 Have a Pairing Code?")
+
+st.caption(
+    "For a student's own device, with no email needed. A parent makes the "
+    "code in Settings, under Devices."
+)
+
+with st.form("pairing_form", clear_on_submit=True):
+
+    code = st.text_input(
+        "Pairing Code",
+        max_chars=7,
+        placeholder="123456"
+    )
+
+    if st.form_submit_button(
+        "Pair This Device",
+        use_container_width=True
+    ):
+
+        device_token, message = PairingService.redeem(code)
+
+        if device_token:
+
+            # Saved like a login, then the rerun finishes the browser write
+            # and sends them to their dashboard.
+
+            SessionService.save_device_token(device_token)
+
+            AuthService.start_page_run()
+
+            st.rerun()
+
+        st.error(message)
