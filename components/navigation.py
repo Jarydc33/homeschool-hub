@@ -11,6 +11,11 @@ from services.student_mode_service import StudentModeService
 FAVICON = "assets/tally-logo.png"
 SIDEBAR_LOGO = "assets/tally-mark.png"
 
+# Where parents' comments and suggestions go. The link opens their email
+# app; the address is shown too, for computers without one set up.
+FEEDBACK_EMAIL = "tallyhomeschoolapp@gmail.com"
+FEEDBACK_LINK = f"mailto:{FEEDBACK_EMAIL}?subject=tally%20feedback"
+
 # Each group is (heading, [(page, label, icon)]). A heading of None means the
 # links sit above the groups.
 
@@ -301,6 +306,16 @@ class NavigationComponent:
 
                 st.divider()
 
+                if AuthService.is_parent():
+
+                    st.markdown(
+                        f"💬 [Send feedback]({FEEDBACK_LINK})"
+                    )
+
+                    st.caption(
+                        f"Comments and ideas are welcome at {FEEDBACK_EMAIL}"
+                    )
+
                 if st.button("Logout"):
 
                     AuthService.logout()
@@ -308,6 +323,7 @@ class NavigationComponent:
                     st.rerun()
 
                 st.caption("Version 1.0.0")
+
             else:
 
                 NavigationComponent._render_links(LOGGED_OUT_LINKS)

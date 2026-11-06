@@ -427,3 +427,17 @@ def test_the_parents_other_logins_are_unaffected(world, page):
     assert not at.exception
     assert "🔒 Family PIN" in [s.value for s in at.subheader]
     assert any("Bob" in item.value for item in at.markdown)
+
+
+def test_parents_get_a_feedback_link_and_students_dont(world, page):
+    # One parent login: Student Mode on session-b, a normal parent on session-a.
+    user_id = _in_student_mode(world, world.bob, "session-b")
+
+    parent_view = page("Settings", user_id, "session-a").run()
+    student_view = page("Student_Dashboard", user_id, "session-b").run()
+
+    def sidebar_text(at):
+        return " ".join(item.value for item in at.sidebar.markdown)
+
+    assert "mailto:tallyhomeschoolapp@gmail.com" in sidebar_text(parent_view)
+    assert "mailto:" not in sidebar_text(student_view)
