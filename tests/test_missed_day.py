@@ -10,7 +10,7 @@ from streamlit.testing.v1 import AppTest
 from database.db import SessionLocal
 from database.models import AssignmentOccurrence, User, UserRole
 from services.assignment_service import AssignmentService
-from services.auth_service import AuthService
+from services.current_user import CurrentUser
 from services.session_service import SessionService
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -28,7 +28,7 @@ NEXT_TUESDAY = date(2026, 11, 10)
 
 @pytest.fixture
 def parent(smith_parent):
-    with mock.patch.object(AuthService, "get_today", return_value=WEDNESDAY):
+    with mock.patch.object(CurrentUser, "get_today", return_value=WEDNESDAY):
         yield smith_parent
 
 
@@ -326,7 +326,7 @@ def test_parent_shifts_from_the_dashboard(world, login, dashboard):
     today = date.today()
     start = today - timedelta(days=3)
     login(w.smith)
-    with mock.patch.object(AuthService, "get_today", return_value=today):
+    with mock.patch.object(CurrentUser, "get_today", return_value=today):
         work = AssignmentService.create_assignment(
             subject_id=w.math,
             title="Saxon Math",

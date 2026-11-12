@@ -88,10 +88,10 @@ class FamilyService:
         """
 
         # Imported here because AuthService imports this module.
-        from services.auth_service import AuthService
+        from services.current_user import CurrentUser
 
         if (
-            not AuthService.is_parent()
+            not CurrentUser.is_parent()
             or FamilyService.settings_error(family_name, timezone)
         ):
             return None
@@ -100,7 +100,7 @@ class FamilyService:
 
             family = db.get(
                 Family,
-                AuthService.get_current_family()
+                CurrentUser.get_family_id()
             )
 
             if not family:

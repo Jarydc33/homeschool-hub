@@ -9,7 +9,7 @@ from database.models import (
     ReadingLog,
     Student,
 )
-from services.auth_service import AuthService
+from services.current_user import CurrentUser
 
 # Enough for any real day, so a typo can't wreck a student's totals.
 MAX_PAGES_PER_DAY = 5000
@@ -47,18 +47,18 @@ class ReadingService:
         student their own, and a parent any active student in their family.
         """
 
-        if AuthService.is_student():
+        if CurrentUser.is_student():
 
-            return student_id == AuthService.get_current_student()
+            return student_id == CurrentUser.get_student_id()
 
-        if not AuthService.is_parent():
+        if not CurrentUser.is_parent():
             return False
 
         return (
             db.query(Student.id)
             .filter(
                 Student.id == student_id,
-                Student.family_id == AuthService.get_current_family(),
+                Student.family_id == CurrentUser.get_family_id(),
                 Student.active.is_(True)
             )
             .first()
@@ -78,7 +78,7 @@ class ReadingService:
             db.query(Book)
             .filter(
                 Book.id == book_id,
-                Book.family_id == AuthService.get_current_family(),
+                Book.family_id == CurrentUser.get_family_id(),
                 Book.active.is_(True)
             )
             .first()
@@ -127,7 +127,7 @@ class ReadingService:
                 return None
 
             book = Book(
-                family_id=AuthService.get_current_family(),
+                family_id=CurrentUser.get_family_id(),
                 student_id=student_id,
                 title=title.strip(),
                 author=(author or "").strip() or None,
@@ -208,7 +208,7 @@ class ReadingService:
                 return None
 
             book.finished_on = (
-                AuthService.get_today()
+                CurrentUser.get_today()
                 if finished
                 else None
             )
@@ -232,7 +232,7 @@ class ReadingService:
         """
 
         if (
-            log_date > AuthService.get_today()
+            log_date > CurrentUser.get_today()
             or pages < 0
             or pages > MAX_PAGES_PER_DAY
         ):
@@ -296,7 +296,7 @@ class ReadingService:
                 )
                 .filter(
                     Book.student_id == student_id,
-                    Book.family_id == AuthService.get_current_family(),
+                    Book.family_id == CurrentUser.get_family_id(),
                     Book.active.is_(True)
                 )
                 .order_by(Book.title)

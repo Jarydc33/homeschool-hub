@@ -4,7 +4,7 @@ import re
 
 from database.db import get_session
 from database.models import Subject, Assignment
-from services.auth_service import AuthService
+from services.current_user import CurrentUser
 
 DEFAULT_COLOR = "#2196F3"
 
@@ -35,7 +35,7 @@ class SubjectService:
                 .filter(
                     Assignment.subject_id == subject_id,
                     Assignment.family_id
-                    == AuthService.get_current_family(),
+                    == CurrentUser.get_family_id(),
                     Assignment.active.is_(True)
                 )
                 .count()
@@ -51,7 +51,7 @@ class SubjectService:
                 .filter(
                     Subject.id == subject_id,
                     Subject.family_id
-                    == AuthService.get_current_family()
+                    == CurrentUser.get_family_id()
                 )
                 .first()
             )
@@ -73,7 +73,7 @@ class SubjectService:
     def get_current_family_subjects():
 
         family_id = (
-            AuthService.get_current_family()
+            CurrentUser.get_family_id()
         )
 
         return (
@@ -90,13 +90,13 @@ class SubjectService:
 
         # Only parents change this, even if a page guard is ever missed.
 
-        if not AuthService.is_parent():
+        if not CurrentUser.is_parent():
             return None
 
         with get_session() as db:
 
             subject = Subject(
-                family_id=AuthService.get_current_family(),
+                family_id=CurrentUser.get_family_id(),
                 name=name,
                 color=SubjectService.display_color(color)
             )
@@ -116,7 +116,7 @@ class SubjectService:
 
         # Only parents change this, even if a page guard is ever missed.
 
-        if not AuthService.is_parent():
+        if not CurrentUser.is_parent():
             return None
 
         with get_session() as db:
@@ -126,7 +126,7 @@ class SubjectService:
                 .filter(
                     Subject.id == subject_id,
                     Subject.family_id
-                    == AuthService.get_current_family()
+                    == CurrentUser.get_family_id()
                 )
                 .first()
             )
@@ -150,7 +150,7 @@ class SubjectService:
         Returns the current family's archived subjects, by name, for a parent.
         """
 
-        if not AuthService.is_parent():
+        if not CurrentUser.is_parent():
             return []
 
         with get_session() as db:
@@ -158,7 +158,7 @@ class SubjectService:
             return (
                 db.query(Subject)
                 .filter(
-                    Subject.family_id == AuthService.get_current_family(),
+                    Subject.family_id == CurrentUser.get_family_id(),
                     Subject.active.is_(False)
                 )
                 .order_by(Subject.name)
@@ -172,7 +172,7 @@ class SubjectService:
         it, or None if it isn't available to this parent.
         """
 
-        if not AuthService.is_parent():
+        if not CurrentUser.is_parent():
             return None
 
         with get_session() as db:
@@ -181,7 +181,7 @@ class SubjectService:
                 db.query(Subject)
                 .filter(
                     Subject.id == subject_id,
-                    Subject.family_id == AuthService.get_current_family()
+                    Subject.family_id == CurrentUser.get_family_id()
                 )
                 .first()
             )
@@ -200,7 +200,7 @@ class SubjectService:
 
         # Only parents change this, even if a page guard is ever missed.
 
-        if not AuthService.is_parent():
+        if not CurrentUser.is_parent():
             return None
 
         with get_session() as db:
@@ -210,7 +210,7 @@ class SubjectService:
                 .filter(
                     Subject.id == subject_id,
                     Subject.family_id
-                    == AuthService.get_current_family()
+                    == CurrentUser.get_family_id()
                 )
                 .first()
             )

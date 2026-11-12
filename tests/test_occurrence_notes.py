@@ -10,7 +10,7 @@ from streamlit.testing.v1 import AppTest
 from database.db import SessionLocal
 from database.models import AssignmentOccurrence, User, UserRole
 from services.assignment_service import AssignmentService
-from services.auth_service import AuthService
+from services.current_user import CurrentUser
 from services.occurrence_service import OccurrenceService
 from services.session_service import SessionService
 from services.student_service import StudentService
@@ -23,7 +23,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 @pytest.fixture
 def parent(smith_parent):
-    with mock.patch.object(AuthService, "get_today", return_value=TODAY):
+    with mock.patch.object(CurrentUser, "get_today", return_value=TODAY):
         yield smith_parent
 
 
@@ -218,7 +218,7 @@ def test_student_sees_the_note_on_that_date_only(world, login, page_as):
     w = world
     today = date.today()
     login(w.smith)
-    with mock.patch.object(AuthService, "get_today", return_value=today):
+    with mock.patch.object(CurrentUser, "get_today", return_value=today):
         work = AssignmentService.create_assignment(
             subject_id=w.art,
             title="Daily Math",
@@ -241,7 +241,7 @@ def test_student_sees_the_assignments_description(world, login, page_as):
     w = world
     today = date.today()
     login(w.smith)
-    with mock.patch.object(AuthService, "get_today", return_value=today):
+    with mock.patch.object(CurrentUser, "get_today", return_value=today):
         AssignmentService.create_assignment(
             subject_id=w.art,
             title="Daily Math",
@@ -262,7 +262,7 @@ def test_parent_saves_a_note_from_the_assignments_page(world, login, page_as):
     w = world
     today = date.today()
     login(w.smith)
-    with mock.patch.object(AuthService, "get_today", return_value=today):
+    with mock.patch.object(CurrentUser, "get_today", return_value=today):
         work = AssignmentService.create_assignment(
             subject_id=w.art,
             title="Daily Math",

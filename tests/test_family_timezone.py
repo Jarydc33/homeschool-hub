@@ -15,6 +15,7 @@ from database.models import (
 )
 from services.auth_provider import AuthProvider
 from services.auth_service import AuthService
+from services.current_user import CurrentUser
 from services.banner_service import BannerService
 from services.dashboard_service import DashboardService
 from services.family_service import FamilyService
@@ -34,7 +35,7 @@ class FrozenDatetime(datetime):
 
 @pytest.fixture(autouse=True)
 def frozen_clock():
-    with mock.patch("services.auth_service.datetime", FrozenDatetime):
+    with mock.patch("services.current_user.datetime", FrozenDatetime):
         yield
 
 

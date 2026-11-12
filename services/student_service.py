@@ -9,7 +9,7 @@ from database.models import (
 from sqlalchemy import and_
 from sqlalchemy.orm import joinedload
 from datetime import datetime
-from services.auth_service import AuthService
+from services.current_user import CurrentUser
 
 
 class StudentService:
@@ -32,18 +32,18 @@ class StudentService:
                 .filter(
                     AssignmentOccurrence.id == occurrence_id,
                     Assignment.family_id
-                    == AuthService.get_current_family(),
+                    == CurrentUser.get_family_id(),
                     Assignment.active.is_(True)
                 )
             )
 
             # Students can only check off their own work.
 
-            if AuthService.is_student():
+            if CurrentUser.is_student():
 
                 query = query.filter(
                     AssignmentOccurrence.student_id
-                    == AuthService.get_current_student()
+                    == CurrentUser.get_student_id()
                 )
 
             occurrence = query.first()
@@ -83,8 +83,8 @@ class StudentService:
         """
 
         if (
-            AuthService.is_student()
-            and student_id != AuthService.get_current_student()
+            CurrentUser.is_student()
+            and student_id != CurrentUser.get_student_id()
         ):
             return []
 
@@ -112,7 +112,7 @@ class StudentService:
                 .filter(
                     AssignmentOccurrence.student_id == student_id,
                     Assignment.family_id
-                    == AuthService.get_current_family(),
+                    == CurrentUser.get_family_id(),
                     Assignment.active.is_(True)
                 )
                 .all()
@@ -125,8 +125,8 @@ class StudentService:
         """
 
         if (
-            AuthService.is_student()
-            and student_id != AuthService.get_current_student()
+            CurrentUser.is_student()
+            and student_id != CurrentUser.get_student_id()
         ):
             return None
 
@@ -136,7 +136,7 @@ class StudentService:
                 .filter(
                     Student.id == student_id,
                     Student.family_id
-                    == AuthService.get_current_family()
+                    == CurrentUser.get_family_id()
                 )
                 .first()
             )
@@ -147,7 +147,7 @@ class StudentService:
     def get_current_family_students():
 
         family_id = (
-            AuthService.get_current_family()
+            CurrentUser.get_family_id()
         )
 
         return (
@@ -182,7 +182,7 @@ class StudentService:
 
         # Only parents change this, even if a page guard is ever missed.
 
-        if not AuthService.is_parent():
+        if not CurrentUser.is_parent():
             return []
 
         with get_session() as db:
@@ -191,7 +191,7 @@ class StudentService:
                 db.query(Student)
                 .filter(
                     Student.family_id
-                    == AuthService.get_current_family(),
+                    == CurrentUser.get_family_id(),
                     Student.active.is_(False)
                 )
                 .order_by(Student.name)
@@ -207,7 +207,7 @@ class StudentService:
 
         # Only parents change this, even if a page guard is ever missed.
 
-        if not AuthService.is_parent():
+        if not CurrentUser.is_parent():
             return None
 
         with get_session() as db:
@@ -217,7 +217,7 @@ class StudentService:
                 .filter(
                     Student.id == student_id,
                     Student.family_id
-                    == AuthService.get_current_family()
+                    == CurrentUser.get_family_id()
                 )
                 .first()
             )
@@ -243,13 +243,13 @@ class StudentService:
 
         # Only parents change this, even if a page guard is ever missed.
 
-        if not AuthService.is_parent():
+        if not CurrentUser.is_parent():
             return None
 
         with get_session() as db:
 
             student = Student(
-                family_id=AuthService.get_current_family(),
+                family_id=CurrentUser.get_family_id(),
                 name=name,
                 grade_level=grade_level,
                 birth_year=birth_year
@@ -274,7 +274,7 @@ class StudentService:
 
         # Only parents change this, even if a page guard is ever missed.
 
-        if not AuthService.is_parent():
+        if not CurrentUser.is_parent():
             return None
 
         with get_session() as db:
@@ -284,7 +284,7 @@ class StudentService:
                 .filter(
                     Student.id == student_id,
                     Student.family_id
-                    == AuthService.get_current_family()
+                    == CurrentUser.get_family_id()
                 )
                 .first()
             )
@@ -314,7 +314,7 @@ class StudentService:
 
         # Only parents change this, even if a page guard is ever missed.
 
-        if not AuthService.is_parent():
+        if not CurrentUser.is_parent():
             return None
 
         with get_session() as db:
@@ -324,7 +324,7 @@ class StudentService:
                 .filter(
                     Student.id == student_id,
                     Student.family_id
-                    == AuthService.get_current_family()
+                    == CurrentUser.get_family_id()
                 )
                 .first()
             )

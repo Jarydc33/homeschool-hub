@@ -12,7 +12,7 @@ from database.db import SessionLocal
 from database.models import User, UserRole
 from services.achievement_service import AchievementService
 from services.assignment_service import AssignmentService
-from services.auth_service import AuthService
+from services.current_user import CurrentUser
 from services.session_service import SessionService
 from services.student_service import StudentService
 
@@ -168,7 +168,7 @@ def test_newly_earned_finds_only_new_badges():
 
 @pytest.fixture
 def parent(smith_parent):
-    with mock.patch.object(AuthService, "get_today", return_value=TODAY):
+    with mock.patch.object(CurrentUser, "get_today", return_value=TODAY):
         yield smith_parent
 
 
@@ -263,7 +263,7 @@ def test_page_shows_the_streak_and_earns_a_badge(world, login, student_page):
     w = world
     today = date.today()
     login(w.smith)
-    with mock.patch.object(AuthService, "get_today", return_value=today):
+    with mock.patch.object(CurrentUser, "get_today", return_value=today):
         _curriculum(w, start=today)
     mock.patch.stopall()
 

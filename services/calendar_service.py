@@ -14,7 +14,7 @@ from database.models import (
     Student,
     StudentAssignment,
 )
-from services.auth_service import AuthService
+from services.current_user import CurrentUser
 from services.event_service import EventService
 from services.occurrence_service import OccurrenceService
 
@@ -122,7 +122,7 @@ class CalendarService:
         and for active students still assigned to them.
         """
 
-        family_id = AuthService.get_current_family()
+        family_id = CurrentUser.get_family_id()
 
         with get_session() as db:
 
@@ -181,15 +181,15 @@ class CalendarService:
         the work belongs to, and None for an event.
         """
 
-        if AuthService.is_student():
+        if CurrentUser.is_student():
 
-            student_id = AuthService.get_current_student()
+            student_id = CurrentUser.get_student_id()
 
-        elif not AuthService.is_parent():
+        elif not CurrentUser.is_parent():
 
             return {}
 
-        today = AuthService.get_today()
+        today = CurrentUser.get_today()
 
         items = defaultdict(list)
 

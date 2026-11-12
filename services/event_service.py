@@ -11,7 +11,7 @@ from database.models import (
     RecurrencePattern,
     Student,
 )
-from services.auth_service import AuthService
+from services.current_user import CurrentUser
 from services.occurrence_service import (
     MAX_SCHEDULE_DAYS,
     OccurrenceService,
@@ -246,7 +246,7 @@ class EventService:
         students means the whole family. Saved in one commit.
         """
 
-        if not AuthService.is_parent():
+        if not CurrentUser.is_parent():
             return None
 
         title = (title or "").strip()
@@ -263,7 +263,7 @@ class EventService:
             return None
 
         family_id = (
-            AuthService.get_current_family()
+            CurrentUser.get_family_id()
         )
 
         with get_session() as db:
@@ -315,7 +315,7 @@ class EventService:
         for the whole family.
         """
 
-        if not AuthService.is_parent():
+        if not CurrentUser.is_parent():
             return None
 
         title = (title or "").strip()
@@ -332,7 +332,7 @@ class EventService:
             return None
 
         family_id = (
-            AuthService.get_current_family()
+            CurrentUser.get_family_id()
         )
 
         with get_session() as db:
@@ -403,7 +403,7 @@ class EventService:
         to this parent.
         """
 
-        if not AuthService.is_parent():
+        if not CurrentUser.is_parent():
             return None
 
         with get_session() as db:
@@ -412,7 +412,7 @@ class EventService:
                 db.query(Event)
                 .filter(
                     Event.id == event_id,
-                    Event.family_id == AuthService.get_current_family()
+                    Event.family_id == CurrentUser.get_family_id()
                 )
                 .first()
             )
@@ -432,7 +432,7 @@ class EventService:
         Returns one of this family's active events, for a parent to edit.
         """
 
-        if not AuthService.is_parent():
+        if not CurrentUser.is_parent():
             return None
 
         with get_session() as db:
@@ -453,7 +453,7 @@ class EventService:
                 .joinedload(EventStudent.student)
             )
             .filter(
-                Event.family_id == AuthService.get_current_family(),
+                Event.family_id == CurrentUser.get_family_id(),
                 Event.active.is_(True)
             )
         )
@@ -466,11 +466,11 @@ class EventService:
         A parent gets them all, or one student's if student_id is given.
         """
 
-        if AuthService.is_student():
+        if CurrentUser.is_student():
 
-            student_id = AuthService.get_current_student()
+            student_id = CurrentUser.get_student_id()
 
-        elif not AuthService.is_parent():
+        elif not CurrentUser.is_parent():
 
             return []
 

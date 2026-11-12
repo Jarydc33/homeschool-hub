@@ -10,7 +10,7 @@ from streamlit.testing.v1 import AppTest
 from database.db import SessionLocal
 from database.models import AssignmentOccurrence, Student, User, UserRole
 from services.assignment_service import AssignmentService
-from services.auth_service import AuthService
+from services.current_user import CurrentUser
 from services.calendar_service import CalendarService
 from services.event_service import EventService
 from services.session_service import SessionService
@@ -27,7 +27,7 @@ TOMORROW = date(2026, 11, 6)
 
 @pytest.fixture
 def parent(smith_parent):
-    with mock.patch.object(AuthService, "get_today", return_value=TODAY):
+    with mock.patch.object(CurrentUser, "get_today", return_value=TODAY):
         yield smith_parent
 
 
@@ -364,7 +364,7 @@ def page_as(world):
 def _add(w, login, title, students, day=None):
     """Real dates, since the page uses the real clock."""
     login(w.smith)
-    with mock.patch.object(AuthService, "get_today", return_value=date.today()):
+    with mock.patch.object(CurrentUser, "get_today", return_value=date.today()):
         one_time(w, title, day or date.today(), students)
     mock.patch.stopall()
 

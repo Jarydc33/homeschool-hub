@@ -17,7 +17,7 @@ from database.models import (
     AssignmentType
 )
 
-from services.auth_service import AuthService
+from services.current_user import CurrentUser
 from services.occurrence_service import OccurrenceService
 
 logger = logging.getLogger(__name__)
@@ -72,7 +72,7 @@ class AssignmentService:
                 .filter(
                     Assignment.id == assignment_id,
                     Assignment.family_id
-                    == AuthService.get_current_family()
+                    == CurrentUser.get_family_id()
                 )
                 .first()
             )
@@ -128,7 +128,7 @@ class AssignmentService:
     def get_current_family_assignments():
 
         family_id = (
-            AuthService.get_current_family()
+            CurrentUser.get_family_id()
         )
 
         return (
@@ -161,7 +161,7 @@ class AssignmentService:
 
         # Only parents change this, even if a page guard is ever missed.
 
-        if not AuthService.is_parent():
+        if not CurrentUser.is_parent():
             return None
 
         if OccurrenceService.schedule_error(
@@ -182,7 +182,7 @@ class AssignmentService:
         )
 
         family_id = (
-            AuthService.get_current_family()
+            CurrentUser.get_family_id()
         )
 
         with get_session() as db:
@@ -280,7 +280,7 @@ class AssignmentService:
 
         # Only parents change this, even if a page guard is ever missed.
 
-        if not AuthService.is_parent():
+        if not CurrentUser.is_parent():
             return None
 
         if OccurrenceService.schedule_error(
@@ -301,7 +301,7 @@ class AssignmentService:
         )
 
         family_id = (
-            AuthService.get_current_family()
+            CurrentUser.get_family_id()
         )
 
         with get_session() as db:
@@ -440,7 +440,7 @@ class AssignmentService:
                 db,
                 assignment,
                 kept_ids,
-                AuthService.get_today(),
+                CurrentUser.get_today(),
                 lesson_count,
                 reschedule
             )
@@ -469,7 +469,7 @@ class AssignmentService:
         with their students: dates for active students still assigned to it.
         """
 
-        if not AuthService.is_parent():
+        if not CurrentUser.is_parent():
             return []
 
         with get_session() as db:
@@ -493,7 +493,7 @@ class AssignmentService:
                 .filter(
                     AssignmentOccurrence.assignment_id == assignment_id,
                     Assignment.family_id
-                    == AuthService.get_current_family(),
+                    == CurrentUser.get_family_id(),
                     Assignment.active.is_(True),
                     Student.active.is_(True)
                 )
@@ -639,11 +639,11 @@ class AssignmentService:
         "new_finish"} per curriculum that would change.
         """
 
-        if not AuthService.is_parent():
+        if not CurrentUser.is_parent():
             return []
 
         family_id = (
-            AuthService.get_current_family()
+            CurrentUser.get_family_id()
         )
 
         with get_session() as db:
@@ -692,11 +692,11 @@ class AssignmentService:
         dated before today that isn't done.
         """
 
-        if not AuthService.is_parent():
+        if not CurrentUser.is_parent():
             return set()
 
         family_id = (
-            AuthService.get_current_family()
+            CurrentUser.get_family_id()
         )
 
         with get_session() as db:
@@ -741,7 +741,7 @@ class AssignmentService:
                 db.query(Assignment.id)
                 .filter(
                     Assignment.family_id
-                    == AuthService.get_current_family(),
+                    == CurrentUser.get_family_id(),
                     Assignment.active.is_(True),
                     Assignment.assignment_type
                     == AssignmentType.CURRICULUM.value
@@ -762,14 +762,14 @@ class AssignmentService:
         or None if a parent can't do this or the date has already passed.
         """
 
-        if not AuthService.is_parent():
+        if not CurrentUser.is_parent():
             return None
 
-        if resume_on < AuthService.get_today():
+        if resume_on < CurrentUser.get_today():
             return None
 
         family_id = (
-            AuthService.get_current_family()
+            CurrentUser.get_family_id()
         )
 
         with get_session() as db:
@@ -804,7 +804,7 @@ class AssignmentService:
         subjects, by title, for a parent.
         """
 
-        if not AuthService.is_parent():
+        if not CurrentUser.is_parent():
             return []
 
         with get_session() as db:
@@ -815,7 +815,7 @@ class AssignmentService:
                     joinedload(Assignment.subject)
                 )
                 .filter(
-                    Assignment.family_id == AuthService.get_current_family(),
+                    Assignment.family_id == CurrentUser.get_family_id(),
                     Assignment.active.is_(False)
                 )
                 .order_by(Assignment.title)
@@ -830,7 +830,7 @@ class AssignmentService:
         available to this parent.
         """
 
-        if not AuthService.is_parent():
+        if not CurrentUser.is_parent():
             return None
 
         with get_session() as db:
@@ -839,7 +839,7 @@ class AssignmentService:
                 db.query(Assignment)
                 .filter(
                     Assignment.id == assignment_id,
-                    Assignment.family_id == AuthService.get_current_family()
+                    Assignment.family_id == CurrentUser.get_family_id()
                 )
                 .first()
             )
@@ -860,7 +860,7 @@ class AssignmentService:
 
         # Only parents change this, even if a page guard is ever missed.
 
-        if not AuthService.is_parent():
+        if not CurrentUser.is_parent():
             return None
 
         with get_session() as db:
@@ -870,7 +870,7 @@ class AssignmentService:
                 .filter(
                     Assignment.id == assignment_id,
                     Assignment.family_id
-                    == AuthService.get_current_family()
+                    == CurrentUser.get_family_id()
                 )
                 .first()
             )

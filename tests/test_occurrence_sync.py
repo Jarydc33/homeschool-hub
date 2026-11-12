@@ -10,7 +10,7 @@ from streamlit.testing.v1 import AppTest
 from database.db import SessionLocal
 from database.models import Assignment, AssignmentOccurrence, User
 from services.assignment_service import AssignmentService
-from services.auth_service import AuthService
+from services.current_user import CurrentUser
 from services.occurrence_service import OccurrenceService
 from services.session_service import SessionService
 
@@ -26,7 +26,7 @@ THREE_WEEKS = date(2026, 11, 25)
 
 @pytest.fixture
 def parent(smith_parent):
-    with mock.patch.object(AuthService, "get_today", return_value=TODAY):
+    with mock.patch.object(CurrentUser, "get_today", return_value=TODAY):
         yield smith_parent
 
 

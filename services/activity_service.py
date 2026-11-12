@@ -15,7 +15,7 @@ from database.models import (
     Student,
     StudentAssignment,
 )
-from services.auth_service import AuthService
+from services.current_user import CurrentUser
 from services.occurrence_service import OccurrenceService
 
 RECENT_DAYS = 7
@@ -208,10 +208,10 @@ class ActivityService:
         parents.
         """
 
-        if not AuthService.is_parent():
+        if not CurrentUser.is_parent():
             return []
 
-        family_id = AuthService.get_current_family()
+        family_id = CurrentUser.get_family_id()
 
         first_day = today - timedelta(days=RECENT_DAYS - 1)
 
@@ -222,7 +222,7 @@ class ActivityService:
                     db,
                     family_id,
                     first_day,
-                    AuthService.get_zone()
+                    CurrentUser.get_zone()
                 )
                 + ActivityService._reading(
                     db,

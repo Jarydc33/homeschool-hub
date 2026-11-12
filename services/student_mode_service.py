@@ -79,9 +79,9 @@ class StudentModeService:
         True if the current family has set a PIN.
         """
 
-        from services.auth_service import AuthService
+        from services.current_user import CurrentUser
 
-        family_id = AuthService.get_current_family()
+        family_id = CurrentUser.get_family_id()
 
         if not family_id:
             return False
@@ -102,9 +102,9 @@ class StudentModeService:
         not from inside Student Mode.
         """
 
-        from services.auth_service import AuthService
+        from services.current_user import CurrentUser
 
-        if not AuthService.is_parent():
+        if not CurrentUser.is_parent():
             return False, FAILED_MESSAGE
 
         error = StudentModeService.pin_error(pin)
@@ -119,7 +119,7 @@ class StudentModeService:
 
             family = db.get(
                 Family,
-                AuthService.get_current_family()
+                CurrentUser.get_family_id()
             )
 
             if not family:
@@ -183,15 +183,15 @@ class StudentModeService:
         Switches this login to the student's view. Returns (started, message).
         """
 
-        from services.auth_service import AuthService
+        from services.current_user import CurrentUser
 
-        if not AuthService.is_parent():
+        if not CurrentUser.is_parent():
             return False, FAILED_MESSAGE
 
         if not StudentModeService.has_pin():
             return False, "Please set a family PIN in Settings first."
 
-        auth_session_id = AuthService.get_auth_session_id()
+        auth_session_id = CurrentUser.get_auth_session_id()
 
         if not auth_session_id:
 
@@ -202,7 +202,7 @@ class StudentModeService:
                 "and try again."
             )
 
-        family_id = AuthService.get_current_family()
+        family_id = CurrentUser.get_family_id()
 
         with get_session() as db:
 
@@ -225,7 +225,7 @@ class StudentModeService:
                     student_id=student.id,
                     mode=DeviceMode.STUDENT_MODE.value,
                     auth_session_id=auth_session_id,
-                    created_by=AuthService.get_current_user().id
+                    created_by=CurrentUser.get().id
                 )
             )
 
@@ -233,7 +233,7 @@ class StudentModeService:
 
             name = student.name
 
-        AuthService.forget_student_mode()
+        CurrentUser.forget_student_mode()
 
         return True, f"Student Mode is on for {name}."
 
@@ -244,9 +244,9 @@ class StudentModeService:
         (exited, message). Too many wrong tries lock the PIN for a while.
         """
 
-        from services.auth_service import AuthService
+        from services.current_user import CurrentUser
 
-        mode = AuthService.get_student_mode()
+        mode = CurrentUser.get_student_mode()
 
         if not mode:
             return False, FAILED_MESSAGE
@@ -261,7 +261,7 @@ class StudentModeService:
         if not exited:
             return False, message
 
-        AuthService.forget_student_mode()
+        CurrentUser.forget_student_mode()
 
         return True, "Student Mode is off."
 
@@ -335,16 +335,16 @@ class StudentModeService:
         out, which needs the parent's password to undo.
         """
 
-        from services.auth_service import AuthService
+        from services.current_user import CurrentUser
 
-        mode = AuthService.get_student_mode()
+        mode = CurrentUser.get_student_mode()
 
         if not mode:
             return
 
         StudentModeService._revoke(mode.id, mode.family_id)
 
-        AuthService.forget_student_mode()
+        CurrentUser.forget_student_mode()
 
     @staticmethod
     def list_sessions():
@@ -353,9 +353,9 @@ class StudentModeService:
         first, with their students. Parents only.
         """
 
-        from services.auth_service import AuthService
+        from services.current_user import CurrentUser
 
-        if not AuthService.is_parent():
+        if not CurrentUser.is_parent():
             return []
 
         with get_session() as db:
@@ -365,7 +365,7 @@ class StudentModeService:
                 .options(joinedload(DeviceSession.student))
                 .filter(
                     DeviceSession.family_id
-                    == AuthService.get_current_family(),
+                    == CurrentUser.get_family_id(),
                     DeviceSession.revoked_at.is_(None)
                 )
                 .order_by(DeviceSession.created_at.desc())
@@ -379,14 +379,14 @@ class StudentModeService:
         it was ended. Parents only.
         """
 
-        from services.auth_service import AuthService
+        from services.current_user import CurrentUser
 
-        if not AuthService.is_parent():
+        if not CurrentUser.is_parent():
             return False
 
         return StudentModeService._revoke(
             device_session_id,
-            AuthService.get_current_family()
+            CurrentUser.get_family_id()
         )
 
     @staticmethod

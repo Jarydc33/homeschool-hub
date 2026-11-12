@@ -11,7 +11,7 @@ from streamlit.testing.v1 import AppTest
 from database.db import SessionLocal
 from database.models import AssignmentOccurrence, User, UserRole
 from services.assignment_service import AssignmentService
-from services.auth_service import AuthService
+from services.current_user import CurrentUser
 from services.dashboard_service import DashboardService
 from services.occurrence_service import OccurrenceService
 from services.session_service import SessionService
@@ -27,7 +27,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 @pytest.fixture
 def parent(smith_parent):
-    with mock.patch.object(AuthService, "get_today", return_value=TODAY):
+    with mock.patch.object(CurrentUser, "get_today", return_value=TODAY):
         yield smith_parent
 
 
@@ -437,7 +437,7 @@ def page_as():
 
 def _add_work(w, today):
     """Real dates, since the pages use the real clock."""
-    with mock.patch.object(AuthService, "get_today", return_value=today):
+    with mock.patch.object(CurrentUser, "get_today", return_value=today):
         work = AssignmentService.create_assignment(
             subject_id=w.art,
             title="Math",
@@ -503,7 +503,7 @@ def test_student_page_only_lists_recent_completed_work(smith_parent, page_as):
 def test_student_page_only_lists_recent_missed_dates(smith_parent, page_as):
     w = smith_parent
     today = date.today()
-    with mock.patch.object(AuthService, "get_today", return_value=today):
+    with mock.patch.object(CurrentUser, "get_today", return_value=today):
         AssignmentService.create_assignment(
             subject_id=w.art,
             title="Math",

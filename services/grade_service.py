@@ -13,7 +13,7 @@ from database.models import (
     Student,
     StudentAssignment,
 )
-from services.auth_service import AuthService
+from services.current_user import CurrentUser
 from services.occurrence_service import OccurrenceService
 
 # Fits the database column.
@@ -174,18 +174,18 @@ class GradeService:
         in their family.
         """
 
-        if AuthService.is_student():
+        if CurrentUser.is_student():
 
-            return student_id == AuthService.get_current_student()
+            return student_id == CurrentUser.get_student_id()
 
-        if not AuthService.is_parent():
+        if not CurrentUser.is_parent():
             return False
 
         return (
             db.query(Student.id)
             .filter(
                 Student.id == student_id,
-                Student.family_id == AuthService.get_current_family(),
+                Student.family_id == CurrentUser.get_family_id(),
                 Student.active.is_(True)
             )
             .first()
@@ -219,7 +219,7 @@ class GradeService:
                     AssignmentOccurrence.student_id == student_id,
                     AssignmentOccurrence.score.isnot(None),
                     AssignmentOccurrence.points_possible.isnot(None),
-                    Assignment.family_id == AuthService.get_current_family(),
+                    Assignment.family_id == CurrentUser.get_family_id(),
                     Assignment.graded.is_(True)
                 )
                 .order_by(
@@ -243,7 +243,7 @@ class GradeService:
 
         empty = {"finished": [], "unfinished": []}
 
-        if not AuthService.is_parent():
+        if not CurrentUser.is_parent():
             return empty
 
         with get_session() as db:
@@ -273,7 +273,7 @@ class GradeService:
                 .filter(
                     AssignmentOccurrence.student_id == student_id,
                     AssignmentOccurrence.score.is_(None),
-                    Assignment.family_id == AuthService.get_current_family(),
+                    Assignment.family_id == CurrentUser.get_family_id(),
                     Assignment.active.is_(True),
                     Assignment.graded.is_(True)
                 )
@@ -328,7 +328,7 @@ class GradeService:
                 .filter(
                     AssignmentOccurrence.assignment_id.in_(assignment_ids),
                     AssignmentOccurrence.points_possible.isnot(None),
-                    Assignment.family_id == AuthService.get_current_family()
+                    Assignment.family_id == CurrentUser.get_family_id()
                 )
                 .order_by(
                     AssignmentOccurrence.occurrence_date,
@@ -376,10 +376,10 @@ class GradeService:
         Returns a row this parent can grade, or None.
         """
 
-        if not AuthService.is_parent():
+        if not CurrentUser.is_parent():
             return None
 
-        family_id = AuthService.get_current_family()
+        family_id = CurrentUser.get_family_id()
 
         return (
             db.query(AssignmentOccurrence)
@@ -460,7 +460,7 @@ class GradeService:
                 db.query(GradingPeriod)
                 .filter(
                     GradingPeriod.family_id
-                    == AuthService.get_current_family(),
+                    == CurrentUser.get_family_id(),
                     GradingPeriod.active.is_(True)
                 )
                 .order_by(GradingPeriod.start_date)
@@ -510,7 +510,7 @@ class GradeService:
         """
 
         if (
-            not AuthService.is_parent()
+            not CurrentUser.is_parent()
             or GradeService.period_error(name, start_date, end_date)
         ):
             return None
@@ -518,7 +518,7 @@ class GradeService:
         with get_session() as db:
 
             period = GradingPeriod(
-                family_id=AuthService.get_current_family(),
+                family_id=CurrentUser.get_family_id(),
                 name=name.strip(),
                 start_date=start_date,
                 end_date=end_date
@@ -536,14 +536,14 @@ class GradeService:
         period_id
     ):
 
-        if not AuthService.is_parent():
+        if not CurrentUser.is_parent():
             return None
 
         return (
             db.query(GradingPeriod)
             .filter(
                 GradingPeriod.id == period_id,
-                GradingPeriod.family_id == AuthService.get_current_family(),
+                GradingPeriod.family_id == CurrentUser.get_family_id(),
                 GradingPeriod.active.is_(True)
             )
             .first()
@@ -561,7 +561,7 @@ class GradeService:
         """
 
         if (
-            not AuthService.is_parent()
+            not CurrentUser.is_parent()
             or GradeService.period_error(
                 name,
                 start_date,

@@ -11,7 +11,7 @@ from database.db import SessionLocal
 from database.models import AssignmentOccurrence, Student, User, UserRole
 from services.activity_service import ActivityService
 from services.assignment_service import AssignmentService
-from services.auth_service import AuthService
+from services.current_user import CurrentUser
 from services.daily_message_service import DailyMessageService, MESSAGES
 from services.reading_service import ReadingService
 from services.session_service import SessionService
@@ -35,7 +35,7 @@ def parent(smith_parent):
     finally:
         db.close()
 
-    with mock.patch.object(AuthService, "get_today", return_value=TODAY):
+    with mock.patch.object(CurrentUser, "get_today", return_value=TODAY):
         yield smith_parent
 
 

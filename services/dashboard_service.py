@@ -1,4 +1,4 @@
-from services.auth_service import AuthService
+from services.current_user import CurrentUser
 from services.occurrence_service import OccurrenceService
 from services.student_service import (
     StudentService
@@ -33,7 +33,7 @@ class DashboardService:
             AssignmentService.get_current_family_assignments()
         )
 
-        today = AuthService.get_today()
+        today = CurrentUser.get_today()
 
         overdue_assignments = []
         today_assignments = []
@@ -115,7 +115,7 @@ class DashboardService:
             StudentService.get_student_occurrences(
                 student.id
             ),
-            AuthService.get_today()
+            CurrentUser.get_today()
         )
 
         progress = OccurrenceService.progress(groups)

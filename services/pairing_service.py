@@ -168,9 +168,9 @@ class PairingService:
         (code, expires_at, None), or (None, None, message). Parents only.
         """
 
-        from services.auth_service import AuthService
+        from services.current_user import CurrentUser
 
-        if not AuthService.is_parent():
+        if not CurrentUser.is_parent():
             return None, None, FAILED_MESSAGE
 
         if not StudentModeService.has_pin():
@@ -181,7 +181,7 @@ class PairingService:
 
         now = now or datetime.utcnow()
 
-        family_id = AuthService.get_current_family()
+        family_id = CurrentUser.get_family_id()
 
         with get_session() as db:
 
@@ -231,7 +231,7 @@ class PairingService:
                     family_id=family_id,
                     student_id=student.id,
                     code_hash=_hash(code),
-                    created_by=AuthService.get_current_user().id,
+                    created_by=CurrentUser.get().id,
                     created_at=now,
                     expires_at=expires_at
                 )
@@ -371,9 +371,10 @@ class PairingService:
         """
 
         from services.auth_service import AuthService
+        from services.current_user import CurrentUser
         from services.session_service import SessionService
 
-        user = AuthService.get_current_user()
+        user = CurrentUser.get()
 
         if not isinstance(user, PairedUser):
             return False, FAILED_MESSAGE

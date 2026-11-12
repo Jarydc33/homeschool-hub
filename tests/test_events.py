@@ -9,7 +9,7 @@ from streamlit.testing.v1 import AppTest
 
 from database.db import SessionLocal
 from database.models import Event, EventStudent, User, UserRole
-from services.auth_service import AuthService
+from services.current_user import CurrentUser
 from services.event_service import EventService
 from services.session_service import SessionService
 from services.student_service import StudentService
@@ -27,7 +27,7 @@ YEAR_END = date(2026, 12, 31)
 
 @pytest.fixture
 def parent(smith_parent):
-    with mock.patch.object(AuthService, "get_today", return_value=TODAY):
+    with mock.patch.object(CurrentUser, "get_today", return_value=TODAY):
         yield smith_parent
 
 

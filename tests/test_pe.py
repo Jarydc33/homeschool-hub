@@ -11,7 +11,7 @@ from streamlit.testing.v1 import AppTest
 from database.db import SessionLocal
 from database.models import ActivityLog, AssignmentOccurrence, Student, User, UserRole
 from services.activity_service import ActivityService
-from services.auth_service import AuthService
+from services.current_user import CurrentUser
 from services.pe_service import PEService
 from services.session_service import SessionService
 
@@ -24,7 +24,7 @@ YESTERDAY = date(2026, 11, 4)
 
 @pytest.fixture
 def parent(smith_parent):
-    with mock.patch.object(AuthService, "get_today", return_value=TODAY):
+    with mock.patch.object(CurrentUser, "get_today", return_value=TODAY):
         yield smith_parent
 
 
@@ -297,7 +297,7 @@ def _text(at):
 
 def _seed(w, login, students, activity="Soccer", minutes=30):
     login(w.smith)
-    with mock.patch.object(AuthService, "get_today", return_value=date.today()):
+    with mock.patch.object(CurrentUser, "get_today", return_value=date.today()):
         PEService.log_activity(students, date.today(), activity, minutes)
     mock.patch.stopall()
 

@@ -7,13 +7,27 @@ A homeschool management app: parents manage students, subjects and assignments; 
 - **Stack:** Python, Streamlit (multipage), SQLAlchemy 2.x, Supabase (Postgres + Auth)
 - **Live app:** https://tally-homeschool.streamlit.app (Streamlit Community Cloud)
 - **Roadmap:** https://claude.ai/artifact/GJHnbvYc9TdaodQxVeD1dM
-- **Long-term plan:** move off Streamlit to our own site and domain (roadmap Phase 5, possibly Django). Android and iOS app store releases come later, so weigh that when choosing the new stack. Prefer work that carries over: schema, services, tests. Keep Streamlit-specific plumbing minimal. A full visual redesign happens with that move, so don't spend effort on polishing the look in Streamlit.
+- **Domain:** tallyhomeschool.com (Namecheap, with Private Email at jaryd@tallyhomeschool.com).
+- **Migration (in progress, roadmap Phase 5):** moving off Streamlit to a FastAPI backend (keeps the SQLAlchemy models, services, Alembic and tests) and an Expo (React Native) frontend that builds the website, iOS and Android apps from one codebase. Supabase stays for the database and auth, so no data moves. Planned addresses: landing page at tallyhomeschool.com, app at app.tallyhomeschool.com, API at api.tallyhomeschool.com. The Streamlit app keeps running until the switch-over, so keep it working. Don't spend effort polishing the Streamlit look; the redesign happens in the new frontend.
 
 ## Current status
 
-### Next step: hours tracking
+### Next step: the migration (decided 2026-11-12)
 
-The sister's family started using the app on 2026-11-06, and logging hours is the feature most likely needed next. Only P.E. logs time today (`activity_logs.minutes`), while the landing banner promises "homeschool hours and records that keep themselves". Agreed approach (schema still needs Jaryd's OK before the migration):
+Parents hesitate to click a link containing "streamlit", and mobile apps were asked for, so the move comes before new features. Steps:
+
+1. Separate the services from Streamlit. Done so far: identity (`services/current_user.py`; an API request sets it with `CurrentUser.acting_as(user, auth_session_id)`). Still to do: config from environment variables instead of `st.secrets` (`database/db.py`, `supabase_service.py`), the in-memory rate limits in `login_limit_service.py` and `pairing_service.py` (`st.cache_resource`, `st.session_state`), and the token handling in `auth_provider.py`.
+2. FastAPI backend: Supabase token login, family and role checks, endpoints.
+3. Expo frontend, screen by screen, starting with login and the Student Dashboard; plus a simple landing page.
+4. Sign-in emails from the domain: Supabase Site URL and templates, and a sending service (such as Resend) with its own DKIM records.
+5. Switch over, redirect the Streamlit address, remove its Supabase redirect URLs.
+6. Later: app store releases (need in-app account deletion and a privacy policy).
+
+Email DNS (deferred until the migration is done): MX and SPF are set by Namecheap. DKIM and DMARC were added on 2026-11-12, but test emails still had problems. Come back to it with step 4: check the DKIM and DMARC records with a public DNS lookup and a Gmail "Show original" test.
+
+### Deferred: hours tracking
+
+Left off for now on 2026-11-12 (no feedback asked for it). Only P.E. logs time today (`activity_logs.minutes`), while the landing banner promises "homeschool hours and records that keep themselves". The approach agreed earlier, for when it comes back (schema still needs Jaryd's OK before the migration):
 
 1. **Record on the assignment, report by subject.** A subject gets an optional usual time per day; an assignment can override it.
 2. **Checking off saves the minutes** on that occurrence (`assignment_occurrences`), using the assignment's time or the subject's. They're stored at check-off, not worked out on read, so changing a subject's usual time later doesn't rewrite past hours (the same idea as grades). Parents can adjust a day's minutes; unchecking clears them.
@@ -24,9 +38,9 @@ Build 1 to 3 first. Before starting, ask Jaryd what the sister said: her state's
 
 ### Where things stand
 
-- **Phase:** 0, 1 and 2 are complete. Phase 3 (launch-ready auth and private beta) is in progress, with the sister's family as the first beta family.
+- **Phase:** 0, 1 and 2 are complete. Phase 3 (launch-ready auth and private beta) is in progress, with the sister's family as the first beta family. Phase 5 (the migration) started early, on 2026-11-12.
 - **Done:** Edit Assignment dialog crash, `update_assignment` wiping completion status, family checks in the student, subject, assignment and user services, pytest suite, family and system-wide announcements, archived students left out of lists and blocked from logging in, restoring students, Create Assignment form, no database setup on page load, Alembic with a baseline migration, `users.auth_user_id`, constraints and `family_id` indexes, session context manager, registration transaction, fetching the current user once per page run, `families.timezone`, occurrences table and date generator, writing occurrences when assignments are saved, dashboards and check-offs per date, per-date notes, dropping the old `student_assignments` progress columns, curriculum schedules, missed-day recovery, streaks and badges, events, calendar view, reading tracker, recent activity, daily message, scores and grades (not the subject health score), P.E. tracker, family settings (name and time zone), grouped sidebar, restoring subjects and assignments, Student Dashboard redesign (work first, today-only progress bar), Student Mode, pairing codes, security review and fixes (login limit, parent checks in services), version 1.0.0, branding (logo, colours, Inter, lowercase "tally"), parent feedback link
-- **After hours tracking:** the second parent invite (Jaryd's wife joins his family), then whatever the sister's feedback asks for. Waiting on feedback: subject health score and bulk assignment creator. Moved later: opt-in leaderboard (Phase 3), accessibility options (Phase 5 redesign), spreadsheet importer (after Phase 5), state report export (pre-launch).
+- **After the migration:** to be re-planned once it's done. Candidates: the second parent invite (Jaryd's wife joins his family), then whatever the sister's feedback asks for. Waiting on feedback: subject health score and bulk assignment creator. Moved later: opt-in leaderboard (Phase 3), accessibility options (Phase 5 redesign), spreadsheet importer (after Phase 5), state report export (pre-launch).
 - **Questions for the sister's feedback:** was the Grades page clear, is the sidebar easy to use on a phone, did she use Student Mode or only pairing, and does her state require an hours log.
 - Update this section when a phase or major item is finished.
 
@@ -75,7 +89,8 @@ pages/                  One file per Streamlit page (emoji filenames, e.g. "✅_
 components/navigation.py  Sidebar nav (grouped links per role) + logout
 services/               All business logic and DB access (static-method classes)
   auth_provider.py      Supabase Auth calls (login, register, invite, set password)
-  auth_service.py       Current user, role, and family from session state
+  current_user.py       Who's making the request (role, family, student, today), with no Streamlit. Services use this
+  auth_service.py       Streamlit login and session: finds the user for CurrentUser outside an API request
   session_service.py    Access token in browser localStorage (via components/browser_session)
   navigation_service.py Page guards: require_authentication / require_parent / require_student
   *_service.py          One service per entity or feature
@@ -99,20 +114,20 @@ tests/                  pytest suite for the services
 - Books belong to one student, and `reading_logs` holds one row per book, per date. The reading streak is separate from the assignment streak and counts every calendar day. Reading totals and badges are worked out when read.
 - Grades: an occurrence's `score` is points earned, out of its `points_possible`, on assignments marked `graded`. Percentages and letters are worked out when read. A blank score never counts, not even as zero. A grade belongs to the `grading_periods` row its date falls in, and periods can't overlap. Archived assignments and subjects still count, as a deliberate exception to rule 3, so tidying up doesn't change a past semester.
 - P.E.: `activity_logs` holds one row per activity, per student, per date, and several can share a date. A mistaken entry is deleted, not archived, as a deliberate exception to rule 3, since it's a correction, not a record. There's no P.E. streak; totals, active days and hour badges are worked out when read.
-- Student Mode: a parent's login switched to one student's view. `device_sessions` ties it to the Supabase `session_id` claim in the login token, so the server decides the mode and clearing the browser can't end it. While a row is active (`revoked_at` empty), `AuthService.is_student()` is true, `is_parent()` is false, and `get_current_student()` returns that student, so pages and services need no special cases. Leaving needs the family PIN (`families.parent_pin_hash`, bcrypt, exactly 4 digits); 5 wrong tries lock it for 5 minutes. Logging out ends it without the PIN, since getting back in needs the parent's password. Students in Student Mode have no `users` row.
+- Student Mode: a parent's login switched to one student's view. `device_sessions` ties it to the Supabase `session_id` claim in the login token, so the server decides the mode and clearing the browser can't end it. While a row is active (`revoked_at` empty), `CurrentUser.is_student()` is true, `is_parent()` is false, and `get_student_id()` returns that student, so pages and services need no special cases. Leaving needs the family PIN (`families.parent_pin_hash`, bcrypt, exactly 4 digits); 5 wrong tries lock it for 5 minutes. Logging out ends it without the PIN, since getting back in needs the parent's password. Students in Student Mode have no `users` row.
 - Paired devices: a student's own device, with no login. A parent makes a one-time 6-digit code (`pairing_codes`, hashed, 10 minutes); redeeming it saves a random device key in the browser (`homeschoolhub_device`) and its SHA-256 in `device_sessions.token_hash` (mode "paired", no `auth_session_id`). With no Supabase login, `AuthService` turns a valid key into a `PairedUser`, which stands in for a `users` row so the role helpers work as usual. Unpairing needs the family PIN; parents end devices from Settings, and archiving the student ends them too. Wrong codes are limited per browser session and app-wide, in memory, because every request reaches the app from the same server.
 - Announcements (`banner_messages`) belong to a family, or are system-wide when `family_id` is NULL. Parents manage their family's; Admins (`users.role = 'Admin'`, no family, a separate login) manage system-wide ones and only see the Announcements page.
 
 ## Rules (follow these on every change)
 
 1. **Scope everything to the family.** Every service function that reads or changes a row by ID must also filter by the current family's `family_id`, e.g. `filter(Student.id == student_id, Student.family_id == family_id)`. Creates must check that referenced subjects and students belong to the same family. Never call or add unscoped helpers (like the removed `get_all_*`) for pages to use.
-2. **Never trust the page for identity.** Get the role, family, and student from `AuthService`, not from widget values or query params. Parent-only changes also check `AuthService.is_parent()` in the service, so a missing page guard can't let a student (or Student Mode) make them.
+2. **Never trust the page for identity.** Services get the role, family, and student from `CurrentUser` (pages may use `AuthService`, which forwards to it), never from widget values, query params or request bodies. Services never import `AuthService` or Streamlit, so the API can reuse them. Parent-only changes also check `CurrentUser.is_parent()` in the service, so a missing page guard can't let a student (or Student Mode) make them.
 3. **Archive, don't delete.** Entities use `active` / `is_active` soft deletes. Every list a user sees filters out archived rows, including joined ones such as archived assignments on the student dashboard.
 4. **Keep completion history.** Never delete and recreate `StudentAssignment` rows (or occurrence rows) to apply an edit; add and remove only what changed.
 5. **One transaction per user action.** Multi-step writes (registration, creating an assignment with its student links) commit once.
 6. **No side effects on page load.** No `create_all()`, seeding, or migrations from pages.
 7. **Schema changes go through Alembic migrations.** Never use `create_all()` outside tests.
-8. **Dates:** "today" means the family's local date, not the server's UTC date. Use `AuthService.get_today()`, never `date.today()`, including for date picker defaults.
+8. **Dates:** "today" means the family's local date, not the server's UTC date. Use `CurrentUser.get_today()` (or `AuthService.get_today()` on pages), never `date.today()`, including for date picker defaults.
 9. **User-facing errors are friendly.** Don't show `str(ex)` to users; log the detail instead.
 
 ## Streamlit gotchas we've hit

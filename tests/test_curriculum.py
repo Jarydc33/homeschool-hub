@@ -10,7 +10,7 @@ from streamlit.testing.v1 import AppTest
 from database.db import SessionLocal
 from database.models import Assignment, AssignmentOccurrence, User
 from services.assignment_service import AssignmentService
-from services.auth_service import AuthService
+from services.current_user import CurrentUser
 from services.dashboard_service import DashboardService
 from services.occurrence_service import OccurrenceService
 from services.session_service import SessionService
@@ -31,7 +31,7 @@ NEXT_WEDNESDAY = date(2026, 11, 11)
 
 @pytest.fixture
 def parent(smith_parent):
-    with mock.patch.object(AuthService, "get_today", return_value=MONDAY):
+    with mock.patch.object(CurrentUser, "get_today", return_value=MONDAY):
         yield smith_parent
 
 
@@ -267,7 +267,7 @@ def test_moving_start_date_keeps_started_lessons_and_notes(parent):
 def test_past_lessons_not_done_stay_put_when_rescheduling(parent):
     work = create(parent, lessons=3)
 
-    with mock.patch.object(AuthService, "get_today", return_value=TUESDAY):
+    with mock.patch.object(CurrentUser, "get_today", return_value=TUESDAY):
         assert edit(parent, work, lessons=3, days="Tue,Thu")
 
     assert lessons_of(work, parent.ann) == {
@@ -310,7 +310,7 @@ def test_fewer_lessons_only_removes_untouched_ones(parent):
 def test_a_student_added_later_gets_every_lesson_from_today(parent):
     work = create(parent, lessons=2, students=[parent.ann])
 
-    with mock.patch.object(AuthService, "get_today", return_value=WEDNESDAY):
+    with mock.patch.object(CurrentUser, "get_today", return_value=WEDNESDAY):
         assert edit(parent, work, lessons=2, students=[parent.ann, parent.bob])
 
     assert lessons_of(work, parent.bob) == {1: WEDNESDAY, 2: THURSDAY}
@@ -401,7 +401,7 @@ def test_unfinished_lessons_are_overdue_and_only_the_next_is_upcoming(parent):
 def test_parent_dashboard_names_a_student_once_for_many_late_lessons(parent):
     create(parent, lessons=3, students=[parent.ann])
 
-    with mock.patch.object(AuthService, "get_today", return_value=NEXT_MONDAY):
+    with mock.patch.object(CurrentUser, "get_today", return_value=NEXT_MONDAY):
         data = DashboardService.get_dashboard_data()
 
     late = [
@@ -505,7 +505,7 @@ def test_student_page_shows_the_lesson_number(smith_parent, page_as):
     w = smith_parent
     today = date.today()
 
-    with mock.patch.object(AuthService, "get_today", return_value=today):
+    with mock.patch.object(CurrentUser, "get_today", return_value=today):
         create(
             w,
             lessons=2,
@@ -524,7 +524,7 @@ def test_student_page_shows_the_lesson_number(smith_parent, page_as):
 def test_edit_dialog_shows_the_schedule_and_saves_changes(smith_parent, page_as):
     w = smith_parent
 
-    with mock.patch.object(AuthService, "get_today", return_value=MONDAY):
+    with mock.patch.object(CurrentUser, "get_today", return_value=MONDAY):
         work = create(w, lessons=3, students=[w.ann])
     mock.patch.stopall()
 
@@ -542,7 +542,7 @@ def test_edit_dialog_saves_a_new_lesson_count(smith_parent, page_as):
     # A dialog's second click needs the browser, so the clicks are stood in for.
     w = smith_parent
 
-    with mock.patch.object(AuthService, "get_today", return_value=MONDAY):
+    with mock.patch.object(CurrentUser, "get_today", return_value=MONDAY):
         work = create(w, lessons=3, students=[w.ann])
     mock.patch.stopall()
 

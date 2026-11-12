@@ -7,7 +7,7 @@ from database.models import (
     ActivityLog,
     Student,
 )
-from services.auth_service import AuthService
+from services.current_user import CurrentUser
 
 # Ten hours, so a typo can't wreck a student's totals.
 MAX_MINUTES = 600
@@ -41,11 +41,11 @@ class PEService:
 
         requested = set(student_ids)
 
-        if AuthService.is_student():
+        if CurrentUser.is_student():
 
-            return requested & {AuthService.get_current_student()}
+            return requested & {CurrentUser.get_student_id()}
 
-        if not AuthService.is_parent() or not requested:
+        if not CurrentUser.is_parent() or not requested:
             return set()
 
         return {
@@ -54,7 +54,7 @@ class PEService:
                 db.query(Student.id)
                 .filter(
                     Student.id.in_(requested),
-                    Student.family_id == AuthService.get_current_family(),
+                    Student.family_id == CurrentUser.get_family_id(),
                     Student.active.is_(True)
                 )
             )
@@ -73,7 +73,7 @@ class PEService:
         if log_date is None:
             return "Please choose a date."
 
-        if log_date > AuthService.get_today():
+        if log_date > CurrentUser.get_today():
             return "You can't log an activity for a future date."
 
         if not (activity or "").strip():
@@ -118,7 +118,7 @@ class PEService:
 
                 db.add(
                     ActivityLog(
-                        family_id=AuthService.get_current_family(),
+                        family_id=CurrentUser.get_family_id(),
                         student_id=student_id,
                         log_date=log_date,
                         activity=activity.strip(),
@@ -146,7 +146,7 @@ class PEService:
                 db.query(ActivityLog)
                 .filter(
                     ActivityLog.student_id == student_id,
-                    ActivityLog.family_id == AuthService.get_current_family()
+                    ActivityLog.family_id == CurrentUser.get_family_id()
                 )
                 .order_by(
                     ActivityLog.log_date.desc(),
@@ -168,7 +168,7 @@ class PEService:
                 db.query(ActivityLog)
                 .filter(
                     ActivityLog.id == log_id,
-                    ActivityLog.family_id == AuthService.get_current_family()
+                    ActivityLog.family_id == CurrentUser.get_family_id()
                 )
                 .first()
             )

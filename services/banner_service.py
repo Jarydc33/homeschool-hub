@@ -2,7 +2,7 @@ from sqlalchemy import false, or_
 
 from database.db import get_session
 from database.models import BannerMessage
-from services.auth_service import AuthService
+from services.current_user import CurrentUser
 
 
 class BannerService:
@@ -14,16 +14,16 @@ class BannerService:
         system-wide ones for an Admin, their own family's for a Parent.
         """
 
-        if AuthService.is_admin():
+        if CurrentUser.is_admin():
 
             return BannerMessage.family_id.is_(None)
 
-        family_id = AuthService.get_current_family()
+        family_id = CurrentUser.get_family_id()
 
         # Without the family check, a NULL family_id would match
         # the system-wide banners.
 
-        if AuthService.is_parent() and family_id is not None:
+        if CurrentUser.is_parent() and family_id is not None:
 
             return BannerMessage.family_id == family_id
 
@@ -56,11 +56,11 @@ class BannerService:
         family's, plus system-wide ones.
         """
 
-        family_id = AuthService.get_current_family()
+        family_id = CurrentUser.get_family_id()
 
         with get_session() as db:
 
-            today = AuthService.get_today()
+            today = CurrentUser.get_today()
 
             return (
                 db.query(BannerMessage)
@@ -110,15 +110,15 @@ class BannerService:
         for a Parent. Returns None for anyone else.
         """
 
-        if AuthService.is_admin():
+        if CurrentUser.is_admin():
 
             family_id = None
 
         else:
 
-            family_id = AuthService.get_current_family()
+            family_id = CurrentUser.get_family_id()
 
-            if not AuthService.is_parent() or family_id is None:
+            if not CurrentUser.is_parent() or family_id is None:
                 return None
 
         with get_session() as db:

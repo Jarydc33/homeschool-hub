@@ -9,7 +9,7 @@ from streamlit.testing.v1 import AppTest
 
 from database.db import SessionLocal
 from database.models import Book, ReadingLog, Student, User, UserRole
-from services.auth_service import AuthService
+from services.current_user import CurrentUser
 from services.reading_service import ReadingService
 from services.session_service import SessionService
 
@@ -27,7 +27,7 @@ def ago(days):
 
 @pytest.fixture
 def parent(smith_parent):
-    with mock.patch.object(AuthService, "get_today", return_value=TODAY):
+    with mock.patch.object(CurrentUser, "get_today", return_value=TODAY):
         yield smith_parent
 
 
@@ -490,7 +490,7 @@ def test_finished_book_moves_to_the_list_and_can_be_reopened(world, page_as):
 
 def test_parent_picks_a_child_and_only_sees_their_books(world, login, page_as):
     login(world.smith)
-    with mock.patch.object(AuthService, "get_today", return_value=date.today()):
+    with mock.patch.object(CurrentUser, "get_today", return_value=date.today()):
         add(world.ann, "Ann's book")
         add(world.bob, "Bob's book")
     mock.patch.stopall()
@@ -509,7 +509,7 @@ def test_parent_picks_a_child_and_only_sees_their_books(world, login, page_as):
 def test_student_dashboard_shows_reading_and_its_badges(world, login, page_as):
     today = date.today()
     login(world.smith)
-    with mock.patch.object(AuthService, "get_today", return_value=today):
+    with mock.patch.object(CurrentUser, "get_today", return_value=today):
         book = add(world.bob)
         ReadingService.log_pages(book.id, today, 15)
     mock.patch.stopall()

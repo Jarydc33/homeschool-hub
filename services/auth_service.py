@@ -1,10 +1,8 @@
 import logging
 import re
-from datetime import datetime
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
-
 import streamlit as st
 
+from services.current_user import CurrentUser
 from services.family_service import FamilyService
 from services.user_service import UserService
 from database.models import DEFAULT_TIMEZONE, UserRole
@@ -479,13 +477,8 @@ class AuthService:
     @staticmethod
     def _load_student_mode():
 
-        user = AuthService.get_current_user()
-
-        if not user or user.role != UserRole.PARENT.value:
-            return None
-
-        return StudentModeService.find_active(
-            user.family_id,
+        return CurrentUser.load_student_mode(
+            AuthService.get_current_user(),
             AuthService.get_auth_session_id()
         )
 
@@ -600,129 +593,51 @@ class AuthService:
             PairedUser
         )
 
+    # The role helpers live in CurrentUser, so services and API requests
+    # share them. These keep the names pages already use.
+
     @staticmethod
     def is_authenticated():
 
-        return (
-            AuthService.get_current_user()
-            is not None
-        )
+        return CurrentUser.is_authenticated()
 
     @staticmethod
     def is_parent():
 
-        user = (
-            AuthService.get_current_user()
-        )
-
-        if not user:
-            return False
-
-        return (
-            user.role
-            == UserRole.PARENT.value
-            and not AuthService.get_student_mode()
-        )
+        return CurrentUser.is_parent()
 
     @staticmethod
     def is_student():
 
-        user = (
-            AuthService.get_current_user()
-        )
-
-        if not user:
-            return False
-
-        if user.role == UserRole.STUDENT.value:
-            return True
-
-        # A parent's login in Student Mode counts as that student.
-
-        return (
-            user.role == UserRole.PARENT.value
-            and AuthService.get_student_mode() is not None
-        )
+        return CurrentUser.is_student()
 
     @staticmethod
     def is_admin():
 
-        user = (
-            AuthService.get_current_user()
-        )
-
-        if not user:
-            return False
-
-        return (
-            user.role
-            == UserRole.ADMIN.value
-        )
+        return CurrentUser.is_admin()
 
     @staticmethod
     def get_current_family():
 
-        user = (
-            AuthService.get_current_user()
-        )
-
-        if not user:
-            return None
-
-        return user.family_id
+        return CurrentUser.get_family_id()
 
     @staticmethod
     def get_today():
         """
-        Returns today's date for the current family. Admins and anyone
-        logged out have no family, so they get UTC's date.
+        Returns today's date for the current family (see CurrentUser).
         """
 
-        return datetime.now(AuthService.get_zone()).date()
+        return CurrentUser.get_today()
 
     @staticmethod
     def get_zone():
-        """
-        Returns the current family's time zone, or UTC if there isn't one.
-        """
 
-        user = AuthService.get_current_user()
-
-        name = (
-            user.family.timezone
-            if user and user.family
-            else "UTC"
-        )
-
-        try:
-
-            zone = ZoneInfo(name)
-
-        except (ZoneInfoNotFoundError, ValueError):
-
-            logger.warning("Unknown family time zone: %s", name)
-
-            zone = ZoneInfo("UTC")
-
-        return zone
+        return CurrentUser.get_zone()
 
     @staticmethod
     def get_current_student():
 
-        user = (
-            AuthService.get_current_user()
-        )
-
-        if not user:
-            return None
-
-        if user.role == UserRole.PARENT.value:
-
-            mode = AuthService.get_student_mode()
-
-            return mode.student_id if mode else None
-
-        return user.student_id
+        return CurrentUser.get_student_id()
 
     @staticmethod
     def logout():
@@ -755,3 +670,8 @@ class AuthService:
         )
 
         AuthService.start_page_run()
+
+
+# Outside an API request, services ask AuthService who's signed in.
+
+CurrentUser.set_fallback(AuthService)

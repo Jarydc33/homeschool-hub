@@ -18,7 +18,7 @@ from database.models import (
     UserRole,
 )
 from services.assignment_service import AssignmentService
-from services.auth_service import AuthService
+from services.current_user import CurrentUser
 from services.grade_service import GradeService
 from services.session_service import SessionService
 
@@ -30,7 +30,7 @@ YESTERDAY = date(2026, 11, 4)
 
 @pytest.fixture
 def parent(smith_parent):
-    with mock.patch.object(AuthService, "get_today", return_value=TODAY):
+    with mock.patch.object(CurrentUser, "get_today", return_value=TODAY):
         yield smith_parent
 
 
@@ -595,7 +595,7 @@ def _labelled(widgets, label):
 
 def _setup(w, login, **kwargs):
     login(w.smith)
-    with mock.patch.object(AuthService, "get_today", return_value=date.today()):
+    with mock.patch.object(CurrentUser, "get_today", return_value=date.today()):
         result = work(w, due=date.today(), **kwargs)
     mock.patch.stopall()
     return result
