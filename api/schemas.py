@@ -26,6 +26,7 @@ class StudentOut(BaseModel):
     id: int
     name: str
     grade_level: str | None
+    birth_year: int | None = None
 
 
 class SubjectOut(BaseModel):
@@ -168,6 +169,7 @@ def student_out(student):
         id=student.id,
         name=student.name,
         grade_level=student.grade_level,
+        birth_year=student.birth_year,
     )
 
 

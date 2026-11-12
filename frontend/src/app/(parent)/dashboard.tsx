@@ -73,9 +73,14 @@ function Dashboard({ data }: { data: ParentDashboard }) {
       <SectionTitle>Students</SectionTitle>
 
       {data.students.length === 0 ? (
-        <Text style={styles.body}>
-          No students yet. Add them in the current Tally app for now.
-        </Text>
+        <Card>
+          <Text style={styles.body}>No students yet. Add your first one to get started.</Text>
+          <Button
+            title="Add a Student"
+            variant="secondary"
+            onPress={() => router.push('/students')}
+          />
+        </Card>
       ) : (
         <View style={styles.studentGrid}>
           {data.students.map((metrics) => (

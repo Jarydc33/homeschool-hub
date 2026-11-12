@@ -20,6 +20,7 @@ export interface Student {
   id: number;
   name: string;
   grade_level: string | null;
+  birth_year?: number | null;
 }
 
 export interface Subject {

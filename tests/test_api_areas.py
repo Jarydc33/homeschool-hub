@@ -57,13 +57,19 @@ def test_the_student_dashboard_has_everything(api, world):
 
 
 def test_parent_manages_students(api, world):
-    created = api.post("/students", json={"name": "  Dee ", "grade_level": "2"}, headers=SMITH)
+    created = api.post(
+        "/students", json={"name": "  Dee ", "grade_level": "2", "birth_year": 2018}, headers=SMITH
+    )
     assert created.status_code == 201
     dee = created.json()
     assert dee["name"] == "Dee"
+    assert dee["birth_year"] == 2018
 
     renamed = api.put(f"/students/{dee['id']}", json={"name": "Deedee"}, headers=SMITH)
     assert renamed.json()["name"] == "Deedee"
+    # Leaving fields out keeps them.
+    assert renamed.json()["grade_level"] == "2"
+    assert renamed.json()["birth_year"] == 2018
 
     assert api.post(f"/students/{dee['id']}/archive", headers=SMITH).status_code == 200
     assert "Deedee" not in {s["name"] for s in api.get("/students", headers=SMITH).json()}

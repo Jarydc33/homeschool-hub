@@ -1,5 +1,428 @@
-import { ComingSoon } from '@/components/coming-soon';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import {
+  Button,
+  Card,
+  ErrorMessage,
+  Loading,
+  PageTitle,
+  Screen,
+  SectionTitle,
+  TextField,
+} from '@/components/ui';
+import { Colors, Spacing } from '@/constants/theme';
+import { api, ApiError } from '@/lib/api';
+import type { Student } from '@/lib/types';
+
+/**
+ * Students: add, edit, archive and restore. Archiving hides a student and
+ * blocks their login and devices; their work and grades are kept.
+ */
 export default function StudentsScreen() {
-  return <ComingSoon title="Students" icon="👨‍🎓" />;
+  const [students, setStudents] = useState<Student[] | null>(null);
+  const [archived, setArchived] = useState<Student[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Only one card is open at a time: adding, or editing / archiving one student.
+  const [adding, setAdding] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [archivingId, setArchivingId] = useState<number | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
+  const [restoringId, setRestoringId] = useState<number | null>(null);
+
+  const load = useCallback(async () => {
+    try {
+      const [active, old] = await Promise.all([
+        api<Student[]>('/students'),
+        api<Student[]>('/students/archived'),
+      ]);
+      setStudents(active);
+      setArchived(old);
+      setError(null);
+    } catch (ex) {
+      setError(messageOf(ex));
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load]),
+  );
+
+  async function refresh() {
+    setRefreshing(true);
+    await load();
+    setRefreshing(false);
+  }
+
+  function closeAll() {
+    setAdding(false);
+    setEditingId(null);
+    setArchivingId(null);
+  }
+
+  async function create(values: StudentValues) {
+    const student = await api<Student>('/students', { method: 'POST', body: values });
+    closeAll();
+    setNotice(`${student.name} added.`);
+    await load();
+  }
+
+  async function update(id: number, values: StudentValues) {
+    const student = await api<Student>(`/students/${id}`, { method: 'PUT', body: values });
+    closeAll();
+    setNotice(`${student.name} updated.`);
+    await load();
+  }
+
+  async function archive(student: Student) {
+    await api(`/students/${student.id}/archive`, { method: 'POST' });
+    closeAll();
+    setNotice(`${student.name} archived. You can restore them below.`);
+    await load();
+  }
+
+  async function restore(student: Student) {
+    setRestoringId(student.id);
+    try {
+      await api(`/students/${student.id}/restore`, { method: 'POST' });
+      setNotice(`${student.name} restored.`);
+      await load();
+    } catch (ex) {
+      setError(messageOf(ex));
+    } finally {
+      setRestoringId(null);
+    }
+  }
+
+  return (
+    <Screen refreshing={refreshing} onRefresh={refresh}>
+      <PageTitle>👨‍🎓 Students</PageTitle>
+
+      {error ? <ErrorMessage message={error} onRetry={load} /> : null}
+
+      {notice ? (
+        <Text style={styles.notice} accessibilityLiveRegion="polite">
+          ✓ {notice}
+        </Text>
+      ) : null}
+
+      {!students && !error ? <Loading /> : null}
+
+      {students ? (
+        <>
+          {adding ? (
+            <Card>
+              <Text style={styles.cardTitle}>Add a Student</Text>
+              <StudentForm submitLabel="Add Student" onSave={create} onCancel={closeAll} />
+            </Card>
+          ) : (
+            <Button
+              title="+ Add Student"
+              onPress={() => {
+                closeAll();
+                setNotice(null);
+                setAdding(true);
+              }}
+            />
+          )}
+
+          {students.length === 0 ? (
+            <Text style={styles.body}>No students yet. Add your first one above.</Text>
+          ) : null}
+
+          {students.map((student) =>
+            editingId === student.id ? (
+              <Card key={student.id}>
+                <Text style={styles.cardTitle}>Edit {student.name}</Text>
+                <StudentForm
+                  initial={student}
+                  submitLabel="Save Changes"
+                  onSave={(values) => update(student.id, values)}
+                  onCancel={closeAll}
+                />
+              </Card>
+            ) : archivingId === student.id ? (
+              <ArchiveConfirm
+                key={student.id}
+                student={student}
+                onArchive={() => archive(student)}
+                onCancel={closeAll}
+              />
+            ) : (
+              <Card key={student.id}>
+                <View style={styles.row}>
+                  <View style={styles.flex}>
+                    <Text style={styles.name}>{student.name}</Text>
+                    <Text style={styles.muted}>{describe(student)}</Text>
+                  </View>
+                </View>
+                <View style={styles.actions}>
+                  <Button
+                    title="Edit"
+                    variant="secondary"
+                    style={styles.action}
+                    onPress={() => {
+                      closeAll();
+                      setNotice(null);
+                      setEditingId(student.id);
+                    }}
+                  />
+                  <Button
+                    title="Archive"
+                    variant="secondary"
+                    style={styles.action}
+                    onPress={() => {
+                      closeAll();
+                      setNotice(null);
+                      setArchivingId(student.id);
+                    }}
+                  />
+                </View>
+              </Card>
+            ),
+          )}
+
+          {archived.length > 0 ? (
+            <>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ expanded: showArchived }}
+                onPress={() => setShowArchived(!showArchived)}>
+                <SectionTitle>
+                  {showArchived ? '▾' : '▸'} Archived Students ({archived.length})
+                </SectionTitle>
+              </Pressable>
+
+              {showArchived ? (
+                <>
+                  <Text style={styles.muted}>
+                    Restoring a student brings back their assignments, progress and login.
+                  </Text>
+                  {archived.map((student) => (
+                    <Card key={student.id}>
+                      <View style={styles.row}>
+                        <Text style={[styles.body, styles.flex]}>{student.name}</Text>
+                        <Button
+                          title="Restore"
+                          variant="secondary"
+                          busy={restoringId === student.id}
+                          onPress={() => restore(student)}
+                        />
+                      </View>
+                    </Card>
+                  ))}
+                </>
+              ) : null}
+            </>
+          ) : null}
+        </>
+      ) : null}
+    </Screen>
+  );
 }
+
+interface StudentValues {
+  name: string;
+  grade_level: string;
+  birth_year?: number;
+}
+
+function StudentForm({
+  initial,
+  submitLabel,
+  onSave,
+  onCancel,
+}: {
+  initial?: Student;
+  submitLabel: string;
+  onSave: (values: StudentValues) => Promise<void>;
+  onCancel: () => void;
+}) {
+  const [name, setName] = useState(initial?.name ?? '');
+  const [grade, setGrade] = useState(initial?.grade_level ?? '');
+  const [birthYear, setBirthYear] = useState(
+    initial?.birth_year ? String(initial.birth_year) : '',
+  );
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function submit() {
+    const trimmed = name.trim();
+
+    if (!trimmed) {
+      setError("Please enter the student's name.");
+      return;
+    }
+
+    const values: StudentValues = { name: trimmed, grade_level: grade.trim() };
+    const year = birthYear.trim();
+
+    if (year) {
+      const number = Number(year);
+
+      if (!/^\d{4}$/.test(year) || number < 1990 || number > 2100) {
+        setError('Please enter the birth year as four digits, like 2015.');
+        return;
+      }
+
+      values.birth_year = number;
+    }
+
+    setBusy(true);
+    setError(null);
+
+    try {
+      await onSave(values);
+    } catch (ex) {
+      setError(messageOf(ex));
+      setBusy(false);
+    }
+  }
+
+  return (
+    <View style={styles.form}>
+      <TextField
+        label="Name"
+        value={name}
+        onChangeText={setName}
+        autoCapitalize="words"
+        maxLength={100}
+        autoFocus
+      />
+      <TextField
+        label="Grade Level"
+        hint="Optional, e.g. 3rd or Kindergarten"
+        value={grade}
+        onChangeText={setGrade}
+        maxLength={50}
+      />
+      <TextField
+        label="Birth Year"
+        hint="Optional"
+        value={birthYear}
+        onChangeText={setBirthYear}
+        keyboardType="number-pad"
+        inputMode="numeric"
+        maxLength={4}
+        returnKeyType="done"
+        onSubmitEditing={submit}
+      />
+
+      {error ? <ErrorMessage message={error} /> : null}
+
+      <View style={styles.actions}>
+        <Button title="Cancel" variant="secondary" style={styles.action} onPress={onCancel} />
+        <Button title={submitLabel} style={styles.action} busy={busy} onPress={submit} />
+      </View>
+    </View>
+  );
+}
+
+function ArchiveConfirm({
+  student,
+  onArchive,
+  onCancel,
+}: {
+  student: Student;
+  onArchive: () => Promise<void>;
+  onCancel: () => void;
+}) {
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function confirm() {
+    setBusy(true);
+    setError(null);
+
+    try {
+      await onArchive();
+    } catch (ex) {
+      setError(messageOf(ex));
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card style={styles.warning}>
+      <Text style={styles.cardTitle}>Archive {student.name}?</Text>
+      <Text style={styles.body}>
+        They&apos;ll be hidden from lists and won&apos;t be able to log in, and any paired devices
+        stop working. Their work and grades are kept, and you can restore them at any time.
+      </Text>
+
+      {error ? <ErrorMessage message={error} /> : null}
+
+      <View style={styles.actions}>
+        <Button title="Cancel" variant="secondary" style={styles.action} onPress={onCancel} />
+        <Button title="Archive" style={styles.action} busy={busy} onPress={confirm} />
+      </View>
+    </Card>
+  );
+}
+
+function describe(student: Student): string {
+  const parts = [
+    student.grade_level ? `Grade: ${student.grade_level}` : 'No grade level',
+    student.birth_year ? `Born ${student.birth_year}` : null,
+  ];
+
+  return parts.filter(Boolean).join('  ·  ');
+}
+
+function messageOf(ex: unknown): string {
+  return ex instanceof ApiError ? ex.message : 'Something went wrong. Please try again.';
+}
+
+const styles = StyleSheet.create({
+  body: {
+    color: Colors.text,
+    fontSize: 16,
+  },
+  muted: {
+    color: Colors.textMuted,
+    fontSize: 14,
+  },
+  notice: {
+    color: Colors.done,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  cardTitle: {
+    color: Colors.navy,
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  name: {
+    color: Colors.navy,
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  flex: {
+    flex: 1,
+  },
+  form: {
+    gap: Spacing.md,
+  },
+  actions: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
+  action: {
+    flex: 1,
+  },
+  warning: {
+    backgroundColor: '#FFF6EE',
+    borderColor: '#F3C6A8',
+  },
+});

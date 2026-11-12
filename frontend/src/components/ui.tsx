@@ -8,8 +8,10 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
   type StyleProp,
+  type TextInputProps,
   type ViewStyle,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -110,6 +112,26 @@ export function Card({ children, style }: { children: React.ReactNode; style?: S
   return <View style={[styles.card, style]}>{children}</View>;
 }
 
+/** A labelled text box. Extra props go to the TextInput. */
+export function TextField({
+  label,
+  hint,
+  ...props
+}: TextInputProps & { label: string; hint?: string }) {
+  return (
+    <View style={styles.field}>
+      <Text style={styles.label}>{label}</Text>
+      <TextInput
+        accessibilityLabel={label}
+        placeholderTextColor={Colors.textMuted}
+        {...props}
+        style={[styles.input, props.style]}
+      />
+      {hint ? <Text style={styles.hint}>{hint}</Text> : null}
+    </View>
+  );
+}
+
 export function PageTitle({ children }: { children: React.ReactNode }) {
   return (
     <Text style={styles.pageTitle} accessibilityRole="header">
@@ -193,6 +215,28 @@ const styles = StyleSheet.create({
     borderRadius: Radius,
     padding: Spacing.md,
     gap: Spacing.sm,
+  },
+  field: {
+    gap: Spacing.xs,
+  },
+  label: {
+    color: Colors.navy,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  input: {
+    minHeight: 48,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: Radius,
+    paddingHorizontal: Spacing.md,
+    fontSize: 16,
+    color: Colors.text,
+    backgroundColor: Colors.background,
+  },
+  hint: {
+    color: Colors.textMuted,
+    fontSize: 13,
   },
   pageTitle: {
     color: Colors.navy,
