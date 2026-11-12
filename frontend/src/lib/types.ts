@@ -130,3 +130,33 @@ export interface SubjectDetail extends Subject {
   // Active assignments in this subject.
   assignment_count: number;
 }
+
+export type AssignmentType = 'One Time' | 'Recurring' | 'Curriculum';
+
+export interface Assignment {
+  id: number;
+  title: string;
+  description: string | null;
+  subject: Subject | null;
+  assignment_type: AssignmentType;
+  // Recurring: how often ("Every Day", "Weekly", ...). Curriculum: its
+  // school days ("Mon,Wed,Fri").
+  recurrence_pattern: string | null;
+  // One-time: due. Recurring: the first date. Curriculum: the first lesson.
+  due_date: string;
+  end_date: string | null;
+  graded: boolean;
+  active: boolean;
+  // Active students only. Archived assignments list none.
+  students: Student[];
+  progress: { done: number; total: number } | null;
+  lesson_count: number | null;
+  finish_date: string | null;
+}
+
+export interface NoteRow {
+  occurrence_id: number;
+  student: Student;
+  date: string;
+  notes: string | null;
+}

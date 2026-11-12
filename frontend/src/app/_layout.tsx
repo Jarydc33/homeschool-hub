@@ -40,6 +40,14 @@ function Routes() {
           name="missed-day"
           options={{ title: 'Missed a Day?', presentation: 'modal' }}
         />
+        <Stack.Screen
+          name="assignment/edit"
+          options={{ title: 'Assignment', presentation: 'modal' }}
+        />
+        <Stack.Screen
+          name="assignment/notes"
+          options={{ title: 'Notes for a Date', presentation: 'modal' }}
+        />
       </Stack.Protected>
 
       <Stack.Protected guard={!signedIn}>
