@@ -1,7 +1,7 @@
 from sqlalchemy.orm import joinedload
 
 from database.db import get_session
-from database.models import Student, User
+from database.models import Student, User, UserRole
 
 class UserService:
 
@@ -20,6 +20,22 @@ class UserService:
                 )
                 .first()
             )
+
+    @staticmethod
+    def is_archived_student(user):
+        """
+        True for a student login whose student has been archived. They
+        can't sign in until the student is restored. Needs user.student
+        loaded.
+        """
+
+        if user.role != UserRole.STUDENT.value:
+            return False
+
+        return not (
+            user.student
+            and user.student.active
+        )
 
     @staticmethod
     def get_user_by_auth_id(auth_user_id):

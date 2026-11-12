@@ -20,8 +20,9 @@ class StudentService:
         completed
     ):
         """
-        Checks one date of an assignment on or off. Returns the row, or None
-        if it isn't available to the current user.
+        Checks one date of an assignment on or off. Returns the row, with its
+        assignment and subject loaded, or None if it isn't available to the
+        current user.
         """
 
         with get_session() as db:
@@ -29,6 +30,13 @@ class StudentService:
             query = (
                 db.query(AssignmentOccurrence)
                 .join(AssignmentOccurrence.assignment)
+                .options(
+                    joinedload(
+                        AssignmentOccurrence.assignment
+                    ).joinedload(
+                        Assignment.subject
+                    )
+                )
                 .filter(
                     AssignmentOccurrence.id == occurrence_id,
                     Assignment.family_id

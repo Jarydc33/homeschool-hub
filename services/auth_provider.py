@@ -241,6 +241,31 @@ class AuthProvider:
         )
 
     @staticmethod
+    def get_auth_user_for_token(
+        access_token
+    ):
+        """
+        Returns the Supabase user for an access token, or None if Supabase
+        rejects it (usually because it expired). For API requests: the app
+        refreshes its own tokens, so nothing is refreshed here. A network
+        problem raises, so the caller can answer "try again" rather than
+        "log in again".
+        """
+
+        if not access_token:
+            return None
+
+        try:
+
+            return SupabaseService.get_client().auth.get_user(
+                access_token
+            )
+
+        except AuthApiError:
+
+            return None
+
+    @staticmethod
     def get_current_auth_user():
 
         from services.session_service import SessionService

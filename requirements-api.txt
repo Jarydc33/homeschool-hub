@@ -1,0 +1,7 @@
+# The API server (api/). It reuses the app's services, so it needs the same
+# packages, plus FastAPI. Streamlit comes along until the Streamlit app is
+# retired, but the services and API never import it.
+-r requirements.txt
+fastapi==0.162.5
+annotated-doc==0.0.6
+opentelemetry-api==1.45.2

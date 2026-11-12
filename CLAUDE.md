@@ -17,7 +17,7 @@ A homeschool management app: parents manage students, subjects and assignments; 
 Parents hesitate to click a link containing "streamlit", and mobile apps were asked for, so the move comes before new features. Steps:
 
 1. ~~Separate the services from Streamlit.~~ Done 2026-11-12. Identity is in `services/current_user.py` (an API request sets it with `CurrentUser.acting_as(user, auth_session_id)`), settings in `config.py`, and the rate limits keep their counts in plain memory (the pairing limit takes the caller's per-client list). `auth_provider.py` imports Streamlit only inside its three Streamlit-only methods. `tests/test_no_streamlit_in_services.py` fails if a service imports Streamlit.
-2. FastAPI backend: Supabase token login, family and role checks, endpoints.
+2. FastAPI backend (`api/`), in progress. Done: login (Bearer Supabase token, or `X-Device-Token` for paired devices) in `api/auth.py`, `/health`, `/me`, `/students`, `/students/{id}/dashboard`, and checking work on and off (`PUT /occurrences/{id}/completed`), with tests in `tests/test_api.py`. Next: the rest of the Student Dashboard (badges, reading, P.E., events), then parent endpoints (add a `require_parent` dependency with the first one), then hosting (Render suggested).
 3. Expo frontend, screen by screen, starting with login and the Student Dashboard; plus a simple landing page.
 4. Sign-in emails from the domain: Supabase Site URL and templates, and a sending service (such as Resend) with its own DKIM records.
 5. Switch over, redirect the Streamlit address, remove its Supabase redirect URLs.
@@ -53,6 +53,8 @@ streamlit run app.py
 
 The app doesn't create tables or sample data on its own. A brand-new database needs `python scripts/init_db.py` first (it runs the migrations, so it needs `requirements-dev.txt`), and optionally `python scripts/seed_data.py` for sample data (it does nothing if a family already exists). Both use whatever `DATABASE_URL` points to, so check it first.
 
+The API runs locally with `pip install -r requirements-api.txt` and `uvicorn api.main:app --reload`; its endpoint docs are at http://127.0.0.1:8000/docs. It uses whatever `DATABASE_URL` points to, so check it before calling endpoints that read or write data. `ALLOWED_ORIGINS` (comma-separated) lists the web app addresses allowed to call it.
+
 Tests run on a temporary SQLite database, never Supabase:
 
 ```bash
@@ -85,6 +87,7 @@ Never print, log, or commit any of these values.
 
 ```
 app.py                  Router: sends users to the landing page or a dashboard
+api/                    FastAPI backend for the new app: main.py (app), auth.py (who's calling), schemas.py (response shapes), routers/ (endpoints)
 config.py               Settings from environment variables, falling back to st.secrets
 pages/                  One file per Streamlit page (emoji filenames, e.g. "✅_Assignments.py")
 components/navigation.py  Sidebar nav (grouped links per role) + logout
@@ -105,6 +108,7 @@ tests/                  pytest suite for the services
 ## How data flows
 
 - Pages call services. Services open a SQLAlchemy session, query, and return ORM objects. Pages never query the DB directly.
+- API endpoints call the same services, inside `Depends(signed_in)`, which runs the request as that user through `CurrentUser`. They turn ORM objects into the Pydantic shapes in `api/schemas.py` and never return ORM objects or query the DB directly. Services list whole-family data even for students (the Streamlit pages only show a student their own), so an endpoint a student can call must narrow it, as `GET /students` does.
 - Data goes through SQLAlchemy as the `postgres` user, so **Supabase RLS does not apply to app queries**. Keeping families apart is the service layer's job. RLS is enabled with no policies only to block Supabase's REST API.
 - Supabase is used for **auth only**. The app's `users` table links to Supabase accounts by `users.auth_user_id` (UUID), which is required and unique. Identify people by it, never by email; email is only how they sign in. Anything that creates a `users` row needs the account's UUID first, including an Admin added by hand.
 - Every page starts with `NavigationComponent.render()` and then a guard from `NavigationService`.

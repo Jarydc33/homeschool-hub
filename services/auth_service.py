@@ -5,7 +5,7 @@ import streamlit as st
 from services.current_user import CurrentUser
 from services.family_service import FamilyService
 from services.user_service import UserService
-from database.models import DEFAULT_TIMEZONE, UserRole
+from database.models import DEFAULT_TIMEZONE
 
 from services.auth_provider import AuthProvider
 from services.student_mode_service import StudentModeService
@@ -498,13 +498,7 @@ class AuthService:
         They can't sign in until the student is unarchived.
         """
 
-        if user.role != UserRole.STUDENT.value:
-            return False
-
-        return not (
-            user.student
-            and user.student.active
-        )
+        return UserService.is_archived_student(user)
 
     @staticmethod
     def _allow_login(user):
