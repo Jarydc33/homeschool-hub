@@ -75,3 +75,5 @@ htmlcov/
 scratch.py
 notes.txt
 temp/
+# Example settings files are safe to commit.
+!.env.example
