@@ -1,8 +1,6 @@
 import threading
 from datetime import datetime, timedelta
 
-import streamlit as st
-
 MAX_FAILURES = 5
 
 WINDOW = timedelta(minutes=15)
@@ -13,19 +11,21 @@ LOCKED_MESSAGE = (
 )
 
 
-@st.cache_resource
-def _store():
-    """
-    Failed logins per email, shared by every session on this server. Every
-    login reaches Supabase from this server's address, so Supabase's own
-    per-address limit can't tell one guesser from all our families.
-    Kept in memory: a restart clears it, which only resets the wait.
-    """
+# Failed logins per email, shared by every session in this server process.
+# Every login reaches Supabase from this server's address, so Supabase's own
+# per-address limit can't tell one guesser from all our families. Kept in
+# memory: a restart (or Streamlit reloading modules on a deploy) clears it,
+# which only resets the wait. An API running several processes would need it
+# in the database instead.
+_STORE = {
+    "lock": threading.Lock(),
+    "failures": {},
+}
 
-    return {
-        "lock": threading.Lock(),
-        "failures": {},
-    }
+
+def _store():
+
+    return _STORE
 
 
 class LoginLimitService:

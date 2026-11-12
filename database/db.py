@@ -2,20 +2,10 @@ from contextlib import contextmanager
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
-from dotenv import load_dotenv
-import os
-import streamlit as st
 
-load_dotenv()
+from config import get_setting
 
-#DATABASE_URL = "sqlite:///tally.db"
-
-DATABASE_URL = os.getenv(
-    "DATABASE_URL"
-)
-
-if not DATABASE_URL:
-    DATABASE_URL = st.secrets["DATABASE_URL"]
+DATABASE_URL = get_setting("DATABASE_URL")
 
 if DATABASE_URL.startswith("sqlite"):
     

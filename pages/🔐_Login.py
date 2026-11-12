@@ -8,7 +8,10 @@ from services.login_limit_service import (
     LOCKED_MESSAGE as LOGIN_LOCKED_MESSAGE,
     LoginLimitService
 )
-from services.pairing_service import PairingService
+from services.pairing_service import (
+    PairingService,
+    SESSION_GUESSES_STATE
+)
 from components.navigation import (
     NavigationComponent
 )
@@ -190,7 +193,15 @@ with st.form("pairing_form", clear_on_submit=True):
         use_container_width=True
     ):
 
-        device_token, message = PairingService.redeem(code)
+        # Wrong codes are counted per browser session, as well as app-wide.
+
+        device_token, message = PairingService.redeem(
+            code,
+            client_guesses=st.session_state.setdefault(
+                SESSION_GUESSES_STATE,
+                []
+            )
+        )
 
         if device_token:
 

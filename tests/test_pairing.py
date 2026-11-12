@@ -27,7 +27,6 @@ from services.auth_service import AuthService
 from services.pairing_service import (
     APP_GUESSES,
     SESSION_GUESSES,
-    SESSION_GUESSES_STATE,
     TOO_MANY_GUESSES_MESSAGE,
     WRONG_CODE_MESSAGE,
     PairedUser,
@@ -244,29 +243,32 @@ def test_a_malformed_code_asks_for_six_digits(smith):
 
 
 def test_too_many_wrong_codes_in_one_session_stop_tries():
-    for _ in range(SESSION_GUESSES):
-        assert PairingService.redeem("000000", NOW)[1] == WRONG_CODE_MESSAGE
+    guesses = []
 
-    assert PairingService.redeem("000000", NOW)[1] == TOO_MANY_GUESSES_MESSAGE
-    assert not PairingService.too_many_guesses(NOW + timedelta(minutes=11))
+    for _ in range(SESSION_GUESSES):
+        assert PairingService.redeem("000000", NOW, guesses)[1] == WRONG_CODE_MESSAGE
+
+    assert PairingService.redeem("000000", NOW, guesses)[1] == TOO_MANY_GUESSES_MESSAGE
+    # Another client isn't blocked yet, since the app-wide limit is higher.
+    assert PairingService.redeem("000000", NOW, [])[1] == WRONG_CODE_MESSAGE
+    assert not PairingService.too_many_guesses(NOW + timedelta(minutes=11), guesses)
 
 
 def test_the_app_wide_limit_stops_guessing_across_sessions():
     for attempt in range(APP_GUESSES):
-        # A new browser session each time, so only the app-wide limit applies.
-        st.session_state.pop(SESSION_GUESSES_STATE, None)
-        assert PairingService.redeem("000000", NOW)[1] == WRONG_CODE_MESSAGE
+        # A new client each time, so only the app-wide limit applies.
+        assert PairingService.redeem("000000", NOW, [])[1] == WRONG_CODE_MESSAGE
 
-    st.session_state.pop(SESSION_GUESSES_STATE, None)
-    assert PairingService.redeem("000000", NOW)[1] == TOO_MANY_GUESSES_MESSAGE
+    assert PairingService.redeem("000000", NOW, [])[1] == TOO_MANY_GUESSES_MESSAGE
 
 
 def test_even_the_right_code_waits_out_the_limit(smith):
     code = _code_for(smith.bob)
+    guesses = []
     for _ in range(SESSION_GUESSES):
-        PairingService.redeem("000000", NOW)
+        PairingService.redeem("000000", NOW, guesses)
 
-    assert PairingService.redeem(code, NOW)[0] is None
+    assert PairingService.redeem(code, NOW, guesses)[0] is None
 
 
 # ----- Being a paired device -----

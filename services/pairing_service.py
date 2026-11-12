@@ -6,7 +6,6 @@ import threading
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
-import streamlit as st
 from sqlalchemy.orm import joinedload
 
 from database.db import get_session
@@ -69,14 +68,17 @@ class PairedUser:
     email: str = None
 
 
-@st.cache_resource
-def _app_guesses():
-    """Wrong codes across every session on this server, in memory."""
+# Wrong codes across every session in this server process, in memory. A
+# restart clears it, which only resets the wait.
+_APP_GUESSES = {
+    "lock": threading.Lock(),
+    "moments": [],
+}
 
-    return {
-        "lock": threading.Lock(),
-        "moments": [],
-    }
+
+def _app_guesses():
+
+    return _APP_GUESSES
 
 
 def _hash(value):
@@ -104,21 +106,25 @@ class PairingService:
         return store["moments"]
 
     @staticmethod
-    def too_many_guesses(now=None):
+    def too_many_guesses(now=None, client_guesses=None):
         """
-        True when this browser session, or the app as a whole, has had too
-        many wrong codes lately.
+        True when this client (a browser session, or later a device), or the
+        app as a whole, has had too many wrong codes lately.
+
+        client_guesses is a list the caller keeps for one client, holding
+        the times of its wrong codes. The Login page keeps it in Streamlit's
+        session. Without one, only the app-wide limit applies.
         """
 
         now = now or datetime.utcnow()
 
-        session_guesses = [
+        recent = [
             moment
-            for moment in st.session_state.get(SESSION_GUESSES_STATE, [])
+            for moment in (client_guesses or [])
             if now - moment < GUESS_WINDOW
         ]
 
-        if len(session_guesses) >= SESSION_GUESSES:
+        if len(recent) >= SESSION_GUESSES:
             return True
 
         store = _app_guesses()
@@ -130,13 +136,17 @@ class PairingService:
             ) >= APP_GUESSES
 
     @staticmethod
-    def _record_wrong_guess(now):
+    def _record_wrong_guess(now, client_guesses=None):
 
-        st.session_state[SESSION_GUESSES_STATE] = [
-            moment
-            for moment in st.session_state.get(SESSION_GUESSES_STATE, [])
-            if now - moment < GUESS_WINDOW
-        ] + [now]
+        if client_guesses is not None:
+
+            # Changed in place, so the caller's list keeps the count.
+
+            client_guesses[:] = [
+                moment
+                for moment in client_guesses
+                if now - moment < GUESS_WINDOW
+            ] + [now]
 
         store = _app_guesses()
 
@@ -147,8 +157,6 @@ class PairingService:
     @staticmethod
     def reset_guesses():
         """For tests."""
-
-        st.session_state.pop(SESSION_GUESSES_STATE, None)
 
         store = _app_guesses()
 
@@ -246,16 +254,19 @@ class PairingService:
     @staticmethod
     def redeem(
         code,
-        now=None
+        now=None,
+        client_guesses=None
     ):
         """
         Pairs this device if the code is live. Returns (device_token, None)
         with the key to save in the browser, or (None, message).
+        client_guesses is this client's list of wrong-code times (see
+        too_many_guesses).
         """
 
         now = now or datetime.utcnow()
 
-        if PairingService.too_many_guesses(now):
+        if PairingService.too_many_guesses(now, client_guesses):
             return None, TOO_MANY_GUESSES_MESSAGE
 
         code = (code or "").strip().replace(" ", "").replace("-", "")
@@ -280,7 +291,7 @@ class PairingService:
 
             if not pairing:
 
-                PairingService._record_wrong_guess(now)
+                PairingService._record_wrong_guess(now, client_guesses)
 
                 return None, WRONG_CODE_MESSAGE
 

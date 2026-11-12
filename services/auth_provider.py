@@ -2,16 +2,16 @@ import base64
 import json
 import logging
 
-import streamlit as st
 from supabase_auth.errors import AuthApiError, AuthWeakPasswordError
 
 from services.supabase_service import (
     SupabaseService
 )
 
-from services.session_service import (
-    SessionService
-)
+# Streamlit and the browser session (SessionService) are imported only inside
+# the Streamlit-only methods below (get_current_auth_user,
+# _refresh_saved_login and complete_email_link), so the API can use the rest
+# without Streamlit. Those methods go when the Streamlit app is retired.
 
 logger = logging.getLogger(__name__)
 
@@ -243,6 +243,8 @@ class AuthProvider:
     @staticmethod
     def get_current_auth_user():
 
+        from services.session_service import SessionService
+
         access_token = (
             SessionService.get_access_token()
         )
@@ -319,6 +321,10 @@ class AuthProvider:
         tokens reach the browser. Each refresh token only works once, so
         nothing else can happen until they're saved.
         """
+
+        import streamlit as st
+
+        from services.session_service import SessionService
 
         refresh_token = (
             SessionService.get_known_refresh_token()
@@ -562,6 +568,8 @@ class AuthProvider:
         The token only works once, so its session is kept for this browser
         session. If the password is rejected, they can try another one.
         """
+
+        import streamlit as st
 
         session = st.session_state.get(
             "email_link_session"

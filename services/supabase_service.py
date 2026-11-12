@@ -1,6 +1,6 @@
 from supabase import ClientOptions, create_client
-import streamlit as st
-import os
+
+from config import get_setting
 
 
 class SupabaseService:
@@ -26,15 +26,9 @@ class SupabaseService:
     @staticmethod
     def get_client():
 
-        url = os.getenv("SUPABASE_URL")
+        url = get_setting("SUPABASE_URL")
 
-        if not url:
-            url = st.secrets["SUPABASE_URL"]
-
-        key = os.getenv("SUPABASE_KEY")
-
-        if not key:
-            key = st.secrets["SUPABASE_KEY"]
+        key = get_setting("SUPABASE_KEY")
 
         return SupabaseService._create(
             url,
@@ -44,15 +38,9 @@ class SupabaseService:
     @staticmethod
     def get_admin_client():
 
-        url = os.getenv("SUPABASE_URL")
+        url = get_setting("SUPABASE_URL")
 
-        if not url:
-            url = st.secrets["SUPABASE_URL"]
-
-        service_key = os.getenv("SERVICE_KEY")
-
-        if not service_key:
-            service_key = st.secrets["SERVICE_KEY"]
+        service_key = get_setting("SERVICE_KEY")
 
         return SupabaseService._create(
             url,

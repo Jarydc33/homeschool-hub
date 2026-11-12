@@ -16,7 +16,7 @@ A homeschool management app: parents manage students, subjects and assignments; 
 
 Parents hesitate to click a link containing "streamlit", and mobile apps were asked for, so the move comes before new features. Steps:
 
-1. Separate the services from Streamlit. Done so far: identity (`services/current_user.py`; an API request sets it with `CurrentUser.acting_as(user, auth_session_id)`). Still to do: config from environment variables instead of `st.secrets` (`database/db.py`, `supabase_service.py`), the in-memory rate limits in `login_limit_service.py` and `pairing_service.py` (`st.cache_resource`, `st.session_state`), and the token handling in `auth_provider.py`.
+1. ~~Separate the services from Streamlit.~~ Done 2026-11-12. Identity is in `services/current_user.py` (an API request sets it with `CurrentUser.acting_as(user, auth_session_id)`), settings in `config.py`, and the rate limits keep their counts in plain memory (the pairing limit takes the caller's per-client list). `auth_provider.py` imports Streamlit only inside its three Streamlit-only methods. `tests/test_no_streamlit_in_services.py` fails if a service imports Streamlit.
 2. FastAPI backend: Supabase token login, family and role checks, endpoints.
 3. Expo frontend, screen by screen, starting with login and the Student Dashboard; plus a simple landing page.
 4. Sign-in emails from the domain: Supabase Site URL and templates, and a sending service (such as Resend) with its own DKIM records.
@@ -70,7 +70,7 @@ alembic upgrade head
 
 `migrations/env.py` enables RLS on any `public` table that lacks it after every run, so migrations don't need to. Keep migrations working on both Postgres and SQLite, since the tests run them on SQLite.
 
-Config comes from `.env` locally, or from `st.secrets` on Streamlit Cloud (`.streamlit/secrets.toml`, never committed):
+Config is read by `config.get_setting()`: environment variables or `.env` first, then `st.secrets` on Streamlit Cloud (`.streamlit/secrets.toml`, never committed):
 
 | Key | Used for |
 | --- | --- |
@@ -85,6 +85,7 @@ Never print, log, or commit any of these values.
 
 ```
 app.py                  Router: sends users to the landing page or a dashboard
+config.py               Settings from environment variables, falling back to st.secrets
 pages/                  One file per Streamlit page (emoji filenames, e.g. "✅_Assignments.py")
 components/navigation.py  Sidebar nav (grouped links per role) + logout
 services/               All business logic and DB access (static-method classes)
