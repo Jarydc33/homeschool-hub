@@ -18,7 +18,7 @@ Parents hesitate to click a link containing "streamlit", and mobile apps were as
 
 1. ~~Separate the services from Streamlit.~~ Done 2026-11-12. Identity is in `services/current_user.py` (an API request sets it with `CurrentUser.acting_as(user, auth_session_id)`), settings in `config.py`, and the rate limits keep their counts in plain memory (the pairing limit takes the caller's per-client list). `auth_provider.py` imports Streamlit only inside its three Streamlit-only methods. `tests/test_no_streamlit_in_services.py` fails if a service imports Streamlit.
 2. ~~FastAPI backend (`api/`).~~ Endpoints done 2026-11-12: every Streamlit page's actions have one (72 endpoints; list them at `/docs`), with tests in `tests/test_api.py` and `tests/test_api_areas.py`. Login: Bearer Supabase token, or `X-Device-Token` for paired devices. The app itself logs in, resets passwords and completes invite links with Supabase's client; the API only signs up (`POST /register`). Before a parent signs out, the app calls `POST /logout` to end Student Mode. Hosted on Render since 2026-11-12 at https://api.tallyhomeschool.com (service `tally-api`, also https://tally-api-yem8.onrender.com; Starter plan; Namecheap CNAME `api` → the onrender address). Render builds with `pip install -r requirements-api.txt`, starts with `uvicorn api.main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips="*"`, checks `/health`, and redeploys on every push to `main`. Its environment variables are the same four keys as Streamlit Cloud plus `PYTHON_VERSION` (3.13.5; align it with Streamlit Cloud and local 3.15 later). `DATABASE_URL` there must be Supabase's Session pooler string, since Render can't reach the IPv6-only direct address. Later: `ALLOWED_ORIGINS` for the web app, and checking tokens locally with Supabase's signing keys if one Supabase call per request gets slow.
-3. Expo frontend, screen by screen, starting with login and the Student Dashboard; plus a simple landing page.
+3. Expo frontend (`frontend/`), in progress. Done 2026-11-12: login (Supabase email and password), home (parents pick a student; students go straight to their day), and the Student Dashboard with checking work on and off and new badges. It runs on the web at http://localhost:8081 against the live API. Next: the rest of the screens, a simple landing page, then hosting at app.tallyhomeschool.com (add that address to the API's `ALLOWED_ORIGINS` on Render).
 4. Sign-in emails from the domain: Supabase Site URL and templates, and a sending service (such as Resend) with its own DKIM records.
 5. Switch over, redirect the Streamlit address, remove its Supabase redirect URLs.
 6. Later: app store releases (need in-app account deletion and a privacy policy).
@@ -46,10 +46,16 @@ Build 1 to 3 first. Before starting, ask Jaryd what the sister said: her state's
 
 ## Running it
 
+The project lives at `C:\Users\jaryd\code\homeschool_hub`, outside OneDrive since 2026-11-12 (OneDrive fought with Git and would sync the app's `node_modules`). The old OneDrive copy is retired. Use Python 3.14: the pinned packages don't all build on 3.15 yet. The virtual environment is `.venv`.
+
 ```bash
+py -V:3.14 -m venv .venv          # once
+.venv\Scripts\activate
 pip install -r requirements.txt
 streamlit run app.py
 ```
+
+The new app (`frontend/`, Node 22) has its own README: `npm install`, then `npm run web`. Its settings are in `frontend/.env` (see `.env.example`): only public values, never the service key.
 
 The app doesn't create tables or sample data on its own. A brand-new database needs `python scripts/init_db.py` first (it runs the migrations, so it needs `requirements-dev.txt`), and optionally `python scripts/seed_data.py` for sample data (it does nothing if a family already exists). Both use whatever `DATABASE_URL` points to, so check it first.
 
@@ -87,6 +93,7 @@ Never print, log, or commit any of these values.
 
 ```
 app.py                  Router: sends users to the landing page or a dashboard
+frontend/               Expo app (web, iOS, Android): src/app (screens), src/lib (API client, login), see frontend/README.md
 api/                    FastAPI backend for the new app: main.py (app), auth.py (who's calling: signed_in, require_parent), errors.py, schemas.py (shared response shapes), routers/ (one file per area)
 config.py               Settings from environment variables, falling back to st.secrets
 pages/                  One file per Streamlit page (emoji filenames, e.g. "✅_Assignments.py")
