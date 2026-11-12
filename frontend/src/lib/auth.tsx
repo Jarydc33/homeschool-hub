@@ -16,6 +16,8 @@ interface AuthState {
   me: Me | null;
   // A problem loading /me, such as no connection.
   error: string | null;
+  // Why someone was sent back to the login, shown there.
+  notice: string | null;
   signIn: (email: string, password: string) => Promise<string | null>;
   signOut: () => Promise<void>;
   reloadMe: () => Promise<void>;
@@ -30,6 +32,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [me, setMe] = useState<Me | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -51,7 +54,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setError(null);
     } catch (ex) {
       if (ex instanceof ApiError && ex.status === 401) {
-        // The login was refused, e.g. an archived student: start over.
+        // The login was refused, e.g. an archived student: start over,
+        // and say why on the login screen.
+        console.warn('Tally refused this login:', ex.message);
+        setNotice(ex.message);
         await supabase.auth.signOut();
         setMe(null);
         return;
@@ -71,6 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [userId, reloadMe]);
 
   const signIn = useCallback(async (email: string, password: string) => {
+    setNotice(null);
     const { error: failed } = await supabase.auth.signInWithPassword({
       email: email.trim().toLowerCase(),
       password,
@@ -94,6 +101,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Only meaningful while someone's signed in.
         me: userId ? me : null,
         error: userId ? error : null,
+        notice,
         signIn,
         signOut,
         reloadMe,

@@ -52,11 +52,17 @@ def identify(authorization, device_token):
         auth_user = AuthProvider.get_auth_user_for_token(access_token)
 
         if not auth_user or not auth_user.user:
+            logger.warning("Refused a login: Supabase rejected the token.")
             return None, None
 
         user = UserService.get_user_by_auth_id(auth_user.user.id)
 
-        if not user or UserService.is_archived_student(user):
+        if not user:
+            logger.warning("Refused a login: no Tally user for this account.")
+            return None, None
+
+        if UserService.is_archived_student(user):
+            logger.warning("Refused a login: the student is archived.")
             return None, None
 
         return user, AuthProvider.session_id_from_token(access_token)

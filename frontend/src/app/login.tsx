@@ -7,7 +7,7 @@ import { Colors, Radius, Spacing } from '@/constants/theme';
 import { useAuth } from '@/lib/auth';
 
 export default function LoginScreen() {
-  const { signIn } = useAuth();
+  const { signIn, notice } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -74,7 +74,7 @@ export default function LoginScreen() {
             onSubmitEditing={submit}
           />
 
-          {error ? <ErrorMessage message={error} /> : null}
+          {error ?? notice ? <ErrorMessage message={(error ?? notice) as string} /> : null}
 
           <Button title="Log In" onPress={submit} busy={busy} style={styles.submit} />
         </View>
