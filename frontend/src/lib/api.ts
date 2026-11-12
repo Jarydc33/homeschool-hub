@@ -14,6 +14,11 @@ export class ApiError extends Error {
   }
 }
 
+/** Text for an error caught from api(), ready to show. */
+export function errorMessage(ex: unknown): string {
+  return ex instanceof ApiError ? ex.message : 'Something went wrong. Please try again.';
+}
+
 const CONNECTION_MESSAGE =
   "We couldn't reach Tally. Check your connection and try again.";
 

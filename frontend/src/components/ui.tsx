@@ -15,8 +15,10 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useState } from 'react';
 
 import { Colors, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
+import { errorMessage } from '@/lib/api';
 
 export function Screen({
   children,
@@ -110,6 +112,53 @@ export function Button({
 
 export function Card({ children, style }: { children: React.ReactNode; style?: StyleProp<ViewStyle> }) {
   return <View style={[styles.card, style]}>{children}</View>;
+}
+
+/**
+ * A warning card asking to confirm something, such as archiving. Shows the
+ * action's error, if it throws one, and stays open so it can be retried.
+ */
+export function ConfirmCard({
+  title,
+  children,
+  confirmLabel,
+  onConfirm,
+  onCancel,
+}: {
+  title: string;
+  children: React.ReactNode;
+  confirmLabel: string;
+  onConfirm: () => Promise<void>;
+  onCancel: () => void;
+}) {
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function confirm() {
+    setBusy(true);
+    setError(null);
+
+    try {
+      await onConfirm();
+    } catch (ex) {
+      setError(errorMessage(ex));
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card style={styles.confirm}>
+      <Text style={styles.confirmTitle}>{title}</Text>
+      <Text style={styles.confirmBody}>{children}</Text>
+
+      {error ? <ErrorMessage message={error} /> : null}
+
+      <View style={styles.actions}>
+        <Button title="Cancel" variant="secondary" style={styles.action} onPress={onCancel} />
+        <Button title={confirmLabel} style={styles.action} busy={busy} onPress={confirm} />
+      </View>
+    </Card>
+  );
 }
 
 /** A labelled text box. Extra props go to the TextInput. */
@@ -215,6 +264,26 @@ const styles = StyleSheet.create({
     borderRadius: Radius,
     padding: Spacing.md,
     gap: Spacing.sm,
+  },
+  confirm: {
+    backgroundColor: '#FFF6EE',
+    borderColor: '#F3C6A8',
+  },
+  confirmTitle: {
+    color: Colors.navy,
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  confirmBody: {
+    color: Colors.text,
+    fontSize: 16,
+  },
+  actions: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
+  action: {
+    flex: 1,
   },
   field: {
     gap: Spacing.xs,

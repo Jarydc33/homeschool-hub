@@ -125,3 +125,8 @@ export interface RecoveryStep {
   old_finish: string | null;
   new_finish: string | null;
 }
+
+export interface SubjectDetail extends Subject {
+  // Active assignments in this subject.
+  assignment_count: number;
+}

@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import {
   Button,
   Card,
+  ConfirmCard,
   ErrorMessage,
   Loading,
   PageTitle,
@@ -13,7 +14,7 @@ import {
   TextField,
 } from '@/components/ui';
 import { Colors, Spacing } from '@/constants/theme';
-import { api, ApiError } from '@/lib/api';
+import { api, errorMessage } from '@/lib/api';
 import type { Student } from '@/lib/types';
 
 /**
@@ -44,7 +45,7 @@ export default function StudentsScreen() {
       setArchived(old);
       setError(null);
     } catch (ex) {
-      setError(messageOf(ex));
+      setError(errorMessage(ex));
     }
   }, []);
 
@@ -94,7 +95,7 @@ export default function StudentsScreen() {
       setNotice(`${student.name} restored.`);
       await load();
     } catch (ex) {
-      setError(messageOf(ex));
+      setError(errorMessage(ex));
     } finally {
       setRestoringId(null);
     }
@@ -148,12 +149,16 @@ export default function StudentsScreen() {
                 />
               </Card>
             ) : archivingId === student.id ? (
-              <ArchiveConfirm
+              <ConfirmCard
                 key={student.id}
-                student={student}
-                onArchive={() => archive(student)}
-                onCancel={closeAll}
-              />
+                title={`Archive ${student.name}?`}
+                confirmLabel="Archive"
+                onConfirm={() => archive(student)}
+                onCancel={closeAll}>
+                They&apos;ll be hidden from lists and won&apos;t be able to log in, and any paired
+                devices stop working. Their work and grades are kept, and you can restore them at
+                any time.
+              </ConfirmCard>
             ) : (
               <Card key={student.id}>
                 <View style={styles.row}>
@@ -280,7 +285,7 @@ function StudentForm({
     try {
       await onSave(values);
     } catch (ex) {
-      setError(messageOf(ex));
+      setError(errorMessage(ex));
       setBusy(false);
     }
   }
@@ -324,48 +329,6 @@ function StudentForm({
   );
 }
 
-function ArchiveConfirm({
-  student,
-  onArchive,
-  onCancel,
-}: {
-  student: Student;
-  onArchive: () => Promise<void>;
-  onCancel: () => void;
-}) {
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  async function confirm() {
-    setBusy(true);
-    setError(null);
-
-    try {
-      await onArchive();
-    } catch (ex) {
-      setError(messageOf(ex));
-      setBusy(false);
-    }
-  }
-
-  return (
-    <Card style={styles.warning}>
-      <Text style={styles.cardTitle}>Archive {student.name}?</Text>
-      <Text style={styles.body}>
-        They&apos;ll be hidden from lists and won&apos;t be able to log in, and any paired devices
-        stop working. Their work and grades are kept, and you can restore them at any time.
-      </Text>
-
-      {error ? <ErrorMessage message={error} /> : null}
-
-      <View style={styles.actions}>
-        <Button title="Cancel" variant="secondary" style={styles.action} onPress={onCancel} />
-        <Button title="Archive" style={styles.action} busy={busy} onPress={confirm} />
-      </View>
-    </Card>
-  );
-}
-
 function describe(student: Student): string {
   const parts = [
     student.grade_level ? `Grade: ${student.grade_level}` : 'No grade level',
@@ -373,10 +336,6 @@ function describe(student: Student): string {
   ];
 
   return parts.filter(Boolean).join('  ·  ');
-}
-
-function messageOf(ex: unknown): string {
-  return ex instanceof ApiError ? ex.message : 'Something went wrong. Please try again.';
 }
 
 const styles = StyleSheet.create({
@@ -420,9 +379,5 @@ const styles = StyleSheet.create({
   },
   action: {
     flex: 1,
-  },
-  warning: {
-    backgroundColor: '#FFF6EE',
-    borderColor: '#F3C6A8',
   },
 });
