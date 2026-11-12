@@ -7,6 +7,7 @@ import { Button, Card, ErrorMessage, Loading, SectionTitle } from '@/components/
 import { Colors, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { api, ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { formatDate } from '@/lib/dates';
 import type { Badge, CheckOffResult, StudentDashboard, WorkItem } from '@/lib/types';
 
 /**
@@ -227,17 +228,6 @@ function WorkRow({
       )}
     </Pressable>
   );
-}
-
-function formatDate(value: string, short = false): string {
-  // "YYYY-MM-DD" is the family's date, so read it as local, not UTC.
-  const [year, month, day] = value.split('-').map(Number);
-
-  return new Date(year, month - 1, day).toLocaleDateString(undefined, {
-    weekday: short ? 'short' : 'long',
-    month: short ? 'short' : 'long',
-    day: 'numeric',
-  });
 }
 
 const styles = StyleSheet.create({

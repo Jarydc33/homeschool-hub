@@ -33,6 +33,9 @@ def test_parent_dashboard(api, world):
     # Everyone it's due for today; Bob hasn't finished, so it's listed.
     assert data["due_today"][0]["student_names"] == ["Ann", "Bob"]
     assert data["today"] == world.due.isoformat()
+    assert data["message"]
+    assert data["has_curriculum"] is False
+    assert data["upcoming_events"] == []
 
 
 def test_students_cant_open_the_parent_dashboard(api):

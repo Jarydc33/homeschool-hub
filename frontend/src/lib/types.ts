@@ -79,3 +79,48 @@ export interface CheckOffResult {
   work: WorkItem;
   new_badges: Badge[];
 }
+
+export interface StudentMetrics {
+  student: Student;
+  total: number;
+  completed: number;
+  // 0 to 100.
+  percent: number;
+  overdue_count: number;
+}
+
+export interface DueWork {
+  assignment_id: number;
+  title: string;
+  subject: Subject | null;
+  // Overdue: who still owes it. Today: who it's due for.
+  student_names: string[];
+}
+
+export interface ActivityDay {
+  date: string;
+  label: string;
+  items: string[];
+}
+
+export interface ParentDashboard {
+  today: string;
+  message: string;
+  students: StudentMetrics[];
+  overdue: DueWork[];
+  due_today: DueWork[];
+  recent_activity: ActivityDay[];
+  students_behind: number[];
+  has_curriculum: boolean;
+  upcoming_events: EventEntry[];
+  banners: Banner[];
+}
+
+export interface RecoveryStep {
+  student_name: string;
+  title: string;
+  next_lesson: number | null;
+  next_date: string | null;
+  old_finish: string | null;
+  new_finish: string | null;
+}

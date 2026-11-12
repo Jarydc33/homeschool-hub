@@ -4,11 +4,21 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
 from api.auth import require_parent, signed_in
-from api.schemas import Banner, StudentOut, SubjectOut, banner, student_out
+from api.schemas import (
+    Banner,
+    EventEntry,
+    StudentOut,
+    SubjectOut,
+    banner,
+    event_entry,
+    student_out,
+)
 from services.activity_service import ActivityService
 from services.assignment_service import AssignmentService
 from services.banner_service import BannerService
+from services.daily_message_service import DailyMessageService
 from services.dashboard_service import DashboardService
+from services.event_service import EventService
 
 router = APIRouter(tags=["dashboard"])
 
@@ -37,6 +47,7 @@ class ActivityDay(BaseModel):
 
 class ParentDashboard(BaseModel):
     today: date
+    message: str
     students: list[StudentMetrics]
     overdue: list[DueWork]
     due_today: list[DueWork]
@@ -44,6 +55,9 @@ class ParentDashboard(BaseModel):
     # Students with a curriculum lesson before today that isn't done, for
     # the "Missed a Day?" prompt.
     students_behind: list[int]
+    # Whether "Missed a Day?" applies at all.
+    has_curriculum: bool
+    upcoming_events: list[EventEntry]
     banners: list[Banner]
 
 
@@ -74,6 +88,7 @@ def parent_dashboard(user=Depends(require_parent)):
 
     return ParentDashboard(
         today=today,
+        message=DailyMessageService.get_message(today),
         students=[
             StudentMetrics(
                 student=student_out(student),
@@ -92,6 +107,10 @@ def parent_dashboard(user=Depends(require_parent)):
             for day, items in ActivityService.get_recent(today)
         ],
         students_behind=sorted(AssignmentService.get_students_behind(today)),
+        has_curriculum=AssignmentService.has_curriculum(),
+        upcoming_events=[
+            event_entry(entry) for entry in EventService.get_upcoming(today)
+        ],
         banners=[banner(row) for row in BannerService.get_active_banners()],
     )
 

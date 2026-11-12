@@ -20,10 +20,14 @@ allows calls from `http://localhost:8081` for local work.
 
 ## Layout
 
-- `src/app/` screens (each file is a route): `login`, `index` (home),
-  `student/[id]` (a student's day)
+- `src/app/` screens (each file is a route): `login`, `index` (sends people
+  to their start), `student/[id]` (a student's day), `missed-day`, and
+  `(parent)/` for parents' screens, whose `_layout` draws the menu (a sidebar
+  on wide screens, a bottom tab bar on phones). Menu areas not rebuilt yet
+  show a "coming soon" screen that links to the current app.
+- `src/lib/nav.ts` the parent menu's groups and links
 - `src/lib/` the API client, Supabase login, and the shapes the API returns
-- `src/components/ui.tsx` shared building blocks
+- `src/components/ui.tsx` shared building blocks; `parent-nav.tsx` the menu
 - `src/constants/theme.ts` Tally's colours
 
 `AGENTS.md` has Expo's notes for coding agents: use `npx expo install` to add

@@ -4,6 +4,7 @@
 import {
   ActivityIndicator,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -18,16 +19,29 @@ import { Colors, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 export function Screen({
   children,
   scroll = true,
+  refreshing,
+  onRefresh,
 }: {
   children: React.ReactNode;
   scroll?: boolean;
+  // Pull to refresh, when given.
+  refreshing?: boolean;
+  onRefresh?: () => void;
 }) {
   const content = <View style={styles.content}>{children}</View>;
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
       {scroll ? (
-        <ScrollView contentContainerStyle={styles.scroll}>{content}</ScrollView>
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          refreshControl={
+            onRefresh ? (
+              <RefreshControl refreshing={refreshing ?? false} onRefresh={onRefresh} />
+            ) : undefined
+          }>
+          {content}
+        </ScrollView>
       ) : (
         content
       )}
@@ -94,6 +108,14 @@ export function Button({
 
 export function Card({ children, style }: { children: React.ReactNode; style?: StyleProp<ViewStyle> }) {
   return <View style={[styles.card, style]}>{children}</View>;
+}
+
+export function PageTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <Text style={styles.pageTitle} accessibilityRole="header">
+      {children}
+    </Text>
+  );
 }
 
 export function SectionTitle({ children }: { children: React.ReactNode }) {
@@ -171,6 +193,11 @@ const styles = StyleSheet.create({
     borderRadius: Radius,
     padding: Spacing.md,
     gap: Spacing.sm,
+  },
+  pageTitle: {
+    color: Colors.navy,
+    fontSize: 26,
+    fontWeight: '700',
   },
   sectionTitle: {
     color: Colors.navy,
