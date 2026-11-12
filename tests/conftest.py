@@ -4,8 +4,11 @@ Tests run against a temporary SQLite file. These variables are set before any
 app module is imported, and load_dotenv() doesn't override existing values, so
 the tests can't reach the Supabase project configured in .env.
 """
+import base64
+import json
 import os
 import tempfile
+import warnings
 from datetime import date, datetime, timedelta
 from types import SimpleNamespace
 from unittest import mock
@@ -23,6 +26,7 @@ import pytest
 from database.db import Base, SessionLocal, engine
 from database.models import (
     Assignment,
+    User,
     AssignmentOccurrence,
     DEFAULT_TIMEZONE,
     Family,
@@ -31,7 +35,17 @@ from database.models import (
     Subject,
     UserRole,
 )
+from services.auth_provider import AuthProvider
 from services.auth_service import AuthService
+from services.current_user import CurrentUser
+
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    from fastapi.testclient import TestClient
+
+from api.main import app
+from api.routers.family import reset_guesses as reset_device_guesses
+from services.pairing_service import PairingService
 
 assert engine.url.drivername == "sqlite", "tests must not run on a real database"
 
@@ -195,3 +209,52 @@ def fetch():
             db.close()
 
     return _fetch
+
+
+@pytest.fixture
+def api(world):
+    """
+    A client, plus users for the Smiths (parent, Bob) and the Jones
+    (parent). Each user's token maps to their Supabase account id.
+    """
+    accounts = {
+        "smith_parent": ("00000000-0000-0000-0000-0000000000a1", UserRole.PARENT, world.smith, None),
+        "jones_parent": ("00000000-0000-0000-0000-0000000000a2", UserRole.PARENT, world.jones, None),
+        "bob": ("00000000-0000-0000-0000-0000000000a3", UserRole.STUDENT, world.smith, world.bob),
+    }
+
+    db = SessionLocal()
+    try:
+        for name, (auth_id, role, family_id, student_id) in accounts.items():
+            db.add(
+                User(
+                    family_id=family_id,
+                    student_id=student_id,
+                    email=f"{name}@x.test",
+                    auth_user_id=auth_id,
+                    role=role.value,
+                )
+            )
+        db.commit()
+    finally:
+        db.close()
+
+    def fake_lookup(access_token):
+        claims = json.loads(
+            base64.urlsafe_b64decode(access_token.split(".")[1] + "==")
+        )
+        account = accounts.get(claims["sub"])
+        if not account:
+            return None
+        return SimpleNamespace(user=SimpleNamespace(id=account[0]))
+
+    with (
+        mock.patch.object(AuthProvider, "get_auth_user_for_token", side_effect=fake_lookup),
+        mock.patch.object(CurrentUser, "get_today", return_value=world.due),
+        mock.patch.object(CurrentUser, "_fallback", None),
+    ):
+        PairingService.reset_guesses()
+        reset_device_guesses()
+        yield TestClient(app)
+        PairingService.reset_guesses()
+        reset_device_guesses()

@@ -4,13 +4,13 @@ Who is calling the API.
 A signed-in parent or student sends their Supabase access token as
 "Authorization: Bearer <token>". A paired student device has no login and
 sends its device key as "X-Device-Token" instead. Every endpoint that needs
-a user depends on signed_in, which runs the whole
+a user depends on signed_in (or require_parent), which runs the whole
 request as that user through CurrentUser, so the services apply the same
 family and role checks as in the Streamlit app.
 """
 import logging
 
-from fastapi import Header, HTTPException, status
+from fastapi import Depends, Header, HTTPException, status
 from fastapi.concurrency import run_in_threadpool
 
 from services.auth_provider import AuthProvider
@@ -106,3 +106,21 @@ async def signed_in(
     with CurrentUser.acting_as(user, auth_session_id):
         yield user
 
+
+PARENTS_ONLY_MESSAGE = "Only a parent can do this."
+
+
+def require_parent(user=Depends(signed_in)):
+    """
+    Requires a parent, and not one whose login is in Student Mode. The
+    services check this too; this gives a clear answer up front.
+    """
+
+    if not CurrentUser.is_parent():
+
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN,
+            PARENTS_ONLY_MESSAGE,
+        )
+
+    return user

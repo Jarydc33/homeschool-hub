@@ -2,19 +2,13 @@
 The API (api/): logins, family scoping, and the first student endpoints.
 Supabase is never called: tokens are checked by a stand-in.
 """
-import base64
 import json
-import warnings
 from types import SimpleNamespace
 from unittest import mock
 
 import pytest
 
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    from fastapi.testclient import TestClient
-
-from api.main import app
+from api_support import _auth, _token
 from database.db import SessionLocal
 from database.models import AssignmentOccurrence, Student, User, UserRole
 from services.auth_provider import AuthProvider
@@ -23,62 +17,6 @@ from services.pairing_service import PairingService
 from services.student_mode_service import StudentModeService
 
 PIN = "2468"
-
-
-def _token(name, session_id="session-a"):
-    """A token shaped like Supabase's, carrying a session_id claim."""
-    claims = json.dumps({"sub": name, "session_id": session_id}).encode()
-    payload = base64.urlsafe_b64encode(claims).decode().rstrip("=")
-    return f"header.{payload}.signature"
-
-
-def _auth(token):
-    return {"Authorization": f"Bearer {token}"}
-
-
-@pytest.fixture
-def api(world):
-    """
-    A client, plus users for the Smiths (parent, Bob) and the Jones
-    (parent). Each user's token maps to their Supabase account id.
-    """
-    accounts = {
-        "smith_parent": ("00000000-0000-0000-0000-0000000000a1", UserRole.PARENT, world.smith, None),
-        "jones_parent": ("00000000-0000-0000-0000-0000000000a2", UserRole.PARENT, world.jones, None),
-        "bob": ("00000000-0000-0000-0000-0000000000a3", UserRole.STUDENT, world.smith, world.bob),
-    }
-
-    db = SessionLocal()
-    try:
-        for name, (auth_id, role, family_id, student_id) in accounts.items():
-            db.add(
-                User(
-                    family_id=family_id,
-                    student_id=student_id,
-                    email=f"{name}@x.test",
-                    auth_user_id=auth_id,
-                    role=role.value,
-                )
-            )
-        db.commit()
-    finally:
-        db.close()
-
-    def fake_lookup(access_token):
-        claims = json.loads(
-            base64.urlsafe_b64decode(access_token.split(".")[1] + "==")
-        )
-        account = accounts.get(claims["sub"])
-        if not account:
-            return None
-        return SimpleNamespace(user=SimpleNamespace(id=account[0]))
-
-    with (
-        mock.patch.object(AuthProvider, "get_auth_user_for_token", side_effect=fake_lookup),
-        mock.patch.object(CurrentUser, "get_today", return_value=world.due),
-        mock.patch.object(CurrentUser, "_fallback", None),
-    ):
-        yield TestClient(app)
 
 
 # ----- Logging in -----
@@ -216,8 +154,11 @@ def test_a_student_checks_off_their_own_work(api, world):
     )
 
     assert response.status_code == 200
-    assert response.json()["completed"] is True
-    assert response.json()["title"] == "Essay"
+    assert response.json()["work"]["completed"] is True
+    assert response.json()["work"]["title"] == "Essay"
+    # Finishing all of today's work starts a streak, which earns a badge.
+    assert response.json()["new_badges"]
+    assert all(badge["earned"] for badge in response.json()["new_badges"])
     assert _status(world.bob_essay_day) == "Complete"
 
     api.put(

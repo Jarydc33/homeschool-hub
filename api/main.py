@@ -12,7 +12,22 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api.routers import me, occurrences, students
+from api.routers import (
+    account,
+    announcements,
+    assignments,
+    calendar,
+    dashboard,
+    events,
+    family,
+    grades,
+    me,
+    occurrences,
+    pe,
+    reading,
+    students,
+    subjects,
+)
 
 # The web app's addresses, comma-separated. The local defaults are Expo's
 # web dev servers. Phone apps don't need to be listed: CORS only applies
@@ -43,6 +58,20 @@ def health():
     return {"status": "ok"}
 
 
-app.include_router(me.router)
-app.include_router(students.router)
-app.include_router(occurrences.router)
+for module in (
+    account,
+    me,
+    dashboard,
+    students,
+    occurrences,
+    subjects,
+    assignments,
+    events,
+    calendar,
+    reading,
+    pe,
+    grades,
+    family,
+    announcements,
+):
+    app.include_router(module.router)

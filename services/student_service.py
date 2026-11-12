@@ -15,6 +15,57 @@ from services.current_user import CurrentUser
 class StudentService:
 
     @staticmethod
+    def _visible_occurrence(db, occurrence_id):
+        """
+        Returns one occurrence on an active assignment of this family, with
+        its assignment and subject loaded, or None. A student only gets
+        their own.
+        """
+
+        query = (
+            db.query(AssignmentOccurrence)
+            .join(AssignmentOccurrence.assignment)
+            .options(
+                joinedload(
+                    AssignmentOccurrence.assignment
+                ).joinedload(
+                    Assignment.subject
+                )
+            )
+            .filter(
+                AssignmentOccurrence.id == occurrence_id,
+                Assignment.family_id
+                == CurrentUser.get_family_id(),
+                Assignment.active.is_(True)
+            )
+        )
+
+        # Students can only see and check off their own work.
+
+        if CurrentUser.is_student():
+
+            query = query.filter(
+                AssignmentOccurrence.student_id
+                == CurrentUser.get_student_id()
+            )
+
+        return query.first()
+
+    @staticmethod
+    def get_occurrence(occurrence_id):
+        """
+        Returns one date of an assignment, or None if it isn't available
+        to the current user.
+        """
+
+        with get_session() as db:
+
+            return StudentService._visible_occurrence(
+                db,
+                occurrence_id
+            )
+
+    @staticmethod
     def update_occurrence_status(
         occurrence_id,
         completed
@@ -27,34 +78,10 @@ class StudentService:
 
         with get_session() as db:
 
-            query = (
-                db.query(AssignmentOccurrence)
-                .join(AssignmentOccurrence.assignment)
-                .options(
-                    joinedload(
-                        AssignmentOccurrence.assignment
-                    ).joinedload(
-                        Assignment.subject
-                    )
-                )
-                .filter(
-                    AssignmentOccurrence.id == occurrence_id,
-                    Assignment.family_id
-                    == CurrentUser.get_family_id(),
-                    Assignment.active.is_(True)
-                )
+            occurrence = StudentService._visible_occurrence(
+                db,
+                occurrence_id
             )
-
-            # Students can only check off their own work.
-
-            if CurrentUser.is_student():
-
-                query = query.filter(
-                    AssignmentOccurrence.student_id
-                    == CurrentUser.get_student_id()
-                )
-
-            occurrence = query.first()
 
             if not occurrence:
                 return None

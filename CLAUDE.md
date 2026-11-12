@@ -17,7 +17,7 @@ A homeschool management app: parents manage students, subjects and assignments; 
 Parents hesitate to click a link containing "streamlit", and mobile apps were asked for, so the move comes before new features. Steps:
 
 1. ~~Separate the services from Streamlit.~~ Done 2026-11-12. Identity is in `services/current_user.py` (an API request sets it with `CurrentUser.acting_as(user, auth_session_id)`), settings in `config.py`, and the rate limits keep their counts in plain memory (the pairing limit takes the caller's per-client list). `auth_provider.py` imports Streamlit only inside its three Streamlit-only methods. `tests/test_no_streamlit_in_services.py` fails if a service imports Streamlit.
-2. FastAPI backend (`api/`), in progress. Done: login (Bearer Supabase token, or `X-Device-Token` for paired devices) in `api/auth.py`, `/health`, `/me`, `/students`, `/students/{id}/dashboard`, and checking work on and off (`PUT /occurrences/{id}/completed`), with tests in `tests/test_api.py`. Next: the rest of the Student Dashboard (badges, reading, P.E., events), then parent endpoints (add a `require_parent` dependency with the first one), then hosting (Render suggested).
+2. ~~FastAPI backend (`api/`).~~ Endpoints done 2026-11-12: every Streamlit page's actions have one (72 endpoints; list them at `/docs`), with tests in `tests/test_api.py` and `tests/test_api_areas.py`. Login: Bearer Supabase token, or `X-Device-Token` for paired devices. The app itself logs in, resets passwords and completes invite links with Supabase's client; the API only signs up (`POST /register`). Before a parent signs out, the app calls `POST /logout` to end Student Mode. Still to do: hosting at api.tallyhomeschool.com (Render suggested; run uvicorn with `--proxy-headers` so the pairing-code limit sees each device's address), and checking tokens locally with Supabase's signing keys instead of one Supabase call per request, if that gets slow.
 3. Expo frontend, screen by screen, starting with login and the Student Dashboard; plus a simple landing page.
 4. Sign-in emails from the domain: Supabase Site URL and templates, and a sending service (such as Resend) with its own DKIM records.
 5. Switch over, redirect the Streamlit address, remove its Supabase redirect URLs.
@@ -87,7 +87,7 @@ Never print, log, or commit any of these values.
 
 ```
 app.py                  Router: sends users to the landing page or a dashboard
-api/                    FastAPI backend for the new app: main.py (app), auth.py (who's calling), schemas.py (response shapes), routers/ (endpoints)
+api/                    FastAPI backend for the new app: main.py (app), auth.py (who's calling: signed_in, require_parent), errors.py, schemas.py (shared response shapes), routers/ (one file per area)
 config.py               Settings from environment variables, falling back to st.secrets
 pages/                  One file per Streamlit page (emoji filenames, e.g. "✅_Assignments.py")
 components/navigation.py  Sidebar nav (grouped links per role) + logout
@@ -95,6 +95,7 @@ services/               All business logic and DB access (static-method classes)
   auth_provider.py      Supabase Auth calls (login, register, invite, set password)
   current_user.py       Who's making the request (role, family, student, today), with no Streamlit. Services use this
   auth_service.py       Streamlit login and session: finds the user for CurrentUser outside an API request
+  account_service.py    Sign-up, student invites and login email changes (Supabase and users together)
   session_service.py    Access token in browser localStorage (via components/browser_session)
   navigation_service.py Page guards: require_authentication / require_parent / require_student
   *_service.py          One service per entity or feature
