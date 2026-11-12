@@ -12,6 +12,11 @@ A homeschool management app: parents manage students, subjects and assignments; 
 
 ## Current status
 
+### Start here next session (left off 2026-11-12)
+
+1. **Pick up the migration at step 3: build the Students screen** in the Expo app, then Subjects and Assignments (replacing their "coming soon" screens in `frontend/src/app/(parent)/`). The parent menu and Parent Dashboard are done and Jaryd checked them; the endpoints already exist (see `/docs`).
+2. **Help Jaryd with SSL on tallyhomeschool.com.** He says the site shows "not secure". On 2026-11-12, `tallyhomeschool.com` and `www.tallyhomeschool.com` didn't resolve at all from his PC (no address), while `api.tallyhomeschool.com` works over HTTPS (Render's certificate). Check the Namecheap DNS records for `@` and `www` and what he sees in the browser. The likely fix is to host the landing page (planned anyway) on a service that issues free certificates, such as Render or Expo's hosting, and point `@` and `www` there, rather than buying a certificate from Namecheap. app.tallyhomeschool.com will need the same when the app is hosted.
+
 ### Next step: the migration (decided 2026-11-12)
 
 Parents hesitate to click a link containing "streamlit", and mobile apps were asked for, so the move comes before new features. Steps:
