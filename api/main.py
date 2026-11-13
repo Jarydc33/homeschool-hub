@@ -29,10 +29,14 @@ from api.routers import (
     subjects,
 )
 
-# The web app's addresses, comma-separated. The local defaults are Expo's
-# web dev servers. Phone apps don't need to be listed: CORS only applies
-# to browsers.
-DEFAULT_ORIGINS = "http://localhost:8081,http://localhost:19006"
+# The web app's addresses, comma-separated: the live web app, and Expo's
+# local web dev servers. ALLOWED_ORIGINS replaces the whole list. Phone apps
+# don't need to be listed: CORS only applies to browsers.
+DEFAULT_ORIGINS = (
+    "https://app.tallyhomeschool.com,"
+    "http://localhost:8081,"
+    "http://localhost:19006"
+)
 
 app = FastAPI(
     title="Tally API",

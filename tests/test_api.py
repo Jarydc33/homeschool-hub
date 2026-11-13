@@ -267,3 +267,28 @@ def test_a_login_wins_over_a_device_key(api, world):
 
     find.assert_not_called()
     assert me["role"] == "parent"
+
+
+def test_the_web_app_may_call_the_api(api):
+    # Browsers refuse the answer unless the API names the web app's address.
+    for origin in ["https://app.tallyhomeschool.com", "http://localhost:8081"]:
+        response = api.options(
+            "/me",
+            headers={
+                "Origin": origin,
+                "Access-Control-Request-Method": "GET",
+                "Access-Control-Request-Headers": "authorization",
+            },
+        )
+
+        assert response.status_code == 200
+        assert response.headers["access-control-allow-origin"] == origin
+
+
+def test_other_websites_may_not_call_the_api(api):
+    response = api.options(
+        "/me",
+        headers={"Origin": "https://example.com", "Access-Control-Request-Method": "GET"},
+    )
+
+    assert "access-control-allow-origin" not in response.headers

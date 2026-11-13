@@ -44,3 +44,13 @@ allows calls from `http://localhost:8081` for local work.
 
 `AGENTS.md` has Expo's notes for coding agents: use `npx expo install` to add
 packages, and check the docs for this SDK version rather than memory.
+
+## Hosting
+
+`npm run build:web` builds the website into `dist/` (a single-page app). It's
+hosted as a Render static site at https://app.tallyhomeschool.com: build
+command `cd frontend && npm ci && npm run build:web`, publish directory
+`frontend/dist`, a rewrite of `/*` to `/index.html` so links like
+`/complete-account` open, and the `EXPO_PUBLIC_` settings from `.env.example`
+set on Render (they're built in, so only public values). The API allows that
+address in `api/main.py`'s `DEFAULT_ORIGINS`.
