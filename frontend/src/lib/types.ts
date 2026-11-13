@@ -299,3 +299,32 @@ export interface PELog {
   // Activity names already used, most used first, to suggest.
   known_activities: string[];
 }
+
+export interface FamilySettings {
+  family_name: string;
+  timezone: string;
+  has_pin: boolean;
+}
+
+export interface TimeZoneChoice {
+  // "America/Chicago".
+  name: string;
+  // "US Central (America/Chicago)".
+  label: string;
+}
+
+export interface Device {
+  id: number;
+  mode: 'student_mode' | 'paired';
+  student: Student;
+  // UTC.
+  created_at: string;
+  last_seen_at: string | null;
+}
+
+export interface PairingCode {
+  // Six digits.
+  code: string;
+  // UTC.
+  expires_at: string;
+}

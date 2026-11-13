@@ -116,3 +116,19 @@ export function parseTime(text: string): string | null {
 
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 }
+
+/**
+ * A moment the API saved in UTC ("2026-11-12T20:05:00", with or without a
+ * zone) in the family's time zone, like "Nov 12, 3:05 PM".
+ */
+export function formatMoment(value: string, timeZone?: string | null): string {
+  const utc = /[zZ]|[+-]\d\d:?\d\d$/.test(value) ? value : `${value}Z`;
+
+  return new Date(utc).toLocaleString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone: timeZone ?? undefined,
+  });
+}
