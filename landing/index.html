@@ -1,0 +1,672 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>tally homeschool · Less logging, more learning.</title>
+<meta name="description" content="tally keeps your homeschool on track: plan assignments and curriculum once, let your kids check off their own day, and keep grades, reading and P.E. records without the busywork.">
+<meta name="theme-color" content="#1B2540">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="tally homeschool">
+<meta property="og:title" content="tally homeschool · Less logging, more learning.">
+<meta property="og:description" content="Plan once, let your kids check off their own day, and keep the records without the busywork.">
+<meta property="og:url" content="https://tallyhomeschool.com/">
+<meta property="og:image" content="https://tallyhomeschool.com/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #1B2540;
+    --navy-2: #26314F;
+    --orange: #E2672F;
+    --orange-text: #B84E1C;
+    --orange-soft: #FFF3EC;
+    --blue-grey: #C9CFDC;
+    --surface: #F2F4F8;
+    --border: #DDE1EA;
+    --text: #1B2540;
+    --muted: #5A6378;
+    --done: #2E7D4F;
+    --on-navy-muted: #B9C1D3;
+    --radius: 14px;
+    --max: 1120px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    color: var(--text);
+    background: #FFFFFF;
+    line-height: 1.55;
+    font-size: 17px;
+  }
+
+  a { color: var(--orange-text); }
+
+  .wrap {
+    width: 100%;
+    max-width: var(--max);
+    margin: 0 auto;
+    padding: 0 16px;
+  }
+
+  @media (min-width: 720px) {
+    .wrap { padding: 0 32px; }
+  }
+
+  /* ---------- Buttons ---------- */
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    padding: 0 22px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 18px;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: transform .12s ease, background-color .12s ease, border-color .12s ease;
+  }
+
+  .btn:active { transform: translateY(1px); }
+
+  .btn-primary {
+    background: var(--orange);
+    color: #FFFFFF;
+  }
+
+  .btn-primary:hover { background: #CF5A25; }
+
+  .btn-ghost {
+    color: #FFFFFF;
+    border: 1.5px solid rgba(255, 255, 255, .35);
+  }
+
+  .btn-ghost:hover { border-color: #FFFFFF; }
+
+  .btn-outline {
+    color: var(--navy);
+    border: 1.5px solid var(--border);
+    background: #FFFFFF;
+  }
+
+  .btn-outline:hover { border-color: var(--navy); }
+
+  a:focus-visible, .btn:focus-visible {
+    outline: 3px solid var(--orange);
+    outline-offset: 3px;
+  }
+
+  /* ---------- Header and hero ---------- */
+
+  .hero {
+    background: var(--navy);
+    color: #FFFFFF;
+    overflow: hidden;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-top: 18px;
+    padding-bottom: 18px;
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: #FFFFFF;
+    text-decoration: none;
+    font-weight: 800;
+    font-size: 26px;
+    letter-spacing: -0.5px;
+  }
+
+  .brand svg { width: 44px; height: 35px; }
+
+  .topbar nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .topbar .login {
+    color: #FFFFFF;
+    text-decoration: none;
+    font-weight: 600;
+    padding: 10px 12px;
+    border-radius: 10px;
+  }
+
+  .topbar .login:hover { background: var(--navy-2); }
+
+  .topbar .btn { min-height: 44px; font-size: 16px; padding: 0 16px; }
+
+  .hero-grid {
+    display: grid;
+    gap: 40px;
+    padding-top: 40px;
+    padding-bottom: 64px;
+    align-items: center;
+  }
+
+  @media (min-width: 900px) {
+    .hero-grid {
+      grid-template-columns: 1.15fr 1fr;
+      padding-top: 64px;
+      padding-bottom: 96px;
+    }
+  }
+
+  .eyebrow {
+    color: var(--orange);
+    font-weight: 700;
+    letter-spacing: .32em;
+    font-size: 14px;
+    text-transform: uppercase;
+    margin: 0 0 14px;
+  }
+
+  h1 {
+    font-size: clamp(42px, 8vw, 72px);
+    line-height: 1.02;
+    letter-spacing: -0.03em;
+    font-weight: 800;
+    margin: 0 0 20px;
+  }
+
+  .lede {
+    color: var(--on-navy-muted);
+    font-size: clamp(18px, 2.2vw, 21px);
+    max-width: 34em;
+    margin: 0 0 28px;
+  }
+
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  /* A picture of a student's day, drawn with HTML. */
+
+  .preview {
+    position: relative;
+    justify-self: center;
+    width: 100%;
+    max-width: 420px;
+  }
+
+
+  .card {
+    position: relative;
+    background: #FFFFFF;
+    color: var(--text);
+    border-radius: 18px;
+    padding: 22px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, .35);
+  }
+
+  .card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .card-head strong { font-size: 22px; }
+
+  .card-head span { color: var(--muted); font-size: 14px; }
+
+  .bar {
+    height: 10px;
+    background: var(--surface);
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 14px 0 6px;
+  }
+
+  .bar i {
+    display: block;
+    height: 100%;
+    width: 67%;
+    background: var(--orange);
+  }
+
+  .card small { color: var(--muted); font-size: 14px; }
+
+  .task {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-top: 10px;
+  }
+
+  .box {
+    flex: none;
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    border: 2px solid var(--blue-grey);
+    display: grid;
+    place-items: center;
+    color: #FFFFFF;
+    font-weight: 800;
+    font-size: 15px;
+  }
+
+  .task.done .box { background: var(--done); border-color: var(--done); }
+
+  .task.done .t { color: var(--muted); text-decoration: line-through; }
+
+  .t { font-weight: 600; font-size: 16px; line-height: 1.3; }
+
+  .s { color: var(--muted); font-size: 13px; }
+
+  .dot {
+    flex: none;
+    margin-left: auto;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+
+  .badge {
+    display: inline-block;
+    margin-top: 14px;
+    background: var(--orange-soft);
+    color: var(--navy);
+    border: 1px solid #F3C6A8;
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  /* ---------- Sections ---------- */
+
+  section { padding: 72px 0; }
+
+  @media (min-width: 900px) {
+    section { padding: 96px 0; }
+  }
+
+  h2 {
+    font-size: clamp(30px, 4.5vw, 42px);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    margin: 0 0 12px;
+  }
+
+  .section-lede {
+    color: var(--muted);
+    font-size: 19px;
+    max-width: 38em;
+    margin: 0 0 40px;
+  }
+
+  .features {
+    display: grid;
+    gap: 16px;
+  }
+
+  @media (min-width: 640px) {
+    .features { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (min-width: 980px) {
+    .features { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  .feature {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 24px;
+  }
+
+  .feature .icon {
+    font-size: 28px;
+    line-height: 1;
+    margin-bottom: 14px;
+  }
+
+  .feature h3 {
+    font-size: 20px;
+    margin: 0 0 8px;
+    line-height: 1.3;
+  }
+
+  .feature p { margin: 0; color: var(--muted); font-size: 16px; }
+
+  .steps-section { background: var(--surface); }
+
+  .steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 16px;
+    counter-reset: step;
+  }
+
+  @media (min-width: 820px) {
+    .steps { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  .steps li {
+    background: #FFFFFF;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    counter-increment: step;
+  }
+
+  .steps li::before {
+    content: counter(step);
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--navy);
+    color: #FFFFFF;
+    font-weight: 800;
+    margin-bottom: 14px;
+  }
+
+  .steps h3 { font-size: 20px; margin: 0 0 6px; }
+
+  .steps p { margin: 0; color: var(--muted); font-size: 16px; }
+
+  .split {
+    display: grid;
+    gap: 32px;
+    align-items: center;
+  }
+
+  @media (min-width: 900px) {
+    .split { grid-template-columns: 1fr 1fr; gap: 64px; }
+  }
+
+  .checks {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 14px;
+  }
+
+  .checks li {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .checks svg { flex: none; width: 24px; height: 24px; margin-top: 2px; }
+
+  .checks strong { display: block; }
+
+  .checks span { color: var(--muted); font-size: 16px; }
+
+  .pin-card {
+    background: var(--navy);
+    color: #FFFFFF;
+    border-radius: 18px;
+    padding: 28px;
+    text-align: center;
+  }
+
+  .pin-card p { color: var(--on-navy-muted); margin: 0 0 18px; }
+
+  .pin-code {
+    font-size: clamp(36px, 7vw, 52px);
+    font-weight: 800;
+    letter-spacing: .12em;
+    background: var(--navy-2);
+    border-radius: 14px;
+    padding: 14px 8px;
+    margin: 0 0 14px;
+  }
+
+  .pin-card small { color: var(--on-navy-muted); font-size: 14px; }
+
+  .cta {
+    background: var(--navy);
+    color: #FFFFFF;
+    text-align: center;
+  }
+
+  .cta p {
+    color: var(--on-navy-muted);
+    font-size: 19px;
+    margin: 0 auto 28px;
+    max-width: 32em;
+  }
+
+  .cta .hero-actions { justify-content: center; }
+
+  footer {
+    padding: 28px 0 40px;
+    color: var(--muted);
+    font-size: 15px;
+  }
+
+  footer .wrap {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .btn { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap topbar">
+    <a class="brand" href="/" aria-label="tally home">
+      <svg viewBox="200 260 700 560" aria-hidden="true">
+        <g fill="#FFFFFF">
+          <rect x="320" y="298" width="56" height="482" rx="28"/>
+          <rect x="432" y="298" width="56" height="482" rx="28"/>
+          <rect x="545" y="298" width="56" height="482" rx="28"/>
+          <rect x="657" y="298" width="56" height="482" rx="28"/>
+        </g>
+        <path d="M258 573 L415 728 L833 303" fill="none" stroke="#1B2540" stroke-width="120" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M258 573 L415 728 L833 303" fill="none" stroke="#E2672F" stroke-width="68" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      tally
+    </a>
+    <nav aria-label="Account">
+      <a class="login" data-link="login" href="https://tally-homeschool.streamlit.app/Login">Log In</a>
+      <a class="btn btn-primary" data-link="signup" href="https://tally-homeschool.streamlit.app/Register">Get Started</a>
+    </nav>
+  </div>
+
+  <div class="wrap hero-grid">
+    <div>
+      <p class="eyebrow">Tally Homeschool</p>
+      <h1>Less logging, more learning.</h1>
+      <p class="lede">Plan the week once. Your kids see their day and check off their own work, and tally keeps the records (grades, reading, P.E.) so you don&rsquo;t have to.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" data-link="signup" href="https://tally-homeschool.streamlit.app/Register">Create Your Family Account</a>
+        <a class="btn btn-ghost" data-link="login" href="https://tally-homeschool.streamlit.app/Login">Log In</a>
+      </div>
+    </div>
+
+    <div class="preview" aria-hidden="true">
+      <div class="card">
+        <div class="card-head">
+          <strong>Hi, Ann!</strong>
+          <span>Tuesday</span>
+        </div>
+        <div class="bar"><i></i></div>
+        <small>2 of 3 done today</small>
+
+        <div class="task done">
+          <span class="box">&#10003;</span>
+          <div><div class="t">Saxon Math: Lesson 47</div><div class="s">Math</div></div>
+          <span class="dot" style="background:#2196F3"></span>
+        </div>
+        <div class="task done">
+          <span class="box">&#10003;</span>
+          <div><div class="t">Read for 20 minutes</div><div class="s">Reading</div></div>
+          <span class="dot" style="background:#43A047"></span>
+        </div>
+        <div class="task">
+          <span class="box"></span>
+          <div><div class="t">Spelling list 12</div><div class="s">Language Arts</div></div>
+          <span class="dot" style="background:#8E24AA"></span>
+        </div>
+
+        <span class="badge">&#128293; 5-day streak</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section aria-labelledby="features-title">
+    <div class="wrap">
+      <h2 id="features-title">Everything your homeschool day needs, in one place</h2>
+      <p class="section-lede">Built for homeschooling families: one parent account, a simple view for each child, and records that build up as you go.</p>
+
+      <div class="features">
+        <article class="feature">
+          <div class="icon" aria-hidden="true">&#128221;</div>
+          <h3>Plan once, it fills in the days</h3>
+          <p>Set up one-time work, repeating assignments, or a whole curriculum, and tally lays each lesson out on your school days.</p>
+        </article>
+        <article class="feature">
+          <div class="icon" aria-hidden="true">&#129298;</div>
+          <h3>Missed a day? One tap.</h3>
+          <p>Sick days happen. Move every unfinished lesson forward for the students you choose, without redoing your plan.</p>
+        </article>
+        <article class="feature">
+          <div class="icon" aria-hidden="true">&#127891;</div>
+          <h3>Kids own their day</h3>
+          <p>Each student sees today&rsquo;s work first and checks it off themselves, with streaks and badges that make finishing feel good.</p>
+        </article>
+        <article class="feature">
+          <div class="icon" aria-hidden="true">&#128202;</div>
+          <h3>Grades without a gradebook</h3>
+          <p>Enter points as you go. tally works out percentages and letter grades by subject and grading period.</p>
+        </article>
+        <article class="feature">
+          <div class="icon" aria-hidden="true">&#128214;</div>
+          <h3>Reading and P.E. logs</h3>
+          <p>Track books and pages read, reading streaks, and P.E. minutes, with totals for the week, the term and the year.</p>
+        </article>
+        <article class="feature">
+          <div class="icon" aria-hidden="true">&#128198;</div>
+          <h3>The whole family&rsquo;s calendar</h3>
+          <p>See everyone&rsquo;s work and events by week or month, from field trips to co-op days.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="steps-section" aria-labelledby="how-title">
+    <div class="wrap">
+      <h2 id="how-title">How it works</h2>
+      <p class="section-lede">Most families are set up in an afternoon.</p>
+      <ol class="steps">
+        <li>
+          <h3>Add your students and subjects</h3>
+          <p>Create your family account, then add each child and the subjects you teach.</p>
+        </li>
+        <li>
+          <h3>Plan the work</h3>
+          <p>Add assignments or a curriculum once. tally schedules the days for you.</p>
+        </li>
+        <li>
+          <h3>Let them check it off</h3>
+          <p>Kids work through their day while you watch progress from your dashboard.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <section aria-labelledby="devices-title">
+    <div class="wrap split">
+      <div>
+        <h2 id="devices-title">One tablet or one each</h2>
+        <p class="section-lede">Kids don&rsquo;t need their own email or password.</p>
+        <ul class="checks">
+          <li>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="12" fill="#FFF3EC"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#E2672F" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <div><strong>Student Mode</strong><span>Hand your own device to a child. It shows only their view until you enter your family PIN.</span></div>
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="12" fill="#FFF3EC"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#E2672F" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <div><strong>Pair their own device</strong><span>Enter a one-time code on a child&rsquo;s tablet or computer, and it&rsquo;s theirs. No account setup.</span></div>
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="12" fill="#FFF3EC"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#E2672F" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <div><strong>Or a login of their own</strong><span>Older students can have their own email and password whenever you&rsquo;re ready.</span></div>
+          </li>
+        </ul>
+      </div>
+      <div class="pin-card" aria-hidden="true">
+        <p>Pairing code for Ann</p>
+        <div class="pin-code">482 913</div>
+        <small>Works once, for 10 minutes</small>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta" aria-labelledby="cta-title">
+    <div class="wrap">
+      <h2 id="cta-title">Spend your time teaching, not tracking.</h2>
+      <p>Set up your family in a few minutes and see your first school day planned out.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" data-link="signup" href="https://tally-homeschool.streamlit.app/Register">Create Your Family Account</a>
+        <a class="btn btn-ghost" data-link="login" href="https://tally-homeschool.streamlit.app/Login">Log In</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>&copy; <span id="year">2026</span> tally homeschool. Built for homeschooling families.</span>
+    <span>Questions? <a href="mailto:hello@tallyhomeschool.com">hello@tallyhomeschool.com</a></span>
+  </div>
+</footer>
+
+<script>
+  // Where Log In and Get Started go. Until the new app has its own address,
+  // they open the current app; at the switch-over, change these two lines.
+  var LINKS = {
+    login: 'https://tally-homeschool.streamlit.app/Login',
+    signup: 'https://tally-homeschool.streamlit.app/Register'
+  };
+
+  document.querySelectorAll('[data-link]').forEach(function (a) {
+    var href = LINKS[a.getAttribute('data-link')];
+    if (href) { a.href = href; }
+  });
+
+  document.getElementById('year').textContent = new Date().getFullYear();
+</script>
+</body>
+</html>
