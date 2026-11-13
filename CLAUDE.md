@@ -166,6 +166,7 @@ tests/                  pytest suite for the services
 ## Known open items (see the roadmap for the full list)
 
 - Logging out in one tab doesn't end the session in another open tab until that tab is refreshed.
+- The web app keeps its size when an open window is resized (seen 2026-11-13: narrowing a wide window left the page and bottom bar in a small box). A refresh fixes it, and a fresh load at any size is right. Check rotating a phone or tablet before the app store releases, since that's a resize too.
 - Archived students can't log in (`AuthService.get_current_user` blocks them) until a parent restores them on the Students page. Subjects and assignments are restored on their own pages. Books and events can't be restored yet.
 - Invites and password resets depend on Supabase's email templates. "Invite user" must link to `{{ .SiteURL }}/Complete_Account?token_hash={{ .TokenHash }}&type=invite`, and "Reset Password" to the same address with `type=recovery`.
 - Changing a student's login email has to update Supabase and `users` together, because people sign in with Supabase's copy and the app shows its own. `AuthService.update_student_email` handles this. Supabase refuses an email another account already has. Parents can't change their own email yet.
