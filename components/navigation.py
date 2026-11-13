@@ -1,4 +1,6 @@
 import streamlit as st
+
+from config import get_optional_setting
 from services.session_service import SessionService
 from services.auth_service import (
     AuthService
@@ -190,7 +192,47 @@ class NavigationComponent:
                 )
 
     @staticmethod
+    def show_moved_notice():
+        """
+        Once the new app takes over, APP_MOVED_TO (Streamlit secrets) is its
+        address, and every page shows only a "tally has moved" notice.
+        Complete_Account doesn't call this, so invite and reset links sent
+        before the move still work. Remove the setting to bring the old app
+        back.
+        """
+
+        moved_to = get_optional_setting("APP_MOVED_TO")
+
+        if not moved_to:
+            return
+
+        st.set_page_config(page_title="tally has moved", page_icon=FAVICON)
+
+        st.title("tally has moved")
+
+        st.write(
+            "tally has a new home, with a fresh look and apps on the way. "
+            "Log in there with the same email and password: your students, "
+            "work and history are all there."
+        )
+
+        st.link_button(
+            "Go to the new tally",
+            moved_to,
+            type="primary",
+            use_container_width=True
+        )
+
+        st.caption(
+            f"Update your bookmark to {moved_to}"
+        )
+
+        st.stop()
+
+    @staticmethod
     def render():
+
+        NavigationComponent.show_moved_notice()
 
         AuthService.start_page_run()
 

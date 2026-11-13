@@ -13,11 +13,11 @@ Changing a student's login email sends nothing: the app changes it directly.
 | `reset-password.html` | Reset Password | Reset your tally password |
 | `confirm-signup.html` | Confirm signup | Confirm your email for tally |
 
-The links must stay in this form (see CLAUDE.md): the Streamlit app's
-Complete Account page reads `token_hash` and `type` from the address, and
-verifies it only when the password is submitted, since email scanners open
-links. Until the switch-over, `{{ .SiteURL }}` is the Streamlit app. When the
-new app takes over, change the links to its own invite and reset screens.
+The links must stay in this form: the new app's `complete-account` screen
+reads `token_hash` and `type` from the address, and uses the token only when
+the password is submitted, since email scanners open links. `{{ .SiteURL }}`
+is https://app.tallyhomeschool.com (since the switch-over on 2026-11-13). The
+Site URL and these links change together, or invites and resets break.
 
 They're sent through Resend from `tally <hello@tallyhomeschool.com>`, an alias
 of Jaryd's mailbox, so replies reach a person.

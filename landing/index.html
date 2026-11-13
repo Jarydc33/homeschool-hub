@@ -497,8 +497,8 @@
       tally
     </a>
     <nav aria-label="Account">
-      <a class="login" data-link="login" href="https://tally-homeschool.streamlit.app/Login">Log In</a>
-      <a class="btn btn-primary" data-link="signup" href="https://tally-homeschool.streamlit.app/Register">Get Started</a>
+      <a class="login" data-link="login" href="https://app.tallyhomeschool.com/login">Log In</a>
+      <a class="btn btn-primary" data-link="signup" href="https://app.tallyhomeschool.com/register">Get Started</a>
     </nav>
   </div>
 
@@ -508,8 +508,8 @@
       <h1>Less logging, more learning.</h1>
       <p class="lede">Plan the week once. Your kids see their day and check off their own work, and tally keeps the records (grades, reading, P.E.) so you don&rsquo;t have to.</p>
       <div class="hero-actions">
-        <a class="btn btn-primary" data-link="signup" href="https://tally-homeschool.streamlit.app/Register">Create Your Family Account</a>
-        <a class="btn btn-ghost" data-link="login" href="https://tally-homeschool.streamlit.app/Login">Log In</a>
+        <a class="btn btn-primary" data-link="signup" href="https://app.tallyhomeschool.com/register">Create Your Family Account</a>
+        <a class="btn btn-ghost" data-link="login" href="https://app.tallyhomeschool.com/login">Log In</a>
       </div>
     </div>
 
@@ -639,8 +639,8 @@
       <h2 id="cta-title">Spend your time teaching, not tracking.</h2>
       <p>Set up your family in a few minutes and see your first school day planned out.</p>
       <div class="hero-actions">
-        <a class="btn btn-primary" data-link="signup" href="https://tally-homeschool.streamlit.app/Register">Create Your Family Account</a>
-        <a class="btn btn-ghost" data-link="login" href="https://tally-homeschool.streamlit.app/Login">Log In</a>
+        <a class="btn btn-primary" data-link="signup" href="https://app.tallyhomeschool.com/register">Create Your Family Account</a>
+        <a class="btn btn-ghost" data-link="login" href="https://app.tallyhomeschool.com/login">Log In</a>
       </div>
     </div>
   </section>
@@ -654,11 +654,11 @@
 </footer>
 
 <script>
-  // Where Log In and Get Started go. Until the new app has its own address,
-  // they open the current app; at the switch-over, change these two lines.
+  // Where Log In and Get Started go: the web app. The links in the page say
+  // the same, for anyone without JavaScript.
   var LINKS = {
-    login: 'https://tally-homeschool.streamlit.app/Login',
-    signup: 'https://tally-homeschool.streamlit.app/Register'
+    login: 'https://app.tallyhomeschool.com/login',
+    signup: 'https://app.tallyhomeschool.com/register'
   };
 
   document.querySelectorAll('[data-link]').forEach(function (a) {

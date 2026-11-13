@@ -38,6 +38,12 @@ def get_setting(name):
     )
 
 
+def get_optional_setting(name):
+    """Returns a setting's value, or None if it isn't set anywhere."""
+
+    return os.getenv(name) or _from_streamlit_secrets(name) or None
+
+
 def _from_streamlit_secrets(name):
 
     try:

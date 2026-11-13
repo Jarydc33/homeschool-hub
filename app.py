@@ -3,6 +3,11 @@ from services.auth_service import (
 )
 import streamlit as st
 
+from components.navigation import NavigationComponent
+
+# Once the new app takes over, every page only says where it went.
+NavigationComponent.show_moved_notice()
+
 AuthService.start_page_run()
 
 if AuthService.is_authenticated():
