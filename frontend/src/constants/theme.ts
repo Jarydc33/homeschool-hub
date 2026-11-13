@@ -5,6 +5,12 @@
 
 export const Colors = {
   navy: '#1B2540',
+  // The sidebar: a lighter navy for hover and the current page, and text
+  // that reads on navy (the landing page's colours).
+  navyRaised: '#26314F',
+  navyLine: '#323D5C',
+  onNavy: '#EEF1F6',
+  onNavyMuted: '#B9C1D3',
   orange: '#E2672F',
   // Darker orange, readable as small text on white.
   orangeText: '#B84E1C',
