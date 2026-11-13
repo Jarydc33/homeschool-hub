@@ -1,22 +1,26 @@
 /**
- * The parent menu: a sidebar on wide screens, a bottom tab bar on phones,
- * and the full list for the phone's More screen.
+ * The menu: a sidebar on wide screens, a bottom tab bar on phones, and the
+ * full list for the phone's More screen. Parents and students each get their
+ * own (lib/nav.ts).
  */
 import { Image } from 'expo-image';
-import { Link, usePathname } from 'expo-router';
+import { Link, router, usePathname } from 'expo-router';
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useEffect, useState } from 'react';
 
 import { Colors, Radius, Spacing } from '@/constants/theme';
+import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import {
   FEEDBACK_EMAIL,
   FEEDBACK_LINK,
   isActive,
   MORE_ITEM,
-  PARENT_NAV,
+  navFor,
   type NavItem,
 } from '@/lib/nav';
+import type { Student } from '@/lib/types';
 
 // Wider than this gets the sidebar.
 export const SIDEBAR_BREAKPOINT = 768;
@@ -35,6 +39,8 @@ export function Sidebar() {
           accessibilityLabel="tally"
         />
 
+        <WhoseView />
+
         <NavList pathname={pathname} />
       </ScrollView>
 
@@ -45,9 +51,11 @@ export function Sidebar() {
 
 /** Every group's links, as the sidebar and the More screen show them. */
 export function NavList({ pathname }: { pathname: string }) {
+  const { me } = useAuth();
+
   return (
     <View style={styles.groups} accessibilityRole="menu">
-      {PARENT_NAV.map((group) => (
+      {navFor(me?.role).map((group) => (
         <View key={group.heading ?? 'top'} style={styles.group}>
           {group.heading ? <Text style={styles.heading}>{group.heading.toUpperCase()}</Text> : null}
 
@@ -78,9 +86,45 @@ function SideLink({ item, active }: { item: NavItem; active: boolean }) {
   );
 }
 
-/** Feedback and logging out, under the menu. */
+/** On a student's view: whose it is, and how it's signed in. */
+export function WhoseView() {
+  const { me } = useAuth();
+  const [name, setName] = useState<string | null>(null);
+  const studentId = me?.role === 'student' ? me.student_id : null;
+
+  useEffect(() => {
+    if (studentId === null) {
+      return;
+    }
+
+    // A student only ever gets themselves here.
+    api<Student[]>('/students')
+      .then((rows) => setName(rows.find((s) => s.id === studentId)?.name ?? null))
+      .catch(() => setName(null));
+  }, [studentId]);
+
+  if (!me || studentId === null || !name) {
+    return null;
+  }
+
+  const how = me.student_mode ? 'Student Mode' : me.paired_device ? 'This device' : null;
+
+  return (
+    <View style={styles.whose}>
+      <Text style={styles.whoseName}>🎓 {name}</Text>
+      {how ? <Text style={styles.feedbackEmail}>{how}</Text> : null}
+    </View>
+  );
+}
+
+/**
+ * Feedback and logging out, under the menu. Student Mode has no Log Out:
+ * leaving it needs the family PIN.
+ */
 export function AccountLinks() {
-  const { signOut } = useAuth();
+  const { me, signOut } = useAuth();
+
+  const studentMode = me?.student_mode ?? false;
 
   return (
     <View style={styles.account}>
@@ -89,12 +133,21 @@ export function AccountLinks() {
         <Text style={styles.feedbackEmail}>{FEEDBACK_EMAIL}</Text>
       </Pressable>
 
-      <Pressable
-        accessibilityRole="button"
-        onPress={signOut}
-        style={({ pressed }) => [styles.logout, pressed && styles.sideLinkHover]}>
-        <Text style={styles.logoutText}>Log Out</Text>
-      </Pressable>
+      {studentMode ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.push('/exit-student-mode')}
+          style={({ pressed }) => [styles.logout, pressed && styles.sideLinkHover]}>
+          <Text style={styles.logoutText}>🔒 Exit Student Mode</Text>
+        </Pressable>
+      ) : me?.paired_device ? null : (
+        <Pressable
+          accessibilityRole="button"
+          onPress={signOut}
+          style={({ pressed }) => [styles.logout, pressed && styles.sideLinkHover]}>
+          <Text style={styles.logoutText}>Log Out</Text>
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -103,8 +156,9 @@ export function AccountLinks() {
 export function BottomBar() {
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
+  const { me } = useAuth();
 
-  const tabs = PARENT_NAV.flatMap((group) => group.items.filter((item) => item.tab));
+  const tabs = navFor(me?.role).flatMap((group) => group.items.filter((item) => item.tab));
 
   // Anything not in the bar counts as More.
   const onTab = tabs.some((item) => isActive(pathname, item.href));
@@ -151,6 +205,18 @@ const styles = StyleSheet.create({
     width: 120,
     height: 48,
     marginLeft: Spacing.sm,
+  },
+  whose: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius,
+    backgroundColor: Colors.background,
+    gap: 2,
+  },
+  whoseName: {
+    color: Colors.navy,
+    fontSize: 15,
+    fontWeight: '700',
   },
   groups: {
     gap: Spacing.md,

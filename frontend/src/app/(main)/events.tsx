@@ -14,14 +14,18 @@ import {
 } from '@/components/ui';
 import { Colors, Spacing } from '@/constants/theme';
 import { api, errorMessage } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
 import { formatDate } from '@/lib/dates';
 import type { Event, EventList } from '@/lib/types';
 
 /**
  * Events: field trips, co-op days, appointments. Upcoming ones show their
  * next date; a repeating event's edit or archive applies to every date.
+ * Students see their own and the family's, without changing them.
  */
 export default function EventsScreen() {
+  const { me } = useAuth();
+  const isParent = me?.role === 'parent';
   const [events, setEvents] = useState<EventList | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -90,23 +94,25 @@ export default function EventsScreen() {
         <Text style={styles.detail}>👨‍🎓 {event.audience}</Text>
         {event.description ? <Text style={styles.body}>{event.description}</Text> : null}
 
-        <View style={styles.actions}>
-          <Button
-            title="Edit"
-            variant="secondary"
-            style={styles.action}
-            onPress={() => open(event.id)}
-          />
-          <Button
-            title="Archive"
-            variant="secondary"
-            style={styles.action}
-            onPress={() => {
-              setNotice(null);
-              setArchivingId(event.id);
-            }}
-          />
-        </View>
+        {isParent ? (
+          <View style={styles.actions}>
+            <Button
+              title="Edit"
+              variant="secondary"
+              style={styles.action}
+              onPress={() => open(event.id)}
+            />
+            <Button
+              title="Archive"
+              variant="secondary"
+              style={styles.action}
+              onPress={() => {
+                setNotice(null);
+                setArchivingId(event.id);
+              }}
+            />
+          </View>
+        ) : null}
       </Card>
     );
   }
@@ -127,7 +133,7 @@ export default function EventsScreen() {
 
       {events ? (
         <>
-          <Button title="+ Add Event" onPress={() => open()} />
+          {isParent ? <Button title="+ Add Event" onPress={() => open()} /> : null}
 
           <SectionTitle>Upcoming</SectionTitle>
 
@@ -150,7 +156,9 @@ export default function EventsScreen() {
                 </SectionTitle>
               </Pressable>
 
-              {showPast ? events.past.map((event) => renderEvent(event, null, `past-${event.id}`)) : null}
+              {showPast
+                ? events.past.map((event) => renderEvent(event, null, `past-${event.id}`))
+                : null}
             </>
           ) : null}
         </>

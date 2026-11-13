@@ -98,7 +98,13 @@ export interface StudentDashboard {
   completed_today: WorkItem[];
   upcoming: WorkItem[];
   missed: WorkItem[];
+  // Checked off in the last 30 days, today included, newest first.
+  recently_completed: WorkItem[];
+  // Repeating work from the last 30 days that wasn't done.
+  recently_missed: WorkItem[];
   achievements: { streak: number; best_streak: number; badges: Badge[] };
+  reading: ReadingSummary;
+  pe: PESummary;
   upcoming_events: EventEntry[];
   banners: Banner[];
 }

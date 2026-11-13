@@ -34,7 +34,7 @@ function Routes() {
       {/* Screens for someone signed in. Anyone else is sent to the login. */}
       <Stack.Protected guard={signedIn}>
         <Stack.Screen name="index" options={{ title: 'tally' }} />
-        <Stack.Screen name="(parent)" options={{ headerShown: false, title: 'tally' }} />
+        <Stack.Screen name="(main)" options={{ headerShown: false, title: 'tally' }} />
         <Stack.Screen name="student/[id]" options={{ title: 'Today' }} />
         <Stack.Screen
           name="missed-day"
@@ -49,6 +49,10 @@ function Routes() {
           options={{ title: 'Notes for a Date', presentation: 'modal' }}
         />
         <Stack.Screen name="event/edit" options={{ title: 'Event', presentation: 'modal' }} />
+        <Stack.Screen
+          name="exit-student-mode"
+          options={{ title: 'Exit Student Mode', presentation: 'modal' }}
+        />
       </Stack.Protected>
 
       <Stack.Protected guard={!signedIn}>

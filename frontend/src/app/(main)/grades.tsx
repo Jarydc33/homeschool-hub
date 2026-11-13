@@ -41,6 +41,8 @@ const ALL_TIME = 0;
 export default function GradesScreen() {
   const { me } = useAuth();
   const today = me?.today ?? null;
+  // Students see their own grades; grading and periods are a parent's job.
+  const isParent = me?.role === 'parent';
 
   const [students, setStudents] = useState<Student[] | null>(null);
   const [periods, setPeriods] = useState<GradingPeriod[]>([]);
@@ -80,7 +82,7 @@ export default function GradesScreen() {
       const [periodRows, reportData, queueData] = await Promise.all([
         api<GradingPeriod[]>('/grading-periods'),
         api<GradeReport>(`/students/${studentId}/grades${period}`),
-        api<GradingQueue>(`/students/${studentId}/grading`),
+        isParent ? api<GradingQueue>(`/students/${studentId}/grading`) : Promise.resolve(null),
       ]);
 
       if (request === latest.current) {
@@ -94,7 +96,7 @@ export default function GradesScreen() {
         setError(errorMessage(ex));
       }
     }
-  }, [studentId, periodId]);
+  }, [studentId, periodId, isParent]);
 
   useFocusEffect(
     useCallback(() => {
@@ -143,7 +145,7 @@ export default function GradesScreen() {
     );
   }
 
-  const ready = report && queue && today;
+  const ready = report && (queue || !isParent) && today;
 
   return (
     <Screen refreshing={refreshing} onRefresh={refresh}>
@@ -186,49 +188,53 @@ export default function GradesScreen() {
 
           <Comparison report={report} periods={periods} />
 
-          <SectionTitle>📝 To Grade ({queue.finished.length})</SectionTitle>
-
-          {queue.finished.length === 0 ? (
-            <Text style={styles.muted}>
-              Nothing is waiting for a grade. Mark an assignment as Graded on the Assignments
-              screen to see its finished work here.
-            </Text>
-          ) : (
-            <Text style={styles.muted}>
-              Finished work on graded assignments. For a plain percentage, use a total of 100.
-            </Text>
-          )}
-
-          {queue.finished.map((work) => (
-            <GradeRow
-              key={work.occurrence_id}
-              work={work}
-              total={suggested(work)}
-              onSave={saveGrade}
-            />
-          ))}
-
-          {queue.unfinished.length > 0 ? (
+          {queue ? (
             <>
-              <Toggle
-                open={showUnfinished}
-                onPress={() => setShowUnfinished(!showUnfinished)}
-                title={`Grade Work Not Checked Off (${queue.unfinished.length})`}
-              />
-              {showUnfinished ? (
+              <SectionTitle>📝 To Grade ({queue.finished.length})</SectionTitle>
+
+              {queue.finished.length === 0 ? (
+                <Text style={styles.muted}>
+                  Nothing is waiting for a grade. Mark an assignment as Graded on the Assignments
+                  screen to see its finished work here.
+                </Text>
+              ) : (
+                <Text style={styles.muted}>
+                  Finished work on graded assignments. For a plain percentage, use a total of 100.
+                </Text>
+              )}
+
+              {queue.finished.map((work) => (
+                <GradeRow
+                  key={work.occurrence_id}
+                  work={work}
+                  total={suggested(work)}
+                  onSave={saveGrade}
+                />
+              ))}
+
+              {queue.unfinished.length > 0 ? (
                 <>
-                  <Text style={styles.muted}>
-                    Work from the last 30 days and the next 7, so you can grade something early.
-                    Grading doesn&apos;t check it off, and blank scores never count.
-                  </Text>
-                  {queue.unfinished.map((work) => (
-                    <GradeRow
-                      key={work.occurrence_id}
-                      work={work}
-                      total={suggested(work)}
-                      onSave={saveGrade}
-                    />
-                  ))}
+                  <Toggle
+                    open={showUnfinished}
+                    onPress={() => setShowUnfinished(!showUnfinished)}
+                    title={`Grade Work Not Checked Off (${queue.unfinished.length})`}
+                  />
+                  {showUnfinished ? (
+                    <>
+                      <Text style={styles.muted}>
+                        Work from the last 30 days and the next 7, so you can grade something early.
+                        Grading doesn&apos;t check it off, and blank scores never count.
+                      </Text>
+                      {queue.unfinished.map((work) => (
+                        <GradeRow
+                          key={work.occurrence_id}
+                          work={work}
+                          total={suggested(work)}
+                          onSave={saveGrade}
+                        />
+                      ))}
+                    </>
+                  ) : null}
                 </>
               ) : null}
             </>
@@ -242,23 +248,39 @@ export default function GradesScreen() {
                 title={`Graded Work (${report.work.length})`}
               />
               {showGraded
-                ? report.work.map((graded) => (
-                    <GradeRow
-                      // A new key after a save resets the boxes to the saved grade.
-                      key={`${graded.work.occurrence_id}-${graded.score}-${graded.points_possible}`}
-                      work={graded.work}
-                      score={graded.score}
-                      total={graded.points_possible}
-                      grade={graded.grade}
-                      onSave={saveGrade}
-                      onClear={clearGrade}
-                    />
-                  ))
+                ? report.work.map((graded) =>
+                    !isParent ? (
+                      <Card key={graded.work.occurrence_id}>
+                        <View style={styles.titleRow}>
+                          <Text style={[styles.workTitle, styles.flex]}>{graded.work.title}</Text>
+                          <Text style={styles.subjectGrade}>{describe(graded.grade)}</Text>
+                        </View>
+                        <Text style={styles.muted}>
+                          {graded.work.subject?.name ?? 'No subject'} ·{' '}
+                          {formatDate(graded.work.date, true)} · {graded.score} out of{' '}
+                          {graded.points_possible}
+                        </Text>
+                      </Card>
+                    ) : (
+                      <GradeRow
+                        // A new key after a save resets the boxes to the saved grade.
+                        key={`${graded.work.occurrence_id}-${graded.score}-${graded.points_possible}`}
+                        work={graded.work}
+                        score={graded.score}
+                        total={graded.points_possible}
+                        grade={graded.grade}
+                        onSave={saveGrade}
+                        onClear={clearGrade}
+                      />
+                    ),
+                  )
                 : null}
             </>
           ) : null}
 
-          <GradingPeriods periods={periods} today={today} onChanged={periodsChanged} />
+          {isParent ? (
+            <GradingPeriods periods={periods} today={today} onChanged={periodsChanged} />
+          ) : null}
         </>
       ) : null}
     </Screen>
@@ -505,7 +527,10 @@ function GradingPeriods({
   }
 
   async function create(values: PeriodValues) {
-    const period = await api<GradingPeriod>('/grading-periods', { method: 'POST', body: values });
+    const period = await api<GradingPeriod>('/grading-periods', {
+      method: 'POST',
+      body: values,
+    });
     closeAll();
     await onChanged(`${period.name} added.`);
   }

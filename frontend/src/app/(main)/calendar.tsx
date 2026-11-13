@@ -128,7 +128,8 @@ export default function CalendarScreen() {
     setView(next);
   }
 
-  const showStudent = studentId === WHOLE_FAMILY;
+  // A student only sees their own work and the family's events.
+  const showStudent = studentId === WHOLE_FAMILY && me?.role === 'parent';
 
   const studentChoices: Choice<number>[] = [
     { value: WHOLE_FAMILY, label: 'Whole family' },

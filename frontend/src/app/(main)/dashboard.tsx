@@ -2,11 +2,13 @@ import { Link, router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { ChoiceField } from '@/components/form';
 import { Button, Card, ErrorMessage, Loading, PageTitle, Screen, SectionTitle } from '@/components/ui';
 import { Colors, Radius, Spacing } from '@/constants/theme';
-import { api, ApiError } from '@/lib/api';
+import { api, ApiError, errorMessage } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
 import { formatDate } from '@/lib/dates';
-import type { DueWork, ParentDashboard, StudentMetrics } from '@/lib/types';
+import type { DueWork, FamilySettings, ParentDashboard, Student, StudentMetrics } from '@/lib/types';
 
 /**
  * The Parent Dashboard: each student's progress, what needs attention, what's
@@ -88,6 +90,10 @@ function Dashboard({ data }: { data: ParentDashboard }) {
           ))}
         </View>
       )}
+
+      {data.students.length > 0 ? (
+        <StartStudentMode students={data.students.map((m) => m.student)} />
+      ) : null}
 
       <SectionTitle>Needs Attention</SectionTitle>
 
@@ -231,7 +237,107 @@ function listNames(names: string[]): string {
   return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
 }
 
+/**
+ * Hands this device to a student: it shows only their view until a parent
+ * enters the family PIN. Needs a PIN set first.
+ */
+function StartStudentMode({ students }: { students: Student[] }) {
+  const { reloadMe } = useAuth();
+  const [open, setOpen] = useState(false);
+  const [hasPin, setHasPin] = useState<boolean | null>(null);
+  const [chosen, setChosen] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const studentId = chosen ?? students[0].id;
+
+  async function openCard() {
+    setOpen(true);
+    setError(null);
+
+    try {
+      const family = await api<FamilySettings>('/family');
+      setHasPin(family.has_pin);
+    } catch (ex) {
+      setError(errorMessage(ex));
+    }
+  }
+
+  async function start() {
+    setBusy(true);
+    setError(null);
+
+    try {
+      await api('/student-mode', { method: 'POST', body: { student_id: studentId } });
+      await reloadMe();
+      router.replace('/today');
+    } catch (ex) {
+      setError(errorMessage(ex));
+      setBusy(false);
+    }
+  }
+
+  if (!open) {
+    return <Button title="🔒 Start Student Mode" variant="secondary" onPress={openCard} />;
+  }
+
+  const name = students.find((s) => s.id === studentId)?.name ?? 'the student';
+
+  return (
+    <Card>
+      <Text style={styles.title}>🔒 Start Student Mode</Text>
+      <Text style={styles.body}>
+        Switch this device to one student&apos;s view, to hand it to them. Leaving Student Mode
+        needs the family PIN.
+      </Text>
+
+      {hasPin === false ? (
+        <>
+          <Text style={styles.body}>First, set a family PIN in Settings.</Text>
+          <Button title="Go to Settings" onPress={() => router.push('/settings')} />
+        </>
+      ) : null}
+
+      {hasPin ? (
+        <>
+          {students.length > 1 ? (
+            <ChoiceField
+              label="Student"
+              options={students.map((s) => ({ value: s.id, label: s.name }))}
+              value={studentId}
+              onChange={setChosen}
+            />
+          ) : null}
+        </>
+      ) : null}
+
+      {hasPin === null && !error ? <Loading /> : null}
+
+      {error ? <ErrorMessage message={error} /> : null}
+
+      <View style={styles.actions}>
+        <Button
+          title="Cancel"
+          variant="secondary"
+          style={styles.action}
+          onPress={() => setOpen(false)}
+        />
+        {hasPin ? (
+          <Button title={`Start for ${name}`} style={styles.action} busy={busy} onPress={start} />
+        ) : null}
+      </View>
+    </Card>
+  );
+}
+
 const styles = StyleSheet.create({
+  actions: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
+  action: {
+    flex: 1,
+  },
   date: {
     color: Colors.textMuted,
     fontSize: 15,

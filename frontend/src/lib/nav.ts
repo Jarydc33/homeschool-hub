@@ -1,5 +1,7 @@
+import type { Role } from './types';
+
 /**
- * The parent menu, in the same groups as the Streamlit sidebar. Computers
+ * The menus, in the same groups as the Streamlit sidebar. Computers
  * show it all as a sidebar; phones show the `tab` items along the bottom and
  * the rest under More.
  */
@@ -49,6 +51,48 @@ export const PARENT_NAV: NavGroup[] = [
     ],
   },
 ];
+
+// A student's menu: their own login, Student Mode or a paired device. The
+// screens they share with parents show them only their own, read-only where
+// that's a parent's job.
+export const STUDENT_NAV: NavGroup[] = [
+  {
+    heading: null,
+    items: [{ href: '/today', label: 'Today', icon: '🎓', tab: true }],
+  },
+  {
+    heading: 'Plan',
+    items: [
+      { href: '/calendar', label: 'Calendar', icon: '📆', tab: true },
+      { href: '/events', label: 'Events', icon: '📅' },
+    ],
+  },
+  {
+    heading: 'Track',
+    items: [
+      { href: '/grades', label: 'Grades', icon: '📊' },
+      { href: '/reading', label: 'Reading', icon: '📖', tab: true },
+      { href: '/pe', label: 'P.E.', icon: '🏃', tab: true },
+    ],
+  },
+];
+
+export function navFor(role: Role | undefined): NavGroup[] {
+  return role === 'student' ? STUDENT_NAV : PARENT_NAV;
+}
+
+/** The screen someone starts on. */
+export function homeFor(role: Role | undefined): string {
+  return role === 'student' ? '/today' : '/dashboard';
+}
+
+/** Whether this menu has the screen, or More, which every menu has. */
+export function allowed(nav: NavGroup[], pathname: string): boolean {
+  return (
+    isActive(pathname, MORE_ITEM.href) ||
+    nav.some((group) => group.items.some((item) => isActive(pathname, item.href)))
+  );
+}
 
 export const MORE_ITEM: NavItem = { href: '/more', label: 'More', icon: '☰' };
 

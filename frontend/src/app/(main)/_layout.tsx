@@ -1,19 +1,22 @@
-import { Redirect, Slot } from 'expo-router';
+import { Redirect, Slot, usePathname } from 'expo-router';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { Loading } from '@/components/ui';
-import { BottomBar, Sidebar, SIDEBAR_BREAKPOINT } from '@/components/parent-nav';
+import { BottomBar, Sidebar, SIDEBAR_BREAKPOINT } from '@/components/app-nav';
+import { allowed, homeFor, navFor } from '@/lib/nav';
 import { Colors } from '@/constants/theme';
 import { useAuth } from '@/lib/auth';
 
 /**
- * Parents' screens, with the menu: a sidebar on wide screens, a tab bar
- * along the bottom on phones. Anyone else goes back home, which sends them
- * to the right place. The API checks every call too.
+ * The screens with the menu: a sidebar on wide screens, a tab bar along the
+ * bottom on phones. Parents and students each get their own menu, and a
+ * screen that isn't on someone's menu sends them to their start. The API
+ * checks every call too.
  */
-export default function ParentLayout() {
+export default function MainLayout() {
   const { me, error } = useAuth();
   const { width } = useWindowDimensions();
+  const pathname = usePathname();
 
   if (error) {
     return <Redirect href="/" />;
@@ -23,8 +26,12 @@ export default function ParentLayout() {
     return <Loading />;
   }
 
-  if (me.role !== 'parent') {
+  if (me.role !== 'parent' && me.role !== 'student') {
     return <Redirect href="/" />;
+  }
+
+  if (!allowed(navFor(me.role), pathname)) {
+    return <Redirect href={homeFor(me.role) as never} />;
   }
 
   const wide = width >= SIDEBAR_BREAKPOINT;

@@ -1,6 +1,6 @@
 import { usePathname } from 'expo-router';
 
-import { AccountLinks, NavList } from '@/components/parent-nav';
+import { AccountLinks, NavList } from '@/components/app-nav';
 import { PageTitle, Screen } from '@/components/ui';
 
 /** Phones: everything in the menu, since the bottom bar shows only the main areas. */

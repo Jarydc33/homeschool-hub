@@ -6,7 +6,7 @@ import { Colors } from '@/constants/theme';
 import { useAuth } from '@/lib/auth';
 
 /**
- * Home sends everyone to their start: a student to their own day, a parent
+ * Home sends everyone to their start: a student to their Today, a parent
  * to the dashboard.
  */
 export default function HomeScreen() {
@@ -25,8 +25,8 @@ export default function HomeScreen() {
     return <Loading />;
   }
 
-  if (me.role === 'student' && me.student_id !== null) {
-    return <Redirect href={{ pathname: '/student/[id]', params: { id: String(me.student_id) } }} />;
+  if (me.role === 'student') {
+    return <Redirect href="/today" />;
   }
 
   if (me.role === 'admin') {
