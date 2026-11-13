@@ -1,13 +1,12 @@
 import { Redirect } from 'expo-router';
-import { StyleSheet, Text } from 'react-native';
 
 import { Button, ErrorMessage, Loading, Screen } from '@/components/ui';
-import { Colors } from '@/constants/theme';
 import { useAuth } from '@/lib/auth';
+import { homeFor } from '@/lib/nav';
 
 /**
  * Home sends everyone to their start: a student to their Today, a parent
- * to the dashboard.
+ * to the dashboard, an Admin to the announcements.
  */
 export default function HomeScreen() {
   const { me, error, reloadMe, signOut } = useAuth();
@@ -25,27 +24,5 @@ export default function HomeScreen() {
     return <Loading />;
   }
 
-  if (me.role === 'student') {
-    return <Redirect href="/today" />;
-  }
-
-  if (me.role === 'admin') {
-    return (
-      <Screen>
-        <Text style={styles.body}>
-          Announcements are still managed in the current Tally app for now.
-        </Text>
-        <Button title="Log Out" variant="secondary" onPress={signOut} />
-      </Screen>
-    );
-  }
-
-  return <Redirect href="/dashboard" />;
+  return <Redirect href={homeFor(me.role) as never} />;
 }
-
-const styles = StyleSheet.create({
-  body: {
-    color: Colors.text,
-    fontSize: 16,
-  },
-});

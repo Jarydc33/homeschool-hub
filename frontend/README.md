@@ -28,7 +28,7 @@ allows calls from `http://localhost:8081` for local work.
   (a sidebar on wide screens, a bottom tab bar on phones) and sends anyone to
   their start from a screen not on their menu. Students (their own login,
   Student Mode or a paired device) get `today` and the shared screens, which
-  hide what only parents can do.
+  hide what only parents can do; an Admin gets only `announcements`.
 - `src/lib/nav.ts` the parent and student menus' groups and links
 - `src/lib/` the API client, Supabase login, a paired device's key (`device.ts`,
   sent as `X-Device-Token` when there's no email login), and the shapes the

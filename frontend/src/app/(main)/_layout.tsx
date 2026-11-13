@@ -26,7 +26,7 @@ export default function MainLayout() {
     return <Loading />;
   }
 
-  if (me.role !== 'parent' && me.role !== 'student') {
+  if (me.role !== 'parent' && me.role !== 'student' && me.role !== 'admin') {
     return <Redirect href="/" />;
   }
 

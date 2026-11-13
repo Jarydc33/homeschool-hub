@@ -77,12 +77,29 @@ export const STUDENT_NAV: NavGroup[] = [
   },
 ];
 
+// An Admin (a separate login, no family) only manages system-wide
+// announcements, as in the Streamlit app.
+export const ADMIN_NAV: NavGroup[] = [
+  {
+    heading: null,
+    items: [{ href: '/announcements', label: 'Announcements', icon: '📢', tab: true }],
+  },
+];
+
 export function navFor(role: Role | undefined): NavGroup[] {
+  if (role === 'admin') {
+    return ADMIN_NAV;
+  }
+
   return role === 'student' ? STUDENT_NAV : PARENT_NAV;
 }
 
 /** The screen someone starts on. */
 export function homeFor(role: Role | undefined): string {
+  if (role === 'admin') {
+    return '/announcements';
+  }
+
   return role === 'student' ? '/today' : '/dashboard';
 }
 
@@ -99,9 +116,6 @@ export const MORE_ITEM: NavItem = { href: '/more', label: 'More', icon: '☰' };
 export const FEEDBACK_EMAIL = 'tallyhomeschoolapp@gmail.com';
 
 export const FEEDBACK_LINK = `mailto:${FEEDBACK_EMAIL}?subject=tally%20feedback`;
-
-// The current app, for screens not rebuilt here yet.
-export const CURRENT_APP_URL = 'https://tally-homeschool.streamlit.app';
 
 export function isActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);

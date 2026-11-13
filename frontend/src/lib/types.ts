@@ -86,6 +86,11 @@ export interface Banner {
   id: number;
   title: string;
   message: string;
+  // It shows from start_date through end_date.
+  start_date: string | null;
+  end_date: string | null;
+  // An Admin's, for every family.
+  system_wide: boolean;
 }
 
 export interface StudentDashboard {
