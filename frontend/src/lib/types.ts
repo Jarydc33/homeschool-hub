@@ -248,3 +248,31 @@ export interface GradingQueue {
   // Points to suggest per assignment id, from its latest grade.
   suggested_totals: Record<string, number>;
 }
+
+export interface ReadingSummary {
+  // Days in a row with some reading, weekends included.
+  streak: number;
+  best_streak: number;
+  pages_this_week: number;
+  total_pages: number;
+  books_finished: number;
+  badges: Badge[];
+}
+
+export interface Book {
+  id: number;
+  student_id: number;
+  title: string;
+  author: string | null;
+  total_pages: number | null;
+  finished_on: string | null;
+  pages_read: number;
+  pages_today: number;
+  // Pages per date, newest first.
+  logs: { date: string; pages: number }[];
+}
+
+export interface Bookshelf {
+  books: Book[];
+  summary: ReadingSummary;
+}
