@@ -118,8 +118,8 @@ export function WhoseView() {
 }
 
 /**
- * Feedback and logging out, under the menu. Student Mode has no Log Out:
- * leaving it needs the family PIN.
+ * Feedback and logging out, under the menu. Student Mode and paired devices
+ * have no Log Out: leaving either needs the family PIN.
  */
 export function AccountLinks() {
   const { me, signOut } = useAuth();
@@ -140,7 +140,14 @@ export function AccountLinks() {
           style={({ pressed }) => [styles.logout, pressed && styles.sideLinkHover]}>
           <Text style={styles.logoutText}>🔒 Exit Student Mode</Text>
         </Pressable>
-      ) : me?.paired_device ? null : (
+      ) : me?.paired_device ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.push('/unpair-device')}
+          style={({ pressed }) => [styles.logout, pressed && styles.sideLinkHover]}>
+          <Text style={styles.logoutText}>🔓 Unpair This Device</Text>
+        </Pressable>
+      ) : (
         <Pressable
           accessibilityRole="button"
           onPress={signOut}

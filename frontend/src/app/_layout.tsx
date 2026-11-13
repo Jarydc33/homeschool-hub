@@ -9,7 +9,7 @@ import { AuthProvider, useAuth } from '@/lib/auth';
 SplashScreen.preventAutoHideAsync();
 
 function Routes() {
-  const { ready, session } = useAuth();
+  const { ready, signedIn } = useAuth();
 
   useEffect(() => {
     if (ready) {
@@ -21,7 +21,6 @@ function Routes() {
     return null;
   }
 
-  const signedIn = session !== null;
 
   return (
     <Stack
@@ -52,6 +51,10 @@ function Routes() {
         <Stack.Screen
           name="exit-student-mode"
           options={{ title: 'Exit Student Mode', presentation: 'modal' }}
+        />
+        <Stack.Screen
+          name="unpair-device"
+          options={{ title: 'Unpair This Device', presentation: 'modal' }}
         />
       </Stack.Protected>
 

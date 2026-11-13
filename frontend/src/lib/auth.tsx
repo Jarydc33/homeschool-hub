@@ -1,11 +1,13 @@
 /**
- * Who's signed in, for every screen: the Supabase session, and the API's
- * /me answer (role, family, student) once there is one.
+ * Who's signed in, for every screen: the Supabase session or a paired
+ * device's key, and the API's /me answer (role, family, student) once there
+ * is one.
  */
 import type { Session } from '@supabase/supabase-js';
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 
-import { api, ApiError } from './api';
+import { api, ApiError, onDeviceRefused } from './api';
+import { clearDeviceToken, getDeviceToken, setDeviceToken } from './device';
 import { supabase } from './supabase';
 import type { Me } from './types';
 
@@ -13,6 +15,8 @@ interface AuthState {
   // False until the saved login has been read.
   ready: boolean;
   session: Session | null;
+  // An email login or a paired device.
+  signedIn: boolean;
   me: Me | null;
   // A problem loading /me, such as no connection.
   error: string | null;
@@ -20,6 +24,10 @@ interface AuthState {
   notice: string | null;
   signIn: (email: string, password: string) => Promise<string | null>;
   signOut: () => Promise<void>;
+  // Pairs this device with a parent's code; an error message, or null.
+  pair: (code: string) => Promise<string | null>;
+  // Unpairs it with the family PIN; throws ApiError when refused.
+  unpair: (pin: string) => Promise<void>;
   reloadMe: () => Promise<void>;
 }
 
@@ -27,9 +35,13 @@ const AuthContext = createContext<AuthState | null>(null);
 
 const SIGN_IN_FAILED = 'That email and password don’t match. Please try again.';
 
+const DEVICE_ENDED =
+  'This device isn’t paired anymore. Ask a parent for a new pairing code, or log in.';
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
+  const [deviceToken, setDeviceState] = useState<string | null>(getDeviceToken);
   const [me, setMe] = useState<Me | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -54,11 +66,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setError(null);
     } catch (ex) {
       if (ex instanceof ApiError && ex.status === 401) {
-        // The login was refused, e.g. an archived student: start over,
-        // and say why on the login screen.
+        // The login was refused, e.g. an archived student or a device a
+        // parent ended: start over, and say why on the login screen.
         console.warn('Tally refused this login:', ex.message);
-        setNotice(ex.message);
-        await supabase.auth.signOut();
+        const { data } = await supabase.auth.getSession();
+
+        if (data.session) {
+          setNotice(ex.message);
+          await supabase.auth.signOut();
+        } else {
+          setNotice(DEVICE_ENDED);
+          clearDeviceToken();
+          setDeviceState(null);
+        }
+
         setMe(null);
         return;
       }
@@ -66,15 +87,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Look up who this is whenever someone new signs in.
+  // A paired device a parent ended: forget it and go to the login, saying
+  // why, as soon as any call is refused.
+  useEffect(() => {
+    onDeviceRefused(() => {
+      clearDeviceToken();
+      setDeviceState(null);
+      setMe(null);
+      setNotice(DEVICE_ENDED);
+    });
+
+    return () => onDeviceRefused(null);
+  }, []);
+
+  // Look up who this is whenever someone new signs in, by email or by
+  // pairing. An email login wins, as it does in the API.
   const userId = session?.user.id;
+  const who = userId ?? (deviceToken ? `device:${deviceToken}` : null);
 
   useEffect(() => {
-    if (userId) {
+    if (who) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- loads data when this opens; state changes only after the API answers.
       reloadMe();
     }
-  }, [userId, reloadMe]);
+  }, [who, reloadMe]);
 
   const signIn = useCallback(async (email: string, password: string) => {
     setNotice(null);
@@ -93,17 +129,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setMe(null);
   }, []);
 
+  const pair = useCallback(async (code: string) => {
+    setNotice(null);
+
+    try {
+      const result = await api<{ device_token: string }>('/pairing/redeem', {
+        method: 'POST',
+        body: { code: code.replace(/\s/g, '') },
+      });
+
+      setDeviceToken(result.device_token);
+      setDeviceState(result.device_token);
+      return null;
+    } catch (ex) {
+      return ex instanceof ApiError ? ex.message : 'Something went wrong. Please try again.';
+    }
+  }, []);
+
+  const unpair = useCallback(async (pin: string) => {
+    await api('/pairing/unpair', { method: 'POST', body: { pin } });
+    clearDeviceToken();
+    setDeviceState(null);
+    setMe(null);
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
         ready,
         session,
+        signedIn: who !== null,
         // Only meaningful while someone's signed in.
-        me: userId ? me : null,
-        error: userId ? error : null,
+        me: who ? me : null,
+        error: who ? error : null,
         notice,
         signIn,
         signOut,
+        pair,
+        unpair,
         reloadMe,
       }}>
       {children}

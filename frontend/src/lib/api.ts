@@ -1,8 +1,9 @@
 /**
- * Calls the Tally API as the signed-in person. Errors come back as ApiError,
+ * Calls the Tally API as the signed-in person, or the paired device. Errors come back as ApiError,
  * whose message is the API's friendly text, ready to show.
  */
 import { API_URL } from './config';
+import { getDeviceToken } from './device';
 import { supabase } from './supabase';
 
 export class ApiError extends Error {
@@ -19,8 +20,14 @@ export function errorMessage(ex: unknown): string {
   return ex instanceof ApiError ? ex.message : 'Something went wrong. Please try again.';
 }
 
-const CONNECTION_MESSAGE =
-  "We couldn't reach Tally. Check your connection and try again.";
+// Told when the API refuses a paired device's key, e.g. a parent ended it.
+let deviceRefused: (() => void) | null = null;
+
+export function onDeviceRefused(handler: (() => void) | null): void {
+  deviceRefused = handler;
+}
+
+const CONNECTION_MESSAGE = "We couldn't reach Tally. Check your connection and try again.";
 
 function messageFrom(body: unknown, status: number): string {
   const detail = (body as { detail?: unknown } | null)?.detail;
@@ -45,8 +52,15 @@ export async function api<T>(
 
   const headers: Record<string, string> = { Accept: 'application/json' };
 
+  // An email login wins; a paired device has only its key.
   if (data.session) {
     headers.Authorization = `Bearer ${data.session.access_token}`;
+  } else {
+    const deviceToken = getDeviceToken();
+
+    if (deviceToken) {
+      headers['X-Device-Token'] = deviceToken;
+    }
   }
 
   if (options.body !== undefined) {
@@ -66,6 +80,10 @@ export async function api<T>(
   }
 
   const body = await response.json().catch(() => null);
+
+  if (response.status === 401 && headers['X-Device-Token']) {
+    deviceRefused?.();
+  }
 
   if (!response.ok) {
     throw new ApiError(messageFrom(body, response.status), response.status);
