@@ -160,3 +160,19 @@ export interface NoteRow {
   date: string;
   notes: string | null;
 }
+
+export type CalendarStatus = 'event' | 'to_do' | 'done' | 'overdue' | 'missed';
+
+export interface CalendarItem {
+  status: CalendarStatus;
+  title: string;
+  detail: string | null;
+  // Whose work it is; null for an event.
+  student: string | null;
+}
+
+// Only dates with something on them are sent.
+export interface CalendarDay {
+  date: string;
+  items: CalendarItem[];
+}
