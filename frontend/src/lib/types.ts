@@ -49,10 +49,37 @@ export interface Badge {
   earned: boolean;
 }
 
+export interface Event {
+  id: number;
+  title: string;
+  description: string | null;
+  start_date: string;
+  // The last day of a multi-day event.
+  end_date: string | null;
+  // "14:30:00", or null for all day.
+  start_time: string | null;
+  // "Weekly", "Every Day", ... or null for a one-off.
+  recurrence_pattern: string | null;
+  repeat_until: string | null;
+  // Empty means the whole family, including students added later.
+  student_ids: number[];
+  // Who it's for, for reading: "Whole family" or names.
+  audience: string;
+}
+
+// One date of an event, as a list shows it.
 export interface EventEntry {
-  event: { id: number; title: string; audience: string };
+  event: Event;
   date: string;
+  // "Tue, Nov 10 at 2:00 PM".
   when: string;
+}
+
+export interface EventList {
+  // The next date of each upcoming event, soonest first.
+  upcoming: EventEntry[];
+  // Events that are over, newest first.
+  past: Event[];
 }
 
 export interface Banner {

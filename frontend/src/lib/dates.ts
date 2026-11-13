@@ -71,3 +71,48 @@ export function shiftDate(day: string, months: boolean, step: number): string {
 
   return toDateString(new Date(date.getFullYear(), date.getMonth() + step, 1));
 }
+
+/** "14:30:00" from the API as "2:30 PM". */
+export function formatTime(value: string): string {
+  const [hours, minutes] = value.split(':').map(Number);
+  const suffix = hours < 12 ? 'AM' : 'PM';
+
+  return `${hours % 12 || 12}:${String(minutes).padStart(2, '0')} ${suffix}`;
+}
+
+/**
+ * A time typed by a person ("9:30 am", "2pm", "14:30") as "HH:MM" for the
+ * API, or null if it can't be read. Hours of 12 or less need AM or PM, so
+ * "2:00" can't quietly mean 2 in the morning.
+ */
+export function parseTime(text: string): string | null {
+  const match = text
+    .trim()
+    .toLowerCase()
+    .replace(/\./g, '')
+    .match(/^(\d{1,2})(?::?(\d{2}))?\s*(am|pm|a|p)?$/);
+
+  if (!match) {
+    return null;
+  }
+
+  let hours = Number(match[1]);
+  const minutes = Number(match[2] ?? 0);
+  const suffix = match[3];
+
+  if (minutes > 59) {
+    return null;
+  }
+
+  if (suffix) {
+    if (hours < 1 || hours > 12) {
+      return null;
+    }
+
+    hours = (hours % 12) + (suffix.startsWith('p') ? 12 : 0);
+  } else if (hours <= 12 || hours > 23) {
+    return null;
+  }
+
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+}

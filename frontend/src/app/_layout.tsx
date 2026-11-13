@@ -48,6 +48,7 @@ function Routes() {
           name="assignment/notes"
           options={{ title: 'Notes for a Date', presentation: 'modal' }}
         />
+        <Stack.Screen name="event/edit" options={{ title: 'Event', presentation: 'modal' }} />
       </Stack.Protected>
 
       <Stack.Protected guard={!signedIn}>
