@@ -20,8 +20,10 @@ allows calls from `http://localhost:8081` for local work.
 
 ## Layout
 
-- `src/app/` screens (each file is a route): `login`, `index` (sends people
-  to their start), `student/[id]` (a parent's look at one student's day),
+- `src/app/` screens (each file is a route): `login`, `register` (sign-up),
+  `forgot-password`, `complete-account` (where invite and reset links lead;
+  uses the link's token only on submit, on its own Supabase client),
+  `index` (sends people to their start), `student/[id]` (a parent's look at one student's day),
   `missed-day`, `assignment/edit` (create, or edit with `?id=`),
   `assignment/notes`, `event/edit`, `exit-student-mode` and `unpair-device` (each
   asks for the family PIN), and `(main)/` for the screens with the menu, whose `_layout` draws it
@@ -34,7 +36,9 @@ allows calls from `http://localhost:8081` for local work.
   sent as `X-Device-Token` when there's no email login), and the shapes the
   API returns
 - `src/components/ui.tsx` shared building blocks; `form.tsx` choice chips, a
-  date field with a month calendar, and a switch; `app-nav.tsx` the menu;
+  date field with a month calendar, and a switch; `app-nav.tsx` the menu; `auth-shell.tsx`
+  the frame of the signed-out screens; `time-zone-field.tsx` the time zone
+  picker;
   `student-day.tsx` a student's day; `achievements.tsx` stat tiles and badges
 - `src/constants/theme.ts` Tally's colours
 

@@ -1,4 +1,5 @@
 import { Image } from 'expo-image';
+import { Link } from 'expo-router';
 import { useState } from 'react';
 import {
   KeyboardAvoidingView,
@@ -93,6 +94,15 @@ export default function LoginScreen() {
             {(error ?? notice) ? <ErrorMessage message={(error ?? notice) as string} /> : null}
 
             <Button title="Log In" onPress={submit} busy={busy} style={styles.submit} />
+
+            <View style={styles.links}>
+              <Link href="/forgot-password" style={styles.link}>
+                Forgot your password?
+              </Link>
+              <Link href="/register" style={styles.link}>
+                New to tally? Create an account
+              </Link>
+            </View>
 
             <Pressable
               accessibilityRole="button"
@@ -214,6 +224,17 @@ const styles = StyleSheet.create({
   },
   submit: {
     marginTop: Spacing.md,
+  },
+  links: {
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginTop: Spacing.sm,
+  },
+  link: {
+    color: Colors.orangeText,
+    fontSize: 15,
+    fontWeight: '600',
+    paddingVertical: Spacing.xs,
   },
   switch: {
     alignItems: 'center',

@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { ChoiceField } from '@/components/form';
+import { TimeZoneField } from '@/components/time-zone-field';
 import {
   Button,
   Card,
@@ -18,16 +19,7 @@ import { Colors, Radius, Spacing } from '@/constants/theme';
 import { api, errorMessage } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { formatMoment } from '@/lib/dates';
-import type {
-  Device,
-  FamilySettings,
-  PairingCode,
-  Student,
-  TimeZoneChoice,
-} from '@/lib/types';
-
-// How many time zones a search shows.
-const ZONE_MATCHES = 8;
+import type { Device, FamilySettings, PairingCode, Student, TimeZoneChoice } from '@/lib/types';
 
 /**
  * Family settings: name and time zone, the family PIN that ends Student Mode
@@ -141,12 +133,7 @@ export default function SettingsScreen() {
             Mode. Ending one sends it back to the login.
           </Text>
 
-          <PairDevice
-            hasPin={settings.has_pin}
-            students={students}
-            zone={zone}
-            onPaired={load}
-          />
+          <PairDevice hasPin={settings.has_pin} students={students} zone={zone} onPaired={load} />
 
           {devices.length === 0 ? (
             <Text style={styles.muted}>
@@ -178,21 +165,8 @@ function FamilyForm({
 }) {
   const [name, setName] = useState(settings.family_name);
   const [timezone, setTimezone] = useState(settings.timezone);
-  const [search, setSearch] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-
-  // The US zones come first from the API and have a friendly label.
-  const common = zones.filter((z) => z.label !== z.name);
-  const current = zones.find((z) => z.name === timezone);
-  const choices = current && !common.includes(current) ? [...common, current] : common;
-
-  const query = search.trim().toLowerCase().replace(/\s+/g, '_');
-  const matches = query
-    ? zones
-        .filter((z) => !choices.includes(z) && z.label.toLowerCase().includes(query))
-        .slice(0, ZONE_MATCHES)
-    : [];
 
   const changed = name.trim() !== settings.family_name || timezone !== settings.timezone;
 
@@ -224,35 +198,12 @@ function FamilyForm({
           maxLength={100}
         />
 
-        <ChoiceField
-          label="Time Zone"
-          hint="Decides when your family's day starts and ends. Saved dates don't change."
-          options={choices.map((z) => ({ value: z.name, label: z.label.replace(/ \(.*\)$/, '') }))}
+        <TimeZoneField
+          zones={zones}
           value={timezone}
           onChange={setTimezone}
+          hint="Decides when your family's day starts and ends. Saved dates don't change."
         />
-
-        <TextField
-          label="Somewhere else?"
-          placeholder="Search, for example London or Toronto"
-          value={search}
-          onChangeText={setSearch}
-          autoCorrect={false}
-        />
-
-        {matches.length > 0 ? (
-          <ChoiceField
-            label="Matching time zones"
-            options={matches.map((z) => ({ value: z.name, label: z.name.replace(/_/g, ' ') }))}
-            value={timezone}
-            onChange={(picked) => {
-              setTimezone(picked);
-              setSearch('');
-            }}
-          />
-        ) : query ? (
-          <Text style={styles.muted}>No time zones match that.</Text>
-        ) : null}
 
         {error ? <ErrorMessage message={error} /> : null}
 
@@ -403,12 +354,14 @@ function PairDevice({
     <Card>
       <Text style={styles.cardTitle}>📱 Pair a Device</Text>
       <Text style={styles.body}>
-        Pair a student&apos;s own phone, tablet or computer. It will show only their view, with
-        no email or password on it.
+        Pair a student&apos;s own phone, tablet or computer. It will show only their view, with no
+        email or password on it.
       </Text>
 
       {!hasPin ? (
-        <Text style={styles.warning}>First, set a family PIN above. It&apos;s what unpairs a device.</Text>
+        <Text style={styles.warning}>
+          First, set a family PIN above. It&apos;s what unpairs a device.
+        </Text>
       ) : students.length === 0 ? (
         <Text style={styles.warning}>Add a student on the Students screen first.</Text>
       ) : code ? (

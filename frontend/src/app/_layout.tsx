@@ -60,7 +60,12 @@ function Routes() {
 
       <Stack.Protected guard={!signedIn}>
         <Stack.Screen name="login" options={{ headerShown: false }} />
+        <Stack.Screen name="register" options={{ headerShown: false }} />
+        <Stack.Screen name="forgot-password" options={{ headerShown: false }} />
       </Stack.Protected>
+
+      {/* Email links work whoever is signed in on this device, if anyone. */}
+      <Stack.Screen name="complete-account" options={{ headerShown: false }} />
     </Stack>
   );
 }

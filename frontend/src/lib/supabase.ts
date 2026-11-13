@@ -33,3 +33,19 @@ if (Platform.OS !== 'web') {
     }
   });
 }
+
+/**
+ * A separate client for finishing an invite or password reset link. It keeps
+ * nothing in storage, so using a link never touches a login already saved on
+ * this device (a parent may open their student's invite while logged in).
+ */
+export function createLinkClient() {
+  return createClient(SUPABASE_URL, SUPABASE_KEY, {
+    auth: {
+      storageKey: 'tally-email-link',
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
+  });
+}
