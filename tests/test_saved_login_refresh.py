@@ -186,7 +186,7 @@ def test_reading_picks_up_both_tokens(state):
 # ----- The Supabase client -----
 
 
-@pytest.mark.parametrize("get", ["get_client", "get_admin_client"])
+@pytest.mark.parametrize("get", ["get_client", "get_admin_client", "get_token_client"])
 def test_clients_never_refresh_in_the_background(get):
     # A background refresh would use up the token saved in the browser.
     client = getattr(SupabaseService, get)()
@@ -262,3 +262,22 @@ def test_login_error_log_leaves_out_the_detail(caplog):
 
     assert "RuntimeError" in caplog.text
     assert "secret" not in caplog.text
+
+
+def test_token_checks_share_one_client():
+    # Only for get_user(token), which stores nothing on the client. Reusing it
+    # saves a new connection to Supabase on every API request.
+    assert SupabaseService.get_token_client() is SupabaseService.get_token_client()
+    assert SupabaseService.get_token_client() is not SupabaseService.get_client()
+
+
+def test_checking_a_token_uses_the_shared_client():
+    fake = mock.Mock()
+    fake.auth.get_user.return_value = "user"
+
+    with mock.patch(
+        "services.auth_provider.SupabaseService.get_token_client", return_value=fake
+    ):
+        assert AuthProvider.get_auth_user_for_token("token") == "user"
+
+    fake.auth.get_user.assert_called_once_with("token")

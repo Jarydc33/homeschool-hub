@@ -257,7 +257,7 @@ class AuthProvider:
 
         try:
 
-            return SupabaseService.get_client().auth.get_user(
+            return SupabaseService.get_token_client().auth.get_user(
                 access_token
             )
 
