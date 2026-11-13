@@ -203,3 +203,48 @@ export interface CalendarDay {
   date: string;
   items: CalendarItem[];
 }
+
+// A percent with its letter, such as 92.0 and "A".
+export interface Grade {
+  percent: number;
+  letter: string;
+}
+
+export interface GradedWork {
+  work: WorkItem;
+  score: number;
+  points_possible: number;
+  grade: Grade;
+}
+
+export interface GradingPeriod {
+  id: number;
+  name: string;
+  start_date: string;
+  end_date: string;
+}
+
+export interface PeriodGrade {
+  period_id: number;
+  grade: Grade;
+}
+
+export interface GradeReport {
+  // The period asked for, or null for all time.
+  period: GradingPeriod | null;
+  overall: Grade | null;
+  subjects: { subject: string; grade: Grade }[];
+  work: GradedWork[];
+  // Each subject across every period, and the overall, to compare terms.
+  comparison: { subject: string; periods: PeriodGrade[] }[];
+  overall_by_period: PeriodGrade[];
+}
+
+export interface GradingQueue {
+  // Checked off but not graded yet, oldest first.
+  finished: WorkItem[];
+  // Not checked off, from the last 30 days through the next 7.
+  unfinished: WorkItem[];
+  // Points to suggest per assignment id, from its latest grade.
+  suggested_totals: Record<string, number>;
+}
