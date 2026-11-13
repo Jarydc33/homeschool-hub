@@ -1,5 +1,5 @@
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import {
@@ -28,9 +28,11 @@ export default function StudentsScreen() {
   const [notice, setNotice] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Only one card is open at a time: adding, or editing / archiving one student.
+  // Only one card is open at a time: adding, or editing / archiving / the
+  // login of one student.
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [loginId, setLoginId] = useState<number | null>(null);
   const [archivingId, setArchivingId] = useState<number | null>(null);
   const [showArchived, setShowArchived] = useState(false);
   const [restoringId, setRestoringId] = useState<number | null>(null);
@@ -65,6 +67,7 @@ export default function StudentsScreen() {
     setAdding(false);
     setEditingId(null);
     setArchivingId(null);
+    setLoginId(null);
   }
 
   async function create(values: StudentValues) {
@@ -148,6 +151,16 @@ export default function StudentsScreen() {
                   onCancel={closeAll}
                 />
               </Card>
+            ) : loginId === student.id ? (
+              <LoginCard
+                key={student.id}
+                student={student}
+                onDone={(message) => {
+                  closeAll();
+                  setNotice(message);
+                }}
+                onCancel={closeAll}
+              />
             ) : archivingId === student.id ? (
               <ConfirmCard
                 key={student.id}
@@ -176,6 +189,16 @@ export default function StudentsScreen() {
                       closeAll();
                       setNotice(null);
                       setEditingId(student.id);
+                    }}
+                  />
+                  <Button
+                    title="Login"
+                    variant="secondary"
+                    style={styles.action}
+                    onPress={() => {
+                      closeAll();
+                      setNotice(null);
+                      setLoginId(student.id);
                     }}
                   />
                   <Button
@@ -336,6 +359,115 @@ function describe(student: Student): string {
   ];
 
   return parts.filter(Boolean).join('  ·  ');
+}
+
+/**
+ * A student's own login: invite them by email, or change the email they sign
+ * in with. Students can also use a paired device or Student Mode instead.
+ */
+function LoginCard({
+  student,
+  onDone,
+  onCancel,
+}: {
+  student: Student;
+  onDone: (message: string) => void;
+  onCancel: () => void;
+}) {
+  // undefined while loading; null when they have no login yet.
+  const [current, setCurrent] = useState<string | null | undefined>(undefined);
+  const [email, setEmail] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    api<{ email: string | null }>(`/students/${student.id}/login`)
+      .then((login) => {
+        setCurrent(login.email);
+        setEmail(login.email ?? '');
+      })
+      .catch((ex) => setError(errorMessage(ex)));
+  }, [student.id]);
+
+  const inviting = current === null;
+
+  async function submit() {
+    if (!email.trim()) {
+      setError('Please enter an email address.');
+      return;
+    }
+
+    setBusy(true);
+    setError(null);
+
+    try {
+      const result = await api<{ message: string }>(`/students/${student.id}/login`, {
+        method: inviting ? 'POST' : 'PUT',
+        body: { email: email.trim() },
+      });
+      onDone(result.message);
+    } catch (ex) {
+      setError(errorMessage(ex));
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card>
+      <Text style={styles.cardTitle}>🔐 {student.name}&apos;s Login</Text>
+
+      {current === undefined && !error ? <Loading /> : null}
+
+      {current !== undefined ? (
+        <View style={styles.form}>
+          {inviting ? (
+            <Text style={styles.body}>
+              {student.name} doesn&apos;t have a login yet. We&apos;ll email them an invitation to
+              set a password. A paired device or Student Mode works without one.
+            </Text>
+          ) : (
+            <>
+              <Text style={styles.body}>Signs in as {current}.</Text>
+              <Text style={styles.muted}>
+                To change it: if they&apos;ve already set a password, it stays the same. If they
+                haven&apos;t, we&apos;ll send a new invitation to the new email, and the old one
+                stops working.
+              </Text>
+            </>
+          )}
+
+          <TextField
+            label={inviting ? 'Student Email' : 'New Email'}
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            inputMode="email"
+            autoCapitalize="none"
+            autoCorrect={false}
+            autoComplete="off"
+            maxLength={254}
+            returnKeyType="done"
+            onSubmitEditing={submit}
+          />
+        </View>
+      ) : null}
+
+      {error ? <ErrorMessage message={error} /> : null}
+
+      <View style={styles.actions}>
+        <Button title="Cancel" variant="secondary" style={styles.action} onPress={onCancel} />
+        {current !== undefined ? (
+          <Button
+            title={inviting ? 'Send Invitation' : 'Save Email'}
+            style={styles.action}
+            busy={busy}
+            disabled={!inviting && email.trim().toLowerCase() === current?.toLowerCase()}
+            onPress={submit}
+          />
+        ) : null}
+      </View>
+    </Card>
+  );
 }
 
 const styles = StyleSheet.create({
