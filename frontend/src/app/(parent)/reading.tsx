@@ -2,6 +2,14 @@ import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import {
+  EarnedBadges,
+  earnedKeys,
+  NewBadges,
+  newlyEarned,
+  Stat,
+  Stats,
+} from '@/components/achievements';
 import { ChoiceField, DateField } from '@/components/form';
 import {
   Button,
@@ -14,7 +22,7 @@ import {
   SectionTitle,
   TextField,
 } from '@/components/ui';
-import { Colors, Radius, Spacing } from '@/constants/theme';
+import { Colors, Spacing } from '@/constants/theme';
 import { api, errorMessage } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { formatDate } from '@/lib/dates';
@@ -93,18 +101,13 @@ function Shelf({ studentId }: { studentId: number }) {
   const load = useCallback(async () => {
     try {
       const data = await api<Bookshelf>(`/students/${studentId}/books`);
-      const now = data.summary.badges.filter((b) => b.earned);
+      const fresh = newlyEarned(earned.current, data.summary.badges);
 
-      if (earned.current) {
-        const before = earned.current;
-        const fresh = now.filter((b) => !before.has(b.key));
-
-        if (fresh.length > 0) {
-          setNewBadges(fresh);
-        }
+      if (fresh.length > 0) {
+        setNewBadges(fresh);
       }
 
-      earned.current = new Set(now.map((b) => b.key));
+      earned.current = earnedKeys(data.summary.badges);
       setShelf(data);
       setError(null);
     } catch (ex) {
@@ -181,20 +184,12 @@ function Shelf({ studentId }: { studentId: number }) {
   const finished = shelf.books
     .filter((b) => b.finished_on)
     .sort((a, b) => (a.finished_on! < b.finished_on! ? 1 : -1));
-  const earnedBadges = summary.badges.filter((b) => b.earned);
 
   return (
     <>
       {error ? <ErrorMessage message={error} onRetry={load} /> : null}
 
-      {newBadges.map((badge) => (
-        <Card key={badge.key} style={styles.badgeCard}>
-          <Text style={styles.badgeNew} accessibilityLiveRegion="polite">
-            {badge.icon} New badge: {badge.name}!
-          </Text>
-          <Text style={styles.muted}>{badge.description}</Text>
-        </Card>
-      ))}
+      <NewBadges badges={newBadges} />
 
       {notice ? (
         <Text style={styles.notice} accessibilityLiveRegion="polite">
@@ -202,32 +197,19 @@ function Shelf({ studentId }: { studentId: number }) {
         </Text>
       ) : null}
 
-      <View style={styles.stats}>
+      <Stats>
         <Stat label="🔥 Reading Streak" value={summary.streak === 1 ? '1 day' : `${summary.streak} days`} />
         <Stat label="🏅 Best Streak" value={String(summary.best_streak)} />
         <Stat label="📄 Pages This Week" value={String(summary.pages_this_week)} />
         <Stat label="📚 Books Finished" value={String(summary.books_finished)} />
-      </View>
+      </Stats>
 
       <Text style={styles.muted}>
         Read something every day to keep the streak alive, weekends included. Forgot a day? Pick
         that date below and log it.
       </Text>
 
-      {earnedBadges.length > 0 ? (
-        <View
-          style={styles.badges}
-          accessible
-          accessibilityLabel={`Badges: ${earnedBadges.map((b) => b.name).join(', ')}`}>
-          {earnedBadges.map((badge) => (
-            <View key={badge.key} style={styles.badge}>
-              <Text style={styles.badgeText}>
-                {badge.icon} {badge.name}
-              </Text>
-            </View>
-          ))}
-        </View>
-      ) : null}
+      <EarnedBadges badges={summary.badges} />
 
       <SectionTitle>Books in Progress</SectionTitle>
 
@@ -341,15 +323,6 @@ function Shelf({ studentId }: { studentId: number }) {
 
 function pagesOn(book: Book, day: string): number {
   return book.logs.find((log) => log.date === day)?.pages ?? 0;
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.stat} accessible accessibilityLabel={`${label}: ${value}`}>
-      <Text style={styles.statLabel}>{label}</Text>
-      <Text style={styles.statValue}>{value}</Text>
-    </View>
-  );
 }
 
 function BookCard({
@@ -560,55 +533,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   cardTitle: {
-    color: Colors.navy,
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  stats: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.sm,
-  },
-  stat: {
-    flexGrow: 1,
-    flexBasis: 140,
-    padding: Spacing.md,
-    borderRadius: Radius,
-    backgroundColor: Colors.surface,
-    gap: Spacing.xs,
-  },
-  statLabel: {
-    color: Colors.textMuted,
-    fontSize: 13,
-  },
-  statValue: {
-    color: Colors.navy,
-    fontSize: 24,
-    fontWeight: '700',
-  },
-  badges: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.sm,
-  },
-  badge: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderRadius: 14,
-    backgroundColor: '#FFF6EE',
-    borderWidth: 1,
-    borderColor: '#F3C6A8',
-  },
-  badgeText: {
-    color: Colors.navy,
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  badgeCard: {
-    backgroundColor: '#FFF6EE',
-    borderColor: '#F3C6A8',
-  },
-  badgeNew: {
     color: Colors.navy,
     fontSize: 18,
     fontWeight: '700',

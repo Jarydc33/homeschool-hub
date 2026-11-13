@@ -276,3 +276,26 @@ export interface Bookshelf {
   books: Book[];
   summary: ReadingSummary;
 }
+
+export interface PESummary {
+  minutes_this_week: number;
+  active_days_this_week: number;
+  total_minutes: number;
+  badges: Badge[];
+}
+
+export interface Activity {
+  id: number;
+  student_id: number;
+  date: string;
+  activity: string;
+  minutes: number;
+}
+
+export interface PELog {
+  // Newest first.
+  logs: Activity[];
+  summary: PESummary;
+  // Activity names already used, most used first, to suggest.
+  known_activities: string[];
+}
