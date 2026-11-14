@@ -439,5 +439,5 @@ def test_parents_get_a_feedback_link_and_students_dont(world, page):
     def sidebar_text(at):
         return " ".join(item.value for item in at.sidebar.markdown)
 
-    assert "mailto:tallyhomeschoolapp@gmail.com" in sidebar_text(parent_view)
+    assert "mailto:hello@tallyhomeschool.com" in sidebar_text(parent_view)
     assert "mailto:" not in sidebar_text(student_view)

@@ -113,7 +113,7 @@ export function allowed(nav: NavGroup[], pathname: string): boolean {
 
 export const MORE_ITEM: NavItem = { href: '/more', label: 'More', icon: '☰' };
 
-export const FEEDBACK_EMAIL = 'tallyhomeschoolapp@gmail.com';
+export const FEEDBACK_EMAIL = 'hello@tallyhomeschool.com';
 
 export const FEEDBACK_LINK = `mailto:${FEEDBACK_EMAIL}?subject=tally%20feedback`;
 

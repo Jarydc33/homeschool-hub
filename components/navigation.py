@@ -15,7 +15,7 @@ SIDEBAR_LOGO = "assets/tally-mark.png"
 
 # Where parents' comments and suggestions go. The link opens their email
 # app; the address is shown too, for computers without one set up.
-FEEDBACK_EMAIL = "tallyhomeschoolapp@gmail.com"
+FEEDBACK_EMAIL = "hello@tallyhomeschool.com"
 FEEDBACK_LINK = f"mailto:{FEEDBACK_EMAIL}?subject=tally%20feedback"
 
 # Each group is (heading, [(page, label, icon)]). A heading of None means the
