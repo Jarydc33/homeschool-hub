@@ -93,6 +93,8 @@ Config is read by `config.get_setting()`: environment variables or `.env` first,
 | `SUPABASE_URL` | Supabase project URL |
 | `SUPABASE_KEY` | Anon key, used only for auth calls |
 | `SERVICE_KEY` | Service-role key, used only for admin auth (student invites and login email changes). Server-side only |
+| `RESEND_API_KEY` | API only (optional): sends feedback emails through Resend. Without it, feedback is still saved but not emailed |
+| `FEEDBACK_EMAIL` | API only (optional): where feedback emails go, `hello@tallyhomeschool.com` by default |
 
 Never print, log, or commit any of these values.
 
@@ -139,6 +141,7 @@ tests/                  pytest suite for the services
 - Student Mode: a parent's login switched to one student's view. `device_sessions` ties it to the Supabase `session_id` claim in the login token, so the server decides the mode and clearing the browser can't end it. While a row is active (`revoked_at` empty), `CurrentUser.is_student()` is true, `is_parent()` is false, and `get_student_id()` returns that student, so pages and services need no special cases. Leaving needs the family PIN (`families.parent_pin_hash`, bcrypt, exactly 4 digits); 5 wrong tries lock it for 5 minutes. Logging out ends it without the PIN, since getting back in needs the parent's password. Students in Student Mode have no `users` row.
 - Paired devices: a student's own device, with no login. A parent makes a one-time 6-digit code (`pairing_codes`, hashed, 10 minutes); redeeming it saves a random device key in the browser (`homeschoolhub_device`) and its SHA-256 in `device_sessions.token_hash` (mode "paired", no `auth_session_id`). With no Supabase login, `AuthService` turns a valid key into a `PairedUser`, which stands in for a `users` row so the role helpers work as usual. Unpairing needs the family PIN; parents end devices from Settings, and archiving the student ends them too. Wrong codes are limited per browser session and app-wide, in memory, because every request reaches the app from the same server.
 - Announcements (`banner_messages`) belong to a family, or are system-wide when `family_id` is NULL. Parents manage their family's; Admins (`users.role = 'Admin'`, no family, a separate login) manage system-wide ones and only see the Announcements page.
+- Feedback: parents send it from the app's Feedback screen (`POST /feedback`). It's saved in `feedback` (family, user, message) first, then emailed to `FEEDBACK_EMAIL` through Resend's API (`services/email_service.py`) after the response, with Reply-To set to the parent. A failed email is only logged, so read the table if one seems missing. The Streamlit sidebar still uses a `mailto:` link, which needs an email app on the device.
 
 ## Rules (follow these on every change)
 

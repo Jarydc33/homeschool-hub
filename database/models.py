@@ -898,6 +898,38 @@ class PairingCode(Base):
     )
 
 
+class Feedback(Base):
+    """A message a parent sent from the app's feedback form."""
+
+    __tablename__ = "feedback"
+
+    id = Column(Integer, primary_key=True)
+
+    family_id = Column(
+        Integer,
+        ForeignKey("families.id"),
+        nullable=False,
+        index=True
+    )
+
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False
+    )
+
+    message = Column(
+        Text,
+        nullable=False
+    )
+
+    created_at = Column(
+        DateTime,
+        nullable=False,
+        default=datetime.utcnow
+    )
+
+
 class CurrentSession:
 
     user_id = None

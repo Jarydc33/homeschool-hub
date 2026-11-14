@@ -20,6 +20,7 @@ from api.routers import (
     dashboard,
     events,
     family,
+    feedback,
     grades,
     me,
     occurrences,
@@ -76,6 +77,7 @@ for module in (
     pe,
     grades,
     family,
+    feedback,
     announcements,
 ):
     app.include_router(module.router)

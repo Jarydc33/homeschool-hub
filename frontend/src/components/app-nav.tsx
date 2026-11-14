@@ -6,15 +6,13 @@
 import { Image } from 'expo-image';
 import { Link, router, usePathname } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import {
-  FEEDBACK_EMAIL,
-  FEEDBACK_LINK,
   isActive,
   MORE_ITEM,
   navFor,
@@ -163,15 +161,19 @@ export function AccountLinks({ dark = false }: { dark?: boolean }) {
       ? { label: '🔓 Unpair This Device', onPress: () => router.push('/unpair-device') }
       : { label: 'Log Out', onPress: signOut };
 
+  // Only parents send feedback; the API refuses students.
+  const canSendFeedback = me?.role === 'parent' && !me.student_mode && !me.paired_device;
+
   return (
     <View style={[styles.account, tone.account]}>
-      <Pressable
-        accessibilityRole="link"
-        onPress={() => Linking.openURL(FEEDBACK_LINK)}
-        style={({ pressed, hovered }) => [styles.accountLink, (pressed || hovered) && tone.linkHover]}>
-        <Text style={[styles.accountText, tone.strong]}>Send feedback</Text>
-        <Text style={[styles.small, tone.muted]}>{FEEDBACK_EMAIL}</Text>
-      </Pressable>
+      {canSendFeedback ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.push('/feedback')}
+          style={({ pressed, hovered }) => [styles.accountLink, (pressed || hovered) && tone.linkHover]}>
+          <Text style={[styles.accountText, tone.strong]}>💬 Send feedback</Text>
+        </Pressable>
+      ) : null}
 
       <Pressable
         accessibilityRole="button"

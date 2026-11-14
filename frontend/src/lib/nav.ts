@@ -115,8 +115,6 @@ export const MORE_ITEM: NavItem = { href: '/more', label: 'More', icon: '☰' };
 
 export const FEEDBACK_EMAIL = 'hello@tallyhomeschool.com';
 
-export const FEEDBACK_LINK = `mailto:${FEEDBACK_EMAIL}?subject=tally%20feedback`;
-
 export function isActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }

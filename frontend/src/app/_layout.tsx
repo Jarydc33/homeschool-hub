@@ -49,6 +49,10 @@ function Routes() {
         />
         <Stack.Screen name="event/edit" options={{ title: 'Event', presentation: 'modal' }} />
         <Stack.Screen
+          name="feedback"
+          options={{ title: 'Send Feedback', presentation: 'modal' }}
+        />
+        <Stack.Screen
           name="exit-student-mode"
           options={{ title: 'Exit Student Mode', presentation: 'modal' }}
         />
