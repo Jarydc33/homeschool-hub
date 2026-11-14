@@ -1,4 +1,4 @@
-import { useFocusEffect } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -130,6 +130,15 @@ export default function CalendarScreen() {
 
   // A student only sees their own work and the family's events.
   const showStudent = studentId === WHOLE_FAMILY && me?.role === 'parent';
+  const canAdd = me?.role === 'parent' && !me.student_mode;
+
+  // A new assignment starting on this day, for the student shown, if just one.
+  function addWork(day: string) {
+    router.push({
+      pathname: '/assignment/edit',
+      params: studentId === WHOLE_FAMILY ? { date: day } : { date: day, student: String(studentId) },
+    });
+  }
 
   const studentChoices: Choice<number>[] = [
     { value: WHOLE_FAMILY, label: 'Whole family' },
@@ -205,6 +214,7 @@ export default function CalendarScreen() {
               today={today}
               items={items[day] ?? []}
               showStudent={showStudent}
+              onAdd={canAdd ? () => addWork(day) : undefined}
             />
           ))
         : null}
@@ -225,6 +235,7 @@ export default function CalendarScreen() {
               today={today}
               items={items[picked] ?? []}
               showStudent={showStudent}
+              onAdd={canAdd ? () => addWork(picked) : undefined}
             />
           ) : null}
         </>
@@ -259,20 +270,35 @@ function DayCard({
   today,
   items,
   showStudent,
+  onAdd,
 }: {
   day: string;
   today: string | null;
   items: CalendarItem[];
   showStudent: boolean;
+  // Parents only: opens a new assignment starting on this day.
+  onAdd?: () => void;
 }) {
   const isToday = day === today;
 
   return (
     <Card style={isToday ? styles.todayCard : undefined}>
-      <Text style={[styles.dayTitle, isToday && styles.todayText]} accessibilityRole="header">
-        {formatDate(day)}
-        {isToday ? ' (Today)' : ''}
-      </Text>
+      <View style={styles.dayHeader}>
+        <Text
+          style={[styles.dayTitle, styles.flex, isToday && styles.todayText]}
+          accessibilityRole="header">
+          {formatDate(day)}
+          {isToday ? ' (Today)' : ''}
+        </Text>
+        {onAdd ? (
+          <Button
+            title="+ Add work"
+            variant="secondary"
+            style={styles.addButton}
+            onPress={onAdd}
+          />
+        ) : null}
+      </View>
 
       {items.length === 0 ? <Text style={styles.muted}>Nothing scheduled.</Text> : null}
 
@@ -415,6 +441,16 @@ const styles = StyleSheet.create({
   todayCard: {
     borderColor: Colors.orange,
     borderWidth: 2,
+  },
+  dayHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  addButton: {
+    minHeight: 36,
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.md,
   },
   dayTitle: {
     color: Colors.navy,

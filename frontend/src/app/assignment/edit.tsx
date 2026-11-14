@@ -44,12 +44,19 @@ const TYPE_HINTS: Record<AssignmentType, string> = {
 /**
  * Creating an assignment, or editing one when opened with ?id=. Saving
  * creates or updates every date it happens on; students who stay keep their
- * check-offs, notes and grades.
+ * check-offs, notes and grades. The Calendar opens a new one with ?date= (and
+ * ?student= when it shows one student's schedule) to start on that day.
  */
 export default function AssignmentEditScreen() {
-  const { id } = useLocalSearchParams<{ id?: string }>();
+  const { id, date, student } = useLocalSearchParams<{
+    id?: string;
+    date?: string;
+    student?: string;
+  }>();
   const { me } = useAuth();
   const today = me?.today ?? null;
+  const startDate = date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : null;
+  const startStudent = student ? Number(student) : null;
 
   const [subjects, setSubjects] = useState<Choice<number>[] | null>(null);
   const [students, setStudents] = useState<Student[] | null>(null);
@@ -107,6 +114,8 @@ export default function AssignmentEditScreen() {
           subjects={subjects}
           students={students}
           existing={existing}
+          startDate={startDate}
+          startStudent={startStudent}
         />
       ) : null}
     </Screen>
@@ -118,15 +127,21 @@ function AssignmentForm({
   subjects,
   students,
   existing,
+  startDate,
+  startStudent,
 }: {
   today: string;
   subjects: Choice<number>[];
   students: Student[];
   existing: Assignment | null;
+  // Where a new assignment starts: the day and student it was opened for.
+  startDate: string | null;
+  startStudent: number | null;
 }) {
   const editing = existing !== null;
   const wasCurriculum = existing?.assignment_type === 'Curriculum';
-  const defaultEnd = `${today.slice(0, 4)}-12-31`;
+  const firstDate = startDate ?? today;
+  const defaultEnd = `${firstDate.slice(0, 4)}-12-31`;
 
   const [type, setType] = useState<AssignmentType>(existing?.assignment_type ?? 'One Time');
   const [title, setTitle] = useState(existing?.title ?? '');
@@ -138,10 +153,12 @@ function AssignmentForm({
       ? existing.students.map((s) => s.id)
       : students.length === 1
         ? [students[0].id]
-        : [],
+        : startStudent !== null && students.some((s) => s.id === startStudent)
+          ? [startStudent]
+          : [],
   );
   const [description, setDescription] = useState(existing?.description ?? '');
-  const [dueDate, setDueDate] = useState(existing?.due_date ?? today);
+  const [dueDate, setDueDate] = useState(existing?.due_date ?? firstDate);
   const [endDate, setEndDate] = useState(existing?.end_date ?? defaultEnd);
   const [frequency, setFrequency] = useState(
     existing?.assignment_type === 'Recurring' && existing.recurrence_pattern
