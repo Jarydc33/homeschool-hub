@@ -1,4 +1,4 @@
-import { Redirect, Slot, usePathname } from 'expo-router';
+import { Redirect, Slot, usePathname, useSegments } from 'expo-router';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { Loading } from '@/components/ui';
@@ -17,6 +17,7 @@ export default function MainLayout() {
   const { me, error } = useAuth();
   const { width } = useWindowDimensions();
   const pathname = usePathname();
+  const segments = useSegments();
 
   if (error) {
     return <Redirect href="/" />;
@@ -30,7 +31,10 @@ export default function MainLayout() {
     return <Redirect href="/" />;
   }
 
-  if (!allowed(navFor(me.role), pathname)) {
+  // Only check while one of these screens is showing. With a form open on
+  // top (such as /feedback), the address is the form's, and redirecting this
+  // hidden layout would change the screen that closing the form returns to.
+  if (segments[0] === '(main)' && !allowed(navFor(me.role), pathname)) {
     return <Redirect href={homeFor(me.role) as never} />;
   }
 
