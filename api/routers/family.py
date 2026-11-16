@@ -8,6 +8,7 @@ from pydantic import BaseModel, StringConstraints
 from api.auth import require_parent, signed_in
 from api.errors import invalid, not_found
 from api.schemas import Message, Name, StudentOut, student_out
+from services.account_service import AccountService
 from services.family_service import FamilyService
 from services.pairing_service import GUESS_WINDOW, PairedUser, PairingService
 from services.student_mode_service import StudentModeService
@@ -154,6 +155,28 @@ def exit_student_mode(body: PinOnly, user=Depends(signed_in)):
         raise invalid(message)
 
     return Message(message=message)
+
+
+class DeleteAccountIn(BaseModel):
+    # The word DELETE, typed by the parent, so a stray tap can't do it.
+    confirm: str
+
+
+@router.post("/account/delete", response_model=Message)
+def delete_account(body: DeleteAccountIn, user=Depends(require_parent)):
+    """
+    Permanently deletes the whole family: its students, schoolwork, grades,
+    logs, devices and every login. It can't be undone. The app signs out
+    afterwards.
+    """
+
+    if body.confirm.strip().upper() != "DELETE":
+        raise invalid("Type DELETE to confirm.")
+
+    if not AccountService.delete_family():
+        raise invalid("We couldn't delete your account. Please try again in a moment.")
+
+    return Message(message="Your account and your family's information were deleted.")
 
 
 @router.post("/logout", response_model=Message)

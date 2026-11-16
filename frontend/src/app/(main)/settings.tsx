@@ -144,6 +144,9 @@ export default function SettingsScreen() {
           {devices.map((device) => (
             <DeviceCard key={device.id} device={device} zone={zone} onEnd={endDevice} />
           ))}
+
+          <SectionTitle>Delete Account</SectionTitle>
+          <DeleteAccount familyName={settings.family_name} />
         </>
       ) : null}
     </Screen>
@@ -446,9 +449,115 @@ function DeviceCard({
   );
 }
 
+/**
+ * Deletes the whole family for good, after the parent types DELETE. The
+ * app signs out afterwards and the login screen says it's done.
+ */
+function DeleteAccount({ familyName }: { familyName: string }) {
+  const { deleteAccount } = useAuth();
+  const [open, setOpen] = useState(false);
+  const [typed, setTyped] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const confirmed = typed.trim().toUpperCase() === 'DELETE';
+
+  async function confirm() {
+    setBusy(true);
+    setError(null);
+
+    try {
+      await deleteAccount(typed);
+    } catch (ex) {
+      setError(errorMessage(ex));
+      setBusy(false);
+    }
+  }
+
+  if (!open) {
+    return (
+      <>
+        <Text style={styles.muted}>
+          Permanently delete your family&apos;s account and everything in it.
+        </Text>
+        <Button
+          title="Delete Account…"
+          variant="secondary"
+          style={styles.deleteOpen}
+          onPress={() => setOpen(true)}
+        />
+      </>
+    );
+  }
+
+  return (
+    <Card style={styles.danger}>
+      <Text style={styles.dangerTitle}>Delete {familyName}&apos;s account?</Text>
+      <Text style={styles.body}>
+        This permanently deletes your family and everything in it: every student, assignment,
+        grade, hours, reading and P.E. log, event and paired device, and every login, including
+        your students&apos; and your own. It can&apos;t be undone.
+      </Text>
+      <Text style={styles.muted}>
+        Want a copy of your records first? Email hello@tallyhomeschool.com before deleting.
+      </Text>
+
+      <TextField
+        label="Type DELETE to confirm"
+        value={typed}
+        onChangeText={setTyped}
+        autoCapitalize="characters"
+        autoCorrect={false}
+        maxLength={20}
+      />
+
+      {error ? <ErrorMessage message={error} /> : null}
+
+      <View style={styles.actions}>
+        <Button
+          title="Cancel"
+          variant="secondary"
+          style={styles.flex}
+          onPress={() => {
+            setOpen(false);
+            setTyped('');
+            setError(null);
+          }}
+        />
+        <Button
+          title="Delete Forever"
+          style={[styles.flex, styles.deleteButton]}
+          disabled={!confirmed}
+          busy={busy}
+          onPress={confirm}
+        />
+      </View>
+    </Card>
+  );
+}
+
 const styles = StyleSheet.create({
   flex: {
     flex: 1,
+  },
+  deleteOpen: {
+    alignSelf: 'flex-start',
+  },
+  danger: {
+    backgroundColor: '#FDECEA',
+    borderColor: '#F2B8B5',
+  },
+  dangerTitle: {
+    color: Colors.danger,
+    fontSize: 18,
+    fontFamily: Fonts.bold,
+  },
+  deleteButton: {
+    backgroundColor: Colors.danger,
+  },
+  actions: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
   },
   body: {
     color: Colors.text,

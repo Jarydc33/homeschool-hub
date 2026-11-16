@@ -24,6 +24,9 @@ interface AuthState {
   notice: string | null;
   signIn: (email: string, password: string) => Promise<string | null>;
   signOut: () => Promise<void>;
+  // Deletes the whole family for good, then signs out here. confirm is the
+  // word DELETE as the parent typed it; throws ApiError when refused.
+  deleteAccount: (confirm: string) => Promise<void>;
   // Pairs this device with a parent's code; an error message, or null.
   pair: (code: string) => Promise<string | null>;
   // Unpairs it with the family PIN; throws ApiError when refused.
@@ -146,6 +149,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const deleteAccount = useCallback(async (confirm: string) => {
+    await api('/account/delete', { method: 'POST', body: { confirm } });
+    setNotice('Your account and your family’s information were deleted.');
+    // The Supabase account is gone, so only clear this device's login.
+    await supabase.auth.signOut({ scope: 'local' }).catch(() => undefined);
+    setMe(null);
+  }, []);
+
   const unpair = useCallback(async (pin: string) => {
     await api('/pairing/unpair', { method: 'POST', body: { pin } });
     clearDeviceToken();
@@ -165,6 +176,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         notice,
         signIn,
         signOut,
+        deleteAccount,
         pair,
         unpair,
         reloadMe,

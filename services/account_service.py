@@ -7,7 +7,29 @@ the Streamlit app share them.
 import logging
 import re
 
-from database.models import DEFAULT_TIMEZONE
+from sqlalchemy import or_
+
+from database.db import get_session
+from database.models import (
+    DEFAULT_TIMEZONE,
+    ActivityLog,
+    Assignment,
+    AssignmentOccurrence,
+    BannerMessage,
+    Book,
+    DeviceSession,
+    Event,
+    EventStudent,
+    Family,
+    Feedback,
+    GradingPeriod,
+    PairingCode,
+    ReadingLog,
+    Student,
+    StudentAssignment,
+    Subject,
+    User,
+)
 from services.auth_provider import AuthProvider
 from services.current_user import CurrentUser
 from services.family_service import FamilyService
@@ -42,6 +64,109 @@ INVITE_FAILED_MESSAGE = (
 
 
 class AccountService:
+
+    @staticmethod
+    def delete_family():
+        """
+        Deletes the current parent's whole family: every row that belongs to
+        it, in one commit, then each of its logins' Supabase accounts. A
+        deliberate exception to "archive, don't delete", since the privacy
+        policy promises deletion. Returns True, or False if the current user
+        isn't a parent (signed in as themselves) or nothing was found.
+
+        If Supabase refuses an account, the family's data is already gone;
+        the account is logged for removing by hand. It can't open anything,
+        since its users row is gone.
+        """
+
+        if not CurrentUser.is_parent():
+            return False
+
+        family_id = CurrentUser.get_family_id()
+
+        if family_id is None:
+            return False
+
+        with get_session() as db:
+
+            if db.get(Family, family_id) is None:
+                return False
+
+            auth_ids = [
+                auth_id
+                for (auth_id,) in db.query(User.auth_user_id).filter(
+                    User.family_id == family_id
+                )
+                if auth_id
+            ]
+
+            def ids(model):
+                return db.query(model.id).filter(
+                    model.family_id == family_id
+                ).scalar_subquery()
+
+            # Children first, so no row is left pointing at a deleted one.
+            deletes = [
+                db.query(ReadingLog).filter(
+                    ReadingLog.book_id.in_(ids(Book))
+                ),
+                db.query(EventStudent).filter(
+                    EventStudent.event_id.in_(ids(Event))
+                ),
+                db.query(AssignmentOccurrence).filter(
+                    or_(
+                        AssignmentOccurrence.assignment_id.in_(ids(Assignment)),
+                        AssignmentOccurrence.student_id.in_(ids(Student)),
+                    )
+                ),
+                db.query(StudentAssignment).filter(
+                    or_(
+                        StudentAssignment.assignment_id.in_(ids(Assignment)),
+                        StudentAssignment.student_id.in_(ids(Student)),
+                    )
+                ),
+            ] + [
+                db.query(model).filter(model.family_id == family_id)
+                for model in (
+                    PairingCode,
+                    DeviceSession,
+                    Feedback,
+                    ActivityLog,
+                    Book,
+                    Event,
+                    GradingPeriod,
+                    BannerMessage,
+                    Assignment,
+                    User,
+                    Subject,
+                    Student,
+                )
+            ] + [
+                db.query(Family).filter(Family.id == family_id),
+            ]
+
+            for query in deletes:
+                query.delete(synchronize_session=False)
+
+            db.commit()
+
+        for auth_id in auth_ids:
+
+            try:
+                AuthProvider.delete_auth_user(auth_id)
+
+            except Exception as ex:
+
+                logger.error(
+                    "Deleting a family's login failed, leaving auth user %s "
+                    "to remove by hand in Supabase: %s",
+                    auth_id,
+                    type(ex).__name__
+                )
+
+        logger.info("Deleted family %s and %s logins", family_id, len(auth_ids))
+
+        return True
 
     @staticmethod
     def register_parent(
