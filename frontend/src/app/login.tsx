@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 
 import { Button, ErrorMessage, Screen } from '@/components/ui';
-import { Colors, Radius, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
 import { useAuth } from '@/lib/auth';
 
 /**
@@ -202,6 +202,7 @@ const styles = StyleSheet.create({
   tagline: {
     color: Colors.textMuted,
     fontSize: 16,
+    fontFamily: Fonts.regular,
   },
   form: {
     gap: Spacing.sm,
@@ -209,7 +210,7 @@ const styles = StyleSheet.create({
   label: {
     color: Colors.navy,
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: Fonts.semibold,
     marginTop: Spacing.sm,
   },
   input: {
@@ -219,6 +220,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius,
     paddingHorizontal: Spacing.md,
     fontSize: 16,
+    fontFamily: Fonts.regular,
     color: Colors.text,
     backgroundColor: Colors.background,
   },
@@ -233,7 +235,7 @@ const styles = StyleSheet.create({
   link: {
     color: Colors.orangeText,
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: Fonts.semibold,
     paddingVertical: Spacing.xs,
   },
   switch: {
@@ -244,23 +246,26 @@ const styles = StyleSheet.create({
   switchText: {
     color: Colors.orangeText,
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: Fonts.semibold,
   },
   switchHint: {
     color: Colors.textMuted,
     fontSize: 13,
+    fontFamily: Fonts.regular,
   },
   heading: {
     color: Colors.navy,
     fontSize: 22,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
   },
   body: {
     color: Colors.text,
     fontSize: 15,
+    fontFamily: Fonts.regular,
   },
   codeInput: {
     fontSize: 24,
+    fontFamily: Fonts.regular,
     letterSpacing: 4,
     textAlign: 'center',
   },

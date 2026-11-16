@@ -6,7 +6,7 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 
-import { Colors, Radius, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
 import { formatDate, parseDate, toDateString } from '@/lib/dates';
 
 export interface Choice<T> {
@@ -334,11 +334,12 @@ const styles = StyleSheet.create({
   label: {
     color: Colors.navy,
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: Fonts.semibold,
   },
   hint: {
     color: Colors.textMuted,
     fontSize: 13,
+    fontFamily: Fonts.regular,
   },
   flex: {
     flex: 1,
@@ -369,10 +370,11 @@ const styles = StyleSheet.create({
   chipText: {
     color: Colors.navy,
     fontSize: 15,
+    fontFamily: Fonts.regular,
   },
   chipTextSelected: {
     color: '#FFFFFF',
-    fontWeight: '600',
+    fontFamily: Fonts.semibold,
   },
   dot: {
     width: 10,
@@ -397,9 +399,11 @@ const styles = StyleSheet.create({
   dateText: {
     color: Colors.text,
     fontSize: 16,
+    fontFamily: Fonts.regular,
   },
   dateIcon: {
     fontSize: 18,
+    fontFamily: Fonts.regular,
   },
   calendar: {
     borderWidth: 1,
@@ -423,11 +427,12 @@ const styles = StyleSheet.create({
   monthArrowText: {
     color: Colors.navy,
     fontSize: 26,
+    fontFamily: Fonts.regular,
   },
   monthTitle: {
     color: Colors.navy,
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
   },
   week: {
     flexDirection: 'row',
@@ -437,7 +442,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: Colors.textMuted,
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: Fonts.semibold,
     paddingVertical: Spacing.xs,
   },
   day: {
@@ -458,12 +463,13 @@ const styles = StyleSheet.create({
   dayText: {
     color: Colors.text,
     fontSize: 15,
+    fontFamily: Fonts.regular,
   },
   dayDisabled: {
     color: Colors.blueGrey,
   },
   dayTextSelected: {
     color: '#FFFFFF',
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
   },
 });

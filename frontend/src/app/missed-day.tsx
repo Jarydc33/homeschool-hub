@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Button, Card, ErrorMessage, Loading, Screen, SectionTitle } from '@/components/ui';
-import { Colors, Radius, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
 import { api, ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { addDays, formatDate } from '@/lib/dates';
@@ -193,15 +193,17 @@ const styles = StyleSheet.create({
   body: {
     color: Colors.text,
     fontSize: 16,
+    fontFamily: Fonts.regular,
   },
   title: {
     color: Colors.navy,
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: Fonts.semibold,
   },
   muted: {
     color: Colors.textMuted,
     fontSize: 14,
+    fontFamily: Fonts.regular,
   },
   chips: {
     flexDirection: 'row',
@@ -224,7 +226,7 @@ const styles = StyleSheet.create({
   chipText: {
     color: Colors.navy,
     fontSize: 15,
-    fontWeight: '500',
+    fontFamily: Fonts.medium,
   },
   chipTextSelected: {
     color: '#FFFFFF',

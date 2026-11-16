@@ -8,7 +8,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { EarnedBadges, Stat, Stats } from '@/components/achievements';
 import { Card, SectionTitle } from '@/components/ui';
-import { Colors, Radius, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
 import { api, errorMessage } from '@/lib/api';
 import { formatDate } from '@/lib/dates';
 import type { Badge, CheckOffResult, StudentDashboard, WorkItem } from '@/lib/types';
@@ -380,20 +380,23 @@ const styles = StyleSheet.create({
   date: {
     color: Colors.navy,
     fontSize: 22,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
   },
   message: {
     color: Colors.textMuted,
     fontSize: 16,
+    fontFamily: Fonts.regular,
     fontStyle: 'italic',
   },
   body: {
     color: Colors.text,
     fontSize: 15,
+    fontFamily: Fonts.regular,
   },
   muted: {
     color: Colors.textMuted,
     fontSize: 14,
+    fontFamily: Fonts.regular,
   },
   banner: {
     backgroundColor: Colors.surface,
@@ -401,7 +404,7 @@ const styles = StyleSheet.create({
   bannerTitle: {
     color: Colors.navy,
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
   },
   celebrate: {
     backgroundColor: '#FFF3EC',
@@ -410,7 +413,7 @@ const styles = StyleSheet.create({
   celebrateText: {
     color: Colors.orangeText,
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
   },
   progressTrack: {
     height: 12,
@@ -447,7 +450,7 @@ const styles = StyleSheet.create({
   check: {
     color: '#FFFFFF',
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
   },
   workText: {
     flex: 1,
@@ -456,7 +459,7 @@ const styles = StyleSheet.create({
   title: {
     color: Colors.navy,
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: Fonts.semibold,
   },
   titleDone: {
     color: Colors.textMuted,
@@ -465,6 +468,7 @@ const styles = StyleSheet.create({
   note: {
     color: Colors.text,
     fontSize: 14,
+    fontFamily: Fonts.regular,
     marginTop: Spacing.xs,
   },
   subjectDot: {

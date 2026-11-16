@@ -42,6 +42,30 @@ Left off for now on 2026-11-12 (no feedback asked for it). Only P.E. logs time t
 
 Build 1 to 3 first. Before starting, ask Jaryd what the sister said: her state's hours rules (including core subjects), and whether parents should trust the defaults or confirm minutes.
 
+### Public launch checklist (decided 2026-11-16)
+
+Jaryd chose to launch publicly without waiting for more beta feedback, since recruiting beta families has been slow; the Phase 3 gate only ordered features. Order agreed: design polish first, then the rest roughly as listed. Tick items here and on the roadmap doc as they're done.
+
+1. **Design polish** (in progress). Done 2026-11-16: Inter throughout the app (five weights loaded in `src/app/_layout.tsx`; set `fontFamily: Fonts.bold` etc. from `constants/theme.ts`, never `fontWeight`, which a custom font ignores on Android) and bolder page and section headers (`PageTitle`, `SectionTitle` in `components/ui.tsx`). Next: the Dashboard and Today screens.
+2. **Finish the migration** (from about 2026-11-20): remove the Streamlit addresses from Supabase's Redirect URLs, then migration step 6.
+3. **Pricing:** decide it (see "Where things stand"), then put it on the landing page. Payments (likely Stripe on the web) if it's paid.
+4. **Landing page promise:** the banner says "homeschool hours and records that keep themselves", but only P.E. logs time. Build hours tracking (see "Deferred: hours tracking") or change the line.
+5. **Privacy policy and terms:** linked from the landing page, sign-up and the app. Children's data is involved; the app stores and Meta ads need them too.
+6. **Account deletion in the app**, for parents (the app stores require it).
+7. **SEO basics** on the landing page (idea 1 under "Ideas to discuss").
+8. **State report export** (attendance, subjects, grades), starting with the sister's state. Could follow just after a free launch.
+9. **Worth considering:** Second Parent Invite, and letting parents change their own email.
+
+### Ideas to discuss: growth and older students (Jaryd, 2026-11-16)
+
+From a conversation with someone in digital marketing. Not started or decided yet; talk them through with Jaryd before building anything.
+
+1. **SEO and GEO** (being found by search engines and by AI assistants). Mostly the landing page (`landing/index.html`, plain HTML): a clear title and meta description, Open Graph tags for link previews, `SoftwareApplication` structured data, `robots.txt` and `sitemap.xml`, and Google Search Console. For AI assistants: plain, factual pages that answer the questions parents ask (what tally does, who it's for, price, state hours rules), and perhaps an `llms.txt`. Worth doing before any paid ads, since ads send people to the same page.
+2. **Meta ads** (Facebook and Instagram). Cheap to test and easy to aim at homeschool parents. Meta bills per impression by default; paying only per link click is offered for some campaign goals, so check that when setting one up. Needs first: pricing settled, a privacy policy, and probably the Meta Pixel on the landing page (mention it in the privacy policy). Best after the public launch.
+3. **Next steps for grades 11 and 12.** College prep, trade school and general "what's next" guidance in an older student's profile (Jaryd thinks this one could be big). Questions to settle: what it shows (checklists and timelines such as SAT/ACT, FAFSA, dual enrollment, applications, apprenticeships; links to trusted sources), whether it's the same for everyone or picks up the student's interests, and who sees it (student, parent, or both). `students.grade_level` is free text today, so it would need a consistent value to tell who's in 11th or 12th. A natural partner: a **high school transcript** export built from the grades the app already keeps, since homeschool families have to make their own for applications. Guidance with dates goes stale, so plan how it stays current.
+
+Pricing is already under "Where things stand".
+
 ### Where things stand
 
 - **Phase:** 0, 1 and 2 are complete. Phase 3 (launch-ready auth and private beta) is in progress, with the sister's family as the first beta family. Phase 5 (the migration) started early, on 2026-11-12; families moved to the new app on 2026-11-13.

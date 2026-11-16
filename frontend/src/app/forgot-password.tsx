@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { AuthShell } from '@/components/auth-shell';
 import { Button, Card, ErrorMessage, TextField } from '@/components/ui';
-import { Colors, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Spacing } from '@/constants/theme';
 import { supabase } from '@/lib/supabase';
 
 /**
@@ -107,9 +107,11 @@ const styles = StyleSheet.create({
   body: {
     color: Colors.text,
     fontSize: 16,
+    fontFamily: Fonts.regular,
   },
   muted: {
     color: Colors.textMuted,
     fontSize: 14,
+    fontFamily: Fonts.regular,
   },
 });

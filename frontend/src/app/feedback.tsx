@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Button, ErrorMessage, Screen, TextField } from '@/components/ui';
-import { Colors, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Spacing } from '@/constants/theme';
 import { api, errorMessage } from '@/lib/api';
 import { FEEDBACK_EMAIL } from '@/lib/nav';
 
@@ -83,15 +83,17 @@ const styles = StyleSheet.create({
   body: {
     color: Colors.text,
     fontSize: 16,
+    fontFamily: Fonts.regular,
   },
   muted: {
     color: Colors.textMuted,
     fontSize: 14,
+    fontFamily: Fonts.regular,
   },
   notice: {
     color: Colors.done,
     fontSize: 18,
-    fontWeight: '600',
+    fontFamily: Fonts.semibold,
   },
   multiline: {
     minHeight: 160,

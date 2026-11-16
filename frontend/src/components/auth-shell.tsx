@@ -6,7 +6,7 @@ import { Image } from 'expo-image';
 import { KeyboardAvoidingView, Platform, StyleSheet, Text, View } from 'react-native';
 
 import { Screen } from '@/components/ui';
-import { Colors, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Spacing } from '@/constants/theme';
 
 export function AuthShell({
   title,
@@ -66,10 +66,11 @@ const styles = StyleSheet.create({
   title: {
     color: Colors.navy,
     fontSize: 26,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
   },
   intro: {
     color: Colors.textMuted,
     fontSize: 16,
+    fontFamily: Fonts.regular,
   },
 });

@@ -15,7 +15,7 @@ import {
   SectionTitle,
   TextField,
 } from '@/components/ui';
-import { Colors, Radius, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
 import { api, errorMessage } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { formatMoment } from '@/lib/dates';
@@ -453,25 +453,27 @@ const styles = StyleSheet.create({
   body: {
     color: Colors.text,
     fontSize: 16,
+    fontFamily: Fonts.regular,
   },
   muted: {
     color: Colors.textMuted,
     fontSize: 14,
+    fontFamily: Fonts.regular,
   },
   warning: {
     color: Colors.orangeText,
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: Fonts.semibold,
   },
   notice: {
     color: Colors.done,
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: Fonts.semibold,
   },
   cardTitle: {
     color: Colors.navy,
     fontSize: 17,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
   },
   form: {
     gap: Spacing.md,
@@ -488,7 +490,7 @@ const styles = StyleSheet.create({
   code: {
     color: Colors.navy,
     fontSize: 40,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
     letterSpacing: 6,
     textAlign: 'center',
     paddingVertical: Spacing.sm,

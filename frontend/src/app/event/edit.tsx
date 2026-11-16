@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { ChoiceField, DateField, MultiChoiceField, SwitchField } from '@/components/form';
 import { Button, Card, ErrorMessage, Loading, Screen, TextField } from '@/components/ui';
-import { Colors, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Spacing } from '@/constants/theme';
 import { api, errorMessage } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { formatTime, parseTime } from '@/lib/dates';
@@ -267,12 +267,12 @@ const styles = StyleSheet.create({
   heading: {
     color: Colors.navy,
     fontSize: 24,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
   },
   subheading: {
     color: Colors.navy,
     fontSize: 17,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
   },
   multiline: {
     minHeight: 96,

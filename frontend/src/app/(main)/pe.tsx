@@ -22,7 +22,7 @@ import {
   SectionTitle,
   TextField,
 } from '@/components/ui';
-import { Colors, Radius, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
 import { api, errorMessage } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { formatDate } from '@/lib/dates';
@@ -435,30 +435,32 @@ const styles = StyleSheet.create({
   body: {
     color: Colors.text,
     fontSize: 16,
+    fontFamily: Fonts.regular,
   },
   strong: {
     color: Colors.navy,
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
   },
   muted: {
     color: Colors.textMuted,
     fontSize: 14,
+    fontFamily: Fonts.regular,
   },
   notice: {
     color: Colors.done,
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: Fonts.semibold,
   },
   cardTitle: {
     color: Colors.navy,
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
   },
   entryTitle: {
     color: Colors.navy,
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
   },
   periodRow: {
     flexDirection: 'row',
@@ -500,9 +502,10 @@ const styles = StyleSheet.create({
   chipText: {
     color: Colors.navy,
     fontSize: 14,
+    fontFamily: Fonts.regular,
   },
   chipTextSelected: {
     color: '#FFFFFF',
-    fontWeight: '600',
+    fontFamily: Fonts.semibold,
   },
 });

@@ -9,7 +9,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Colors, Radius, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import {
@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
   brandName: {
     color: '#FFFFFF',
     fontSize: 26,
-    fontWeight: '800',
+    fontFamily: Fonts.extrabold,
     letterSpacing: -0.5,
   },
   groups: {
@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
   },
   heading: {
     fontSize: 11,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
     letterSpacing: 1.2,
     paddingHorizontal: Spacing.md,
     marginBottom: Spacing.xs,
@@ -289,12 +289,13 @@ const styles = StyleSheet.create({
   },
   sideIcon: {
     fontSize: 17,
+    fontFamily: Fonts.regular,
     width: 22,
     textAlign: 'center',
   },
   sideLabel: {
     fontSize: 15,
-    fontWeight: '500',
+    fontFamily: Fonts.medium,
   },
   whose: {
     paddingHorizontal: Spacing.md,
@@ -304,10 +305,11 @@ const styles = StyleSheet.create({
   },
   whoseName: {
     fontSize: 15,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
   },
   small: {
     fontSize: 12,
+    fontFamily: Fonts.regular,
   },
   account: {
     gap: 2,
@@ -323,7 +325,7 @@ const styles = StyleSheet.create({
   },
   accountText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: Fonts.semibold,
   },
   bottomBar: {
     flexDirection: 'row',
@@ -341,6 +343,7 @@ const styles = StyleSheet.create({
   },
   tabIcon: {
     fontSize: 20,
+    fontFamily: Fonts.regular,
   },
   tabIconIdle: {
     opacity: 0.55,
@@ -348,7 +351,7 @@ const styles = StyleSheet.create({
   tabLabel: {
     color: Colors.textMuted,
     fontSize: 11,
-    fontWeight: '600',
+    fontFamily: Fonts.semibold,
   },
   tabLabelActive: {
     color: Colors.orangeText,
@@ -360,7 +363,7 @@ const darkStyles = StyleSheet.create({
   groupHeaded: { borderTopColor: Colors.navyLine },
   heading: { color: '#8C97B3' },
   label: { color: Colors.onNavy },
-  labelActive: { color: '#FFFFFF', fontWeight: '700' },
+  labelActive: { color: '#FFFFFF', fontFamily: Fonts.bold },
   linkHover: { backgroundColor: Colors.navyRaised },
   linkActive: { backgroundColor: Colors.navyRaised },
   whose: { backgroundColor: Colors.navyRaised },
@@ -374,7 +377,7 @@ const lightStyles = StyleSheet.create({
   groupHeaded: { borderTopColor: Colors.border },
   heading: { color: Colors.textMuted },
   label: { color: Colors.navy },
-  labelActive: { color: Colors.orangeText, fontWeight: '700' },
+  labelActive: { color: Colors.orangeText, fontFamily: Fonts.bold },
   linkHover: { backgroundColor: Colors.surface },
   linkActive: { backgroundColor: Colors.surface },
   whose: { backgroundColor: Colors.surface },

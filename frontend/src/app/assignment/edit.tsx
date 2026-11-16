@@ -11,7 +11,7 @@ import {
   type Choice,
 } from '@/components/form';
 import { Button, Card, ErrorMessage, Loading, Screen, TextField } from '@/components/ui';
-import { Colors, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Spacing } from '@/constants/theme';
 import { api, errorMessage } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { addDays, parseDate } from '@/lib/dates';
@@ -434,12 +434,12 @@ const styles = StyleSheet.create({
   heading: {
     color: Colors.navy,
     fontSize: 24,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
   },
   subheading: {
     color: Colors.navy,
     fontSize: 17,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
   },
   schedule: {
     gap: Spacing.md,
@@ -453,15 +453,17 @@ const styles = StyleSheet.create({
   info: {
     color: Colors.navy,
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: Fonts.semibold,
   },
   hint: {
     color: Colors.textMuted,
     fontSize: 13,
+    fontFamily: Fonts.regular,
   },
   warning: {
     color: Colors.danger,
     fontSize: 15,
+    fontFamily: Fonts.regular,
   },
   actions: {
     flexDirection: 'row',

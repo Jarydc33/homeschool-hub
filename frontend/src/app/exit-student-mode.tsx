@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Button, ErrorMessage, Screen, TextField } from '@/components/ui';
-import { Colors, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Spacing } from '@/constants/theme';
 import { api, errorMessage } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 
@@ -85,11 +85,12 @@ const styles = StyleSheet.create({
   heading: {
     color: Colors.navy,
     fontSize: 24,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
   },
   body: {
     color: Colors.text,
     fontSize: 16,
+    fontFamily: Fonts.regular,
   },
   actions: {
     flexDirection: 'row',

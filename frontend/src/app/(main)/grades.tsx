@@ -14,7 +14,7 @@ import {
   SectionTitle,
   TextField,
 } from '@/components/ui';
-import { Colors, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Spacing } from '@/constants/theme';
 import { api, errorMessage } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { formatDate } from '@/lib/dates';
@@ -707,20 +707,22 @@ const styles = StyleSheet.create({
   body: {
     color: Colors.text,
     fontSize: 16,
+    fontFamily: Fonts.regular,
   },
   muted: {
     color: Colors.textMuted,
     fontSize: 14,
+    fontFamily: Fonts.regular,
   },
   notice: {
     color: Colors.done,
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: Fonts.semibold,
   },
   overall: {
     color: Colors.navy,
     fontSize: 32,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
   },
   subjectRow: {
     flexDirection: 'row',
@@ -733,7 +735,7 @@ const styles = StyleSheet.create({
   subjectGrade: {
     color: Colors.navy,
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
   },
   titleRow: {
     flexDirection: 'row',
@@ -743,7 +745,7 @@ const styles = StyleSheet.create({
   workTitle: {
     color: Colors.navy,
     fontSize: 17,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
   },
   boxes: {
     flexDirection: 'row',
@@ -772,12 +774,13 @@ const styles = StyleSheet.create({
   tableHead: {
     color: Colors.navy,
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
     padding: Spacing.sm,
   },
   tableCell: {
     color: Colors.text,
     fontSize: 14,
+    fontFamily: Fonts.regular,
     padding: Spacing.sm,
   },
   firstColumn: {

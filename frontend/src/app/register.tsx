@@ -5,7 +5,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { AuthShell } from '@/components/auth-shell';
 import { deviceTimeZone, TimeZoneField } from '@/components/time-zone-field';
 import { Button, Card, ErrorMessage, Loading, TextField } from '@/components/ui';
-import { Colors, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Spacing } from '@/constants/theme';
 import { api, errorMessage } from '@/lib/api';
 import { supabase } from '@/lib/supabase';
 import type { TimeZoneChoice } from '@/lib/types';
@@ -192,12 +192,14 @@ const styles = StyleSheet.create({
   body: {
     color: Colors.text,
     fontSize: 16,
+    fontFamily: Fonts.regular,
   },
   strong: {
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
   },
   muted: {
     color: Colors.textMuted,
     fontSize: 14,
+    fontFamily: Fonts.regular,
   },
 });

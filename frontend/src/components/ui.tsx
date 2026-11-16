@@ -17,7 +17,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
 
-import { Colors, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
+import { Colors, Fonts, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { errorMessage } from '@/lib/api';
 
 export function Screen({
@@ -228,6 +228,7 @@ const styles = StyleSheet.create({
   errorText: {
     color: Colors.danger,
     fontSize: 15,
+    fontFamily: Fonts.regular,
   },
   button: {
     minHeight: 48,
@@ -250,12 +251,12 @@ const styles = StyleSheet.create({
   buttonPrimaryText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: Fonts.semibold,
   },
   buttonSecondaryText: {
     color: Colors.navy,
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: Fonts.semibold,
   },
   card: {
     backgroundColor: Colors.background,
@@ -272,11 +273,12 @@ const styles = StyleSheet.create({
   confirmTitle: {
     color: Colors.navy,
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
   },
   confirmBody: {
     color: Colors.text,
     fontSize: 16,
+    fontFamily: Fonts.regular,
   },
   actions: {
     flexDirection: 'row',
@@ -291,7 +293,7 @@ const styles = StyleSheet.create({
   label: {
     color: Colors.navy,
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: Fonts.semibold,
   },
   input: {
     minHeight: 48,
@@ -300,22 +302,29 @@ const styles = StyleSheet.create({
     borderRadius: Radius,
     paddingHorizontal: Spacing.md,
     fontSize: 16,
+    fontFamily: Fonts.regular,
     color: Colors.text,
     backgroundColor: Colors.background,
   },
   hint: {
     color: Colors.textMuted,
     fontSize: 13,
+    fontFamily: Fonts.regular,
   },
+  // Bold and tight, like the landing page's headings.
   pageTitle: {
     color: Colors.navy,
-    fontSize: 26,
-    fontWeight: '700',
+    fontSize: 30,
+    lineHeight: 36,
+    fontFamily: Fonts.extrabold,
+    letterSpacing: -0.6,
+    marginTop: Spacing.sm,
   },
   sectionTitle: {
     color: Colors.navy,
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 19,
+    fontFamily: Fonts.extrabold,
+    letterSpacing: -0.3,
     marginTop: Spacing.sm,
   },
 });

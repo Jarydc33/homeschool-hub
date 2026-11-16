@@ -24,6 +24,19 @@ export const Colors = {
   danger: '#B3261E',
 } as const;
 
+/**
+ * Inter, as on the landing page, loaded in the root layout. Each weight is
+ * its own font, so set `fontFamily` from here instead of `fontWeight`:
+ * a custom font ignores `fontWeight` on Android.
+ */
+export const Fonts = {
+  regular: 'Inter_400Regular',
+  medium: 'Inter_500Medium',
+  semibold: 'Inter_600SemiBold',
+  bold: 'Inter_700Bold',
+  extrabold: 'Inter_800ExtraBold',
+} as const;
+
 export const Spacing = {
   xs: 4,
   sm: 8,

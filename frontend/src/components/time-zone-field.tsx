@@ -7,7 +7,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { ChoiceField } from '@/components/form';
 import { TextField } from '@/components/ui';
-import { Colors, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Spacing } from '@/constants/theme';
 import type { TimeZoneChoice } from '@/lib/types';
 
 // How many time zones a search shows.
@@ -93,5 +93,6 @@ const styles = StyleSheet.create({
   muted: {
     color: Colors.textMuted,
     fontSize: 14,
+    fontFamily: Fonts.regular,
   },
 });

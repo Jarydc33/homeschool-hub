@@ -13,7 +13,7 @@ import {
   SectionTitle,
   TextField,
 } from '@/components/ui';
-import { Colors, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Spacing } from '@/constants/theme';
 import { api, errorMessage } from '@/lib/api';
 import type { SubjectDetail } from '@/lib/types';
 
@@ -343,25 +343,27 @@ const styles = StyleSheet.create({
   body: {
     color: Colors.text,
     fontSize: 16,
+    fontFamily: Fonts.regular,
   },
   muted: {
     color: Colors.textMuted,
     fontSize: 14,
+    fontFamily: Fonts.regular,
   },
   notice: {
     color: Colors.done,
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: Fonts.semibold,
   },
   cardTitle: {
     color: Colors.navy,
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
   },
   name: {
     color: Colors.navy,
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
   },
   row: {
     flexDirection: 'row',
@@ -385,7 +387,7 @@ const styles = StyleSheet.create({
   label: {
     color: Colors.navy,
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: Fonts.semibold,
   },
   swatches: {
     flexDirection: 'row',
@@ -406,7 +408,7 @@ const styles = StyleSheet.create({
   check: {
     color: '#FFFFFF',
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
   },
   actions: {
     flexDirection: 'row',

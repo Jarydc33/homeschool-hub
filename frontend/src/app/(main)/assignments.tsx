@@ -12,7 +12,7 @@ import {
   Screen,
   SectionTitle,
 } from '@/components/ui';
-import { Colors, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Spacing } from '@/constants/theme';
 import { api, errorMessage } from '@/lib/api';
 import { formatDate } from '@/lib/dates';
 import type { Assignment } from '@/lib/types';
@@ -253,24 +253,27 @@ const styles = StyleSheet.create({
   body: {
     color: Colors.text,
     fontSize: 16,
+    fontFamily: Fonts.regular,
   },
   muted: {
     color: Colors.textMuted,
     fontSize: 14,
+    fontFamily: Fonts.regular,
   },
   detail: {
     color: Colors.text,
     fontSize: 15,
+    fontFamily: Fonts.regular,
   },
   notice: {
     color: Colors.done,
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: Fonts.semibold,
   },
   title: {
     color: Colors.navy,
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
   },
   row: {
     flexDirection: 'row',

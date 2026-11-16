@@ -14,7 +14,7 @@ import {
   SectionTitle,
   TextField,
 } from '@/components/ui';
-import { Colors, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Spacing } from '@/constants/theme';
 import { api, errorMessage } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { addDays, parseDate } from '@/lib/dates';
@@ -323,20 +323,22 @@ const styles = StyleSheet.create({
   body: {
     color: Colors.text,
     fontSize: 16,
+    fontFamily: Fonts.regular,
   },
   muted: {
     color: Colors.textMuted,
     fontSize: 14,
+    fontFamily: Fonts.regular,
   },
   notice: {
     color: Colors.done,
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: Fonts.semibold,
   },
   cardTitle: {
     color: Colors.navy,
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
   },
   row: {
     flexDirection: 'row',
@@ -345,7 +347,7 @@ const styles = StyleSheet.create({
   },
   status: {
     fontSize: 12,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
     borderWidth: 1,
     borderRadius: 12,
     paddingHorizontal: Spacing.sm,

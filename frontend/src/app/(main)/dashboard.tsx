@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { ChoiceField } from '@/components/form';
 import { Button, Card, ErrorMessage, Loading, PageTitle, Screen, SectionTitle } from '@/components/ui';
-import { Colors, Radius, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
 import { api, ApiError, errorMessage } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { formatDate } from '@/lib/dates';
@@ -341,11 +341,12 @@ const styles = StyleSheet.create({
   date: {
     color: Colors.textMuted,
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: Fonts.semibold,
   },
   message: {
     color: Colors.text,
     fontSize: 16,
+    fontFamily: Fonts.regular,
     marginTop: Spacing.xs,
   },
   banner: {
@@ -354,25 +355,27 @@ const styles = StyleSheet.create({
   bannerTitle: {
     color: Colors.navy,
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
   },
   body: {
     color: Colors.text,
     fontSize: 16,
+    fontFamily: Fonts.regular,
   },
   muted: {
     color: Colors.textMuted,
     fontSize: 14,
+    fontFamily: Fonts.regular,
   },
   good: {
     color: Colors.done,
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: Fonts.semibold,
   },
   title: {
     color: Colors.navy,
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: Fonts.semibold,
   },
   flex: {
     flex: 1,
@@ -395,11 +398,12 @@ const styles = StyleSheet.create({
   name: {
     color: Colors.navy,
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
   },
   chevron: {
     color: Colors.textMuted,
     fontSize: 24,
+    fontFamily: Fonts.regular,
   },
   pressed: {
     backgroundColor: Colors.surface,
@@ -418,7 +422,7 @@ const styles = StyleSheet.create({
   overdueCount: {
     color: Colors.danger,
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: Fonts.semibold,
   },
   warning: {
     backgroundColor: '#FFF6EE',
@@ -435,6 +439,6 @@ const styles = StyleSheet.create({
   activityLabel: {
     color: Colors.navy,
     fontSize: 15,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
   },
 });

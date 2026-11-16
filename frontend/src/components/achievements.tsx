@@ -4,7 +4,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Card } from '@/components/ui';
-import { Colors, Radius, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
 import type { Badge } from '@/lib/types';
 
 /** Tiles in a row on wide screens, wrapping two by two on phones. */
@@ -81,6 +81,7 @@ const styles = StyleSheet.create({
   muted: {
     color: Colors.textMuted,
     fontSize: 14,
+    fontFamily: Fonts.regular,
   },
   stats: {
     flexDirection: 'row',
@@ -98,11 +99,12 @@ const styles = StyleSheet.create({
   statLabel: {
     color: Colors.textMuted,
     fontSize: 13,
+    fontFamily: Fonts.regular,
   },
   statValue: {
     color: Colors.navy,
     fontSize: 24,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
   },
   badges: {
     flexDirection: 'row',
@@ -120,7 +122,7 @@ const styles = StyleSheet.create({
   badgeText: {
     color: Colors.navy,
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: Fonts.semibold,
   },
   badgeCard: {
     backgroundColor: '#FFF6EE',
@@ -129,6 +131,6 @@ const styles = StyleSheet.create({
   badgeNew: {
     color: Colors.navy,
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
   },
 });

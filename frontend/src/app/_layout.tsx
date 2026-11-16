@@ -1,33 +1,48 @@
+// Each weight from its own path, so the build carries only these five.
+import { Inter_400Regular } from '@expo-google-fonts/inter/400Regular';
+import { Inter_500Medium } from '@expo-google-fonts/inter/500Medium';
+import { Inter_600SemiBold } from '@expo-google-fonts/inter/600SemiBold';
+import { Inter_700Bold } from '@expo-google-fonts/inter/700Bold';
+import { Inter_800ExtraBold } from '@expo-google-fonts/inter/800ExtraBold';
+import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 
-import { Colors } from '@/constants/theme';
+import { Colors, Fonts } from '@/constants/theme';
 import { AuthProvider, useAuth } from '@/lib/auth';
 
 SplashScreen.preventAutoHideAsync();
 
 function Routes() {
   const { ready, signedIn } = useAuth();
+  // If the fonts fail to load, carry on with the system font.
+  const [fontsLoaded, fontError] = useFonts({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+    Inter_800ExtraBold,
+  });
+  const fontsReady = fontsLoaded || fontError !== null;
 
   useEffect(() => {
-    if (ready) {
+    if (ready && fontsReady) {
       SplashScreen.hideAsync();
     }
-  }, [ready]);
+  }, [ready, fontsReady]);
 
-  if (!ready) {
+  if (!ready || !fontsReady) {
     return null;
   }
-
 
   return (
     <Stack
       screenOptions={{
         headerStyle: { backgroundColor: Colors.navy },
         headerTintColor: '#FFFFFF',
-        headerTitleStyle: { fontWeight: '700' },
+        headerTitleStyle: { fontFamily: Fonts.bold },
         contentStyle: { backgroundColor: Colors.background },
       }}>
       {/* Screens for someone signed in. Anyone else is sent to the login. */}

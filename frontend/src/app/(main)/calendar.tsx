@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { ChoiceField, type Choice } from '@/components/form';
 import { Button, Card, ErrorMessage, Loading, PageTitle, Screen } from '@/components/ui';
-import { Colors, Radius, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
 import { api, errorMessage } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { formatDate, monthWeeks, parseDate, shiftDate, weekDays } from '@/lib/dates';
@@ -414,6 +414,7 @@ const styles = StyleSheet.create({
   muted: {
     color: Colors.textMuted,
     fontSize: 14,
+    fontFamily: Fonts.regular,
   },
   nav: {
     flexDirection: 'row',
@@ -426,7 +427,7 @@ const styles = StyleSheet.create({
   title: {
     color: Colors.navy,
     fontSize: 20,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
   },
   legend: {
     flexDirection: 'row',
@@ -437,6 +438,7 @@ const styles = StyleSheet.create({
   legendItem: {
     color: Colors.textMuted,
     fontSize: 13,
+    fontFamily: Fonts.regular,
   },
   todayCard: {
     borderColor: Colors.orange,
@@ -455,7 +457,7 @@ const styles = StyleSheet.create({
   dayTitle: {
     color: Colors.navy,
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
   },
   todayText: {
     color: Colors.orangeText,
@@ -467,11 +469,13 @@ const styles = StyleSheet.create({
   },
   itemIcon: {
     fontSize: 16,
+    fontFamily: Fonts.regular,
     lineHeight: 22,
   },
   itemTitle: {
     color: Colors.text,
     fontSize: 16,
+    fontFamily: Fonts.regular,
     lineHeight: 22,
   },
   doneText: {
@@ -496,7 +500,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: Colors.textMuted,
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: Fonts.semibold,
     paddingVertical: Spacing.xs,
   },
   cell: {
@@ -517,7 +521,7 @@ const styles = StyleSheet.create({
   cellNumber: {
     color: Colors.text,
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: Fonts.semibold,
   },
   outside: {
     color: Colors.blueGrey,
@@ -534,5 +538,6 @@ const styles = StyleSheet.create({
   more: {
     color: Colors.textMuted,
     fontSize: 11,
+    fontFamily: Fonts.regular,
   },
 });

@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { DateField, formatYear, MultiChoiceField } from '@/components/form';
 import { Button, Card, ErrorMessage, Loading, Screen, SectionTitle, TextField } from '@/components/ui';
-import { Colors, Spacing } from '@/constants/theme';
+import { Colors, Fonts, Spacing } from '@/constants/theme';
 import { api, errorMessage } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { formatDate } from '@/lib/dates';
@@ -263,20 +263,22 @@ const styles = StyleSheet.create({
   heading: {
     color: Colors.navy,
     fontSize: 24,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
   },
   body: {
     color: Colors.text,
     fontSize: 16,
+    fontFamily: Fonts.regular,
   },
   muted: {
     color: Colors.textMuted,
     fontSize: 14,
+    fontFamily: Fonts.regular,
   },
   notice: {
     color: Colors.done,
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: Fonts.semibold,
   },
   stepper: {
     flexDirection: 'row',
@@ -293,7 +295,7 @@ const styles = StyleSheet.create({
   noteDate: {
     color: Colors.navy,
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
   },
   current: {
     borderColor: Colors.orange,
