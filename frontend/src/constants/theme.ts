@@ -49,3 +49,6 @@ export const Radius = 10;
 
 // Keeps screens readable on wide desktop windows.
 export const MaxContentWidth = 720;
+
+// Screens with two columns on a computer, such as the Dashboard.
+export const WideContentWidth = 1120;

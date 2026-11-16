@@ -126,6 +126,12 @@ export interface StudentMetrics {
   // 0 to 100.
   percent: number;
   overdue_count: number;
+  // Work dated today: done, and done plus still to do.
+  today_done: number;
+  today_total: number;
+  streak: number;
+  // The first unfinished piece of today's work.
+  next_up: string | null;
 }
 
 export interface DueWork {

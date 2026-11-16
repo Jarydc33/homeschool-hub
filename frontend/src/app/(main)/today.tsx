@@ -28,14 +28,15 @@ export default function TodayScreen() {
 
   return (
     <Screen refreshing={refreshing} onRefresh={refresh}>
-      <PageTitle>{data ? `Hi, ${data.student.name}!` : 'Today'}</PageTitle>
+      {/* Once loaded, the day's top card greets them instead. */}
+      {data ? null : <PageTitle>Today</PageTitle>}
 
       {error ? <ErrorMessage message={error} onRetry={load} /> : null}
 
       {!data && !error ? <Loading /> : null}
 
       {data ? (
-        <StudentDayView data={data} saving={saving} celebrate={celebrate} onToggle={toggle} />
+        <StudentDayView data={data} saving={saving} celebrate={celebrate} onToggle={toggle} own />
       ) : null}
     </Screen>
   );

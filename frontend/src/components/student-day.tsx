@@ -4,10 +4,10 @@
  * one student and the student's own Today screen.
  */
 import { useCallback, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { EarnedBadges, Stat, Stats } from '@/components/achievements';
-import { Card, SectionTitle } from '@/components/ui';
+import { Button, Card, SectionTitle } from '@/components/ui';
 import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
 import { api, errorMessage } from '@/lib/api';
 import { formatDate } from '@/lib/dates';
@@ -110,27 +110,36 @@ function withCompleted(day: StudentDashboard, id: number, completed: boolean): S
   };
 }
 
+// "Coming Up" shows this many until it's opened.
+const UPCOMING_SHOWN = 5;
+
 export function StudentDayView({
   data,
   saving,
   celebrate,
   onToggle,
+  own = false,
 }: {
   data: StudentDashboard;
   saving: number[];
   celebrate: Badge[];
   onToggle: (item: WorkItem) => void;
+  // The student's own view, which greets them by name.
+  own?: boolean;
 }) {
-  const { done, total } = data.progress;
   const [showMissed, setShowMissed] = useState(false);
   const [showCompleted, setShowCompleted] = useState(false);
+  const [showProgress, setShowProgress] = useState(false);
   const [showToEarn, setShowToEarn] = useState(false);
+  const [showAllUpcoming, setShowAllUpcoming] = useState(false);
+  // New badges already closed, by key.
+  const [seen, setSeen] = useState<string[]>([]);
 
-  const allDone = total > 0 && done === total;
   const { achievements, reading, pe } = data;
   const badges = [...achievements.badges, ...reading.badges, ...pe.badges];
   const toEarn = badges.filter((b) => !b.earned);
   const earnedCount = badges.length - toEarn.length;
+  const upcoming = showAllUpcoming ? data.upcoming : data.upcoming.slice(0, UPCOMING_SHOWN);
 
   return (
     <>
@@ -141,45 +150,29 @@ export function StudentDayView({
         </Card>
       ))}
 
-      <Text style={styles.date}>{formatDate(data.today)}</Text>
-      <Text style={styles.message}>{data.message}</Text>
+      <DayHero data={data} own={own} />
 
-      {celebrate.map((badge) => (
-        <Card key={badge.key} style={styles.celebrate}>
-          <Text style={styles.celebrateText}>
-            {badge.icon} New badge: {badge.name}
-          </Text>
-          <Text style={styles.body}>{badge.description}</Text>
-        </Card>
-      ))}
+      <NewBadgePopup
+        badges={celebrate.filter((b) => !seen.includes(b.key))}
+        onClose={() => setSeen([...seen, ...celebrate.map((b) => b.key)])}
+      />
 
-      <SectionTitle>Today</SectionTitle>
-
-      {total > 0 ? (
-        <View accessible accessibilityLabel={`${done} of ${total} done today`}>
-          <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${(done / total) * 100}%` }]} />
-          </View>
-          <Text style={styles.muted}>
-            {allDone ? 'All done for today!' : `${done} of ${total} done`}
-            {data.achievements.streak > 0 ? `  ·  ${data.achievements.streak}-day streak` : ''}
-          </Text>
-        </View>
-      ) : (
-        <Text style={styles.body}>Nothing due today.</Text>
-      )}
-
-      {data.today_work.map((item) => (
-        <WorkRow key={item.occurrence_id} item={item} saving={saving} onToggle={onToggle} />
-      ))}
-
-      {data.completed_today.map((item) => (
-        <WorkRow key={item.occurrence_id} item={item} saving={saving} onToggle={onToggle} />
-      ))}
+      {data.today_work.length + data.completed_today.length > 0 ? (
+        <>
+          <SectionTitle>Today&apos;s Work</SectionTitle>
+          {data.today_work.map((item) => (
+            <WorkRow key={item.occurrence_id} item={item} saving={saving} onToggle={onToggle} />
+          ))}
+          {data.completed_today.map((item) => (
+            <WorkRow key={item.occurrence_id} item={item} saving={saving} onToggle={onToggle} />
+          ))}
+        </>
+      ) : null}
 
       {data.overdue.length > 0 ? (
         <>
-          <SectionTitle>Overdue</SectionTitle>
+          <SectionTitle>Catch Up</SectionTitle>
+          <Text style={styles.muted}>Work from earlier days that isn&apos;t finished yet.</Text>
           {data.overdue.map((item) => (
             <WorkRow key={item.occurrence_id} item={item} saving={saving} onToggle={onToggle} showDate />
           ))}
@@ -189,9 +182,19 @@ export function StudentDayView({
       {data.upcoming.length > 0 ? (
         <>
           <SectionTitle>Coming Up</SectionTitle>
-          {data.upcoming.map((item) => (
+          {upcoming.map((item) => (
             <WorkRow key={item.occurrence_id} item={item} saving={saving} onToggle={onToggle} showDate />
           ))}
+          {data.upcoming.length > UPCOMING_SHOWN ? (
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => setShowAllUpcoming(!showAllUpcoming)}
+              style={styles.more}>
+              <Text style={styles.moreText}>
+                {showAllUpcoming ? 'Show less' : `Show all ${data.upcoming.length}`}
+              </Text>
+            </Pressable>
+          ) : null}
         </>
       ) : null}
 
@@ -222,47 +225,67 @@ export function StudentDayView({
         </>
       ) : null}
 
-      <SectionTitle>🔥 Streaks</SectionTitle>
-      <Stats>
-        <Stat
-          label={`🔥 Streak (best ${achievements.best_streak})`}
-          value={days(achievements.streak)}
-        />
-        <Stat
-          label={`📖 Reading (${reading.pages_this_week} pages this week)`}
-          value={days(reading.streak)}
-        />
-        <Stat
-          label={`🏃 P.E. This Week (${pe.active_days_this_week} of 7 days)`}
-          value={minutes(pe.minutes_this_week)}
-        />
-      </Stats>
-      <Text style={styles.muted}>
-        Days with no work don&apos;t break a streak, and catching up repairs it.
-      </Text>
+      <SectionTitle>Streaks and Badges</SectionTitle>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ expanded: showProgress }}
+        accessibilityLabel={`Streak ${days(achievements.streak)}, reading streak ${days(
+          reading.streak,
+        )}, P.E. ${minutes(pe.minutes_this_week)} this week, ${earnedCount} of ${
+          badges.length
+        } badges. ${showProgress ? 'Hide' : 'Show'} details.`}
+        onPress={() => setShowProgress(!showProgress)}
+        style={({ pressed }) => [styles.pills, pressed && styles.pillsPressed]}>
+        <Pill text={`🔥 ${days(achievements.streak)}`} />
+        <Pill text={`📖 ${days(reading.streak)}`} />
+        <Pill text={`🏃 ${minutes(pe.minutes_this_week)}`} />
+        <Pill text={`🏅 ${earnedCount} of ${badges.length}`} />
+        <Text style={styles.pillsToggle}>{showProgress ? 'Hide ▴' : 'Details ▾'}</Text>
+      </Pressable>
 
-      <SectionTitle>
-        🏅 Badges ({earnedCount} of {badges.length})
-      </SectionTitle>
-      {earnedCount > 0 ? (
-        <EarnedBadges badges={badges} />
-      ) : (
-        <Text style={styles.muted}>Finish your first piece of work to earn your first badge.</Text>
-      )}
-      {toEarn.length > 0 ? (
+      {showProgress ? (
         <>
-          <Toggle
-            open={showToEarn}
-            onPress={() => setShowToEarn(!showToEarn)}
-            title="Badges to earn"
-          />
-          {showToEarn
-            ? toEarn.map((badge) => (
-                <Text key={badge.key} style={styles.body}>
-                  {badge.icon} {badge.name}: {badge.description}
-                </Text>
-              ))
-            : null}
+          <Stats>
+            <Stat
+              label={`🔥 Streak (best ${achievements.best_streak})`}
+              value={days(achievements.streak)}
+            />
+            <Stat
+              label={`📖 Reading (${reading.pages_this_week} pages this week)`}
+              value={days(reading.streak)}
+            />
+            <Stat
+              label={`🏃 P.E. This Week (${pe.active_days_this_week} of 7 days)`}
+              value={minutes(pe.minutes_this_week)}
+            />
+          </Stats>
+          <Text style={styles.muted}>
+            Days with no work don&apos;t break a streak, and catching up repairs it.
+          </Text>
+
+          {earnedCount > 0 ? (
+            <EarnedBadges badges={badges} />
+          ) : (
+            <Text style={styles.muted}>
+              Finish your first piece of work to earn your first badge.
+            </Text>
+          )}
+          {toEarn.length > 0 ? (
+            <>
+              <Toggle
+                open={showToEarn}
+                onPress={() => setShowToEarn(!showToEarn)}
+                title="Badges to earn"
+              />
+              {showToEarn
+                ? toEarn.map((badge) => (
+                    <Text key={badge.key} style={styles.body}>
+                      {badge.icon} {badge.name}: {badge.description}
+                    </Text>
+                  ))
+                : null}
+            </>
+          ) : null}
         </>
       ) : null}
 
@@ -302,6 +325,124 @@ export function StudentDayView({
         </>
       ) : null}
     </>
+  );
+}
+
+/**
+ * The top of the day: who and when, the daily message, the streak, and
+ * today's progress. Turns green once today's work is all done.
+ */
+function DayHero({ data, own }: { data: StudentDashboard; own: boolean }) {
+  const { done, total } = data.progress;
+  const allDone = total > 0 && done === total;
+  const name = data.student.name;
+  const streak = data.achievements.streak;
+
+  const title = allDone
+    ? own
+      ? `All done, ${name}! 🎉`
+      : 'All done for today! 🎉'
+    : own
+      ? `Hi, ${name}!`
+      : `${name}'s Day`;
+
+  const summary =
+    total === 0
+      ? 'Nothing due today.'
+      : allDone
+        ? `${total} of ${total} done. Great work!`
+        : `${done} of ${total} done  ·  ${total - done} to go`;
+
+  return (
+    <View
+      style={[styles.hero, allDone && styles.heroDone]}
+      accessible
+      accessibilityLabel={[
+        title,
+        formatDate(data.today),
+        summary,
+        streak > 0 ? `${days(streak)} streak` : null,
+        data.message,
+      ]
+        .filter(Boolean)
+        .join('. ')}>
+      <View style={styles.heroTop}>
+        <View style={styles.flex}>
+          <Text style={styles.heroDate}>{formatDate(data.today)}</Text>
+          <Text style={styles.heroTitle}>{title}</Text>
+        </View>
+
+        {streak > 0 ? (
+          <View style={styles.streak}>
+            <Text style={styles.streakNumber}>🔥 {streak}</Text>
+            <Text style={styles.streakLabel}>day streak</Text>
+          </View>
+        ) : null}
+      </View>
+
+      <Text style={styles.heroMessage}>{data.message}</Text>
+
+      {total > 0 ? <DayProgress done={done} total={total} allDone={allDone} /> : null}
+
+      <Text style={styles.heroSummary}>{summary}</Text>
+    </View>
+  );
+}
+
+// Up to this many pieces of work show as blocks; more show as a bar.
+const MAX_BLOCKS = 12;
+
+/** One block per piece of work, filling as each is checked off. */
+function DayProgress({ done, total, allDone }: { done: number; total: number; allDone: boolean }) {
+  const filled = allDone ? styles.blockFilledDone : styles.blockFilled;
+
+  if (total > MAX_BLOCKS) {
+    return (
+      <View style={styles.block}>
+        <View style={[styles.barFill, filled, { width: `${(done / total) * 100}%` }]} />
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.blocks}>
+      {Array.from({ length: total }, (_, index) => (
+        <View key={index} style={[styles.block, index < done && filled]} />
+      ))}
+    </View>
+  );
+}
+
+function Pill({ text }: { text: string }) {
+  return (
+    <View style={styles.pill}>
+      <Text style={styles.pillText}>{text}</Text>
+    </View>
+  );
+}
+
+/** Shows badges just earned over the screen until closed. */
+function NewBadgePopup({ badges, onClose }: { badges: Badge[]; onClose: () => void }) {
+  return (
+    <Modal transparent animationType="fade" visible={badges.length > 0} onRequestClose={onClose}>
+      <View style={styles.overlay}>
+        <View style={styles.popup} accessibilityViewIsModal accessibilityLiveRegion="polite">
+          <Text style={styles.popupKicker}>
+            {badges.length === 1 ? 'New badge!' : `${badges.length} new badges!`}
+          </Text>
+
+          {badges.map((badge) => (
+            <View key={badge.key} style={styles.popupBadge}>
+              <Text style={styles.popupIcon}>{badge.icon}</Text>
+              <Text style={styles.popupName}>{badge.name}</Text>
+              <Text style={styles.popupDescription}>{badge.description}</Text>
+            </View>
+          ))}
+
+          <Button title="Yay!" onPress={onClose} style={styles.popupButton} />
+        </View>
+      </View>
+    </Modal>
   );
 }
 
@@ -352,7 +493,13 @@ function WorkRow({
       disabled={busy}
       onPress={() => onToggle(item)}>
       {({ pressed }) => (
-        <Card style={[styles.workRow, pressed && styles.pressed]}>
+        <Card
+          style={[
+            styles.workRow,
+            { borderLeftColor: item.subject?.color ?? Colors.blueGrey },
+            item.completed && styles.workRowDone,
+            pressed && styles.pressed,
+          ]}>
           <View style={[styles.box, item.completed && styles.boxChecked]}>
             {item.completed ? <Text style={styles.check}>{'✓'}</Text> : null}
           </View>
@@ -366,10 +513,6 @@ function WorkRow({
             </Text>
             {item.notes ? <Text style={styles.note}>{item.notes}</Text> : null}
           </View>
-
-          {item.subject?.color ? (
-            <View style={[styles.subjectDot, { backgroundColor: item.subject.color }]} />
-          ) : null}
         </Card>
       )}
     </Pressable>
@@ -377,16 +520,8 @@ function WorkRow({
 }
 
 const styles = StyleSheet.create({
-  date: {
-    color: Colors.navy,
-    fontSize: 22,
-    fontFamily: Fonts.bold,
-  },
-  message: {
-    color: Colors.textMuted,
-    fontSize: 16,
-    fontFamily: Fonts.regular,
-    fontStyle: 'italic',
+  flex: {
+    flex: 1,
   },
   body: {
     color: Colors.text,
@@ -406,40 +541,194 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: Fonts.bold,
   },
-  celebrate: {
-    backgroundColor: '#FFF3EC',
-    borderColor: Colors.orange,
+  // The top card.
+  hero: {
+    backgroundColor: Colors.navy,
+    borderRadius: 16,
+    padding: Spacing.lg,
+    gap: Spacing.md,
   },
-  celebrateText: {
-    color: Colors.orangeText,
+  heroDone: {
+    backgroundColor: Colors.done,
+  },
+  heroTop: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.md,
+  },
+  heroDate: {
+    color: 'rgba(255, 255, 255, 0.78)',
+    fontSize: 14,
+    fontFamily: Fonts.semibold,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  },
+  heroTitle: {
+    color: '#FFFFFF',
+    fontSize: 30,
+    lineHeight: 36,
+    fontFamily: Fonts.extrabold,
+    letterSpacing: -0.6,
+    marginTop: Spacing.xs,
+  },
+  heroMessage: {
+    color: Colors.onNavy,
     fontSize: 16,
-    fontFamily: Fonts.bold,
+    lineHeight: 23,
+    fontFamily: Fonts.regular,
+    fontStyle: 'italic',
   },
-  progressTrack: {
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: Colors.surface,
+  heroSummary: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontFamily: Fonts.semibold,
+  },
+  streak: {
+    alignItems: 'center',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+  },
+  streakNumber: {
+    color: '#FFFFFF',
+    fontSize: 22,
+    fontFamily: Fonts.extrabold,
+  },
+  streakLabel: {
+    color: 'rgba(255, 255, 255, 0.78)',
+    fontSize: 12,
+    fontFamily: Fonts.semibold,
+  },
+  blocks: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  block: {
+    flex: 1,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
     overflow: 'hidden',
-    marginBottom: Spacing.xs,
   },
-  progressFill: {
-    height: '100%',
+  blockFilled: {
     backgroundColor: Colors.orange,
   },
+  blockFilledDone: {
+    backgroundColor: '#FFFFFF',
+  },
+  barFill: {
+    height: '100%',
+  },
+  // Streaks and badges, folded.
+  pills: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    padding: Spacing.sm,
+    borderRadius: Radius,
+  },
+  pillsPressed: {
+    backgroundColor: Colors.surface,
+  },
+  pill: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: 20,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  pillText: {
+    color: Colors.navy,
+    fontSize: 15,
+    fontFamily: Fonts.bold,
+  },
+  pillsToggle: {
+    color: Colors.orangeText,
+    fontSize: 14,
+    fontFamily: Fonts.semibold,
+    marginLeft: Spacing.xs,
+  },
+  more: {
+    alignSelf: 'flex-start',
+    paddingVertical: Spacing.sm,
+  },
+  moreText: {
+    color: Colors.orangeText,
+    fontSize: 15,
+    fontFamily: Fonts.semibold,
+  },
+  // The new badge pop-up.
+  overlay: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing.lg,
+    backgroundColor: 'rgba(27, 37, 64, 0.55)',
+  },
+  popup: {
+    width: '100%',
+    maxWidth: 360,
+    alignItems: 'center',
+    gap: Spacing.md,
+    padding: Spacing.lg,
+    borderRadius: 16,
+    backgroundColor: Colors.background,
+  },
+  popupKicker: {
+    color: Colors.orangeText,
+    fontSize: 14,
+    fontFamily: Fonts.bold,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  popupBadge: {
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  popupIcon: {
+    fontSize: 56,
+    fontFamily: Fonts.regular,
+  },
+  popupName: {
+    color: Colors.navy,
+    fontSize: 22,
+    fontFamily: Fonts.extrabold,
+    textAlign: 'center',
+  },
+  popupDescription: {
+    color: Colors.textMuted,
+    fontSize: 15,
+    fontFamily: Fonts.regular,
+    textAlign: 'center',
+  },
+  popupButton: {
+    alignSelf: 'stretch',
+  },
+  // A piece of work: the subject's colour down the left edge.
   workRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,
+    minHeight: 68,
+    paddingVertical: Spacing.md,
+    borderLeftWidth: 6,
+  },
+  workRowDone: {
+    backgroundColor: Colors.surface,
   },
   pressed: {
     backgroundColor: Colors.surface,
   },
   box: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
+    width: 32,
+    height: 32,
+    borderRadius: 9,
     borderWidth: 2,
     borderColor: Colors.blueGrey,
+    backgroundColor: Colors.background,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -449,7 +738,7 @@ const styles = StyleSheet.create({
   },
   check: {
     color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: 20,
     fontFamily: Fonts.bold,
   },
   workText: {
@@ -458,7 +747,7 @@ const styles = StyleSheet.create({
   },
   title: {
     color: Colors.navy,
-    fontSize: 16,
+    fontSize: 17,
     fontFamily: Fonts.semibold,
   },
   titleDone: {
@@ -470,10 +759,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: Fonts.regular,
     marginTop: Spacing.xs,
-  },
-  subjectDot: {
-    width: 10,
-    height: 10,
-    borderRadius: Radius,
   },
 });

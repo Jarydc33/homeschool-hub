@@ -17,7 +17,14 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
 
-import { Colors, Fonts, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
+import {
+  Colors,
+  Fonts,
+  MaxContentWidth,
+  Radius,
+  Spacing,
+  WideContentWidth,
+} from '@/constants/theme';
 import { errorMessage } from '@/lib/api';
 
 export function Screen({
@@ -25,14 +32,17 @@ export function Screen({
   scroll = true,
   refreshing,
   onRefresh,
+  wide = false,
 }: {
   children: React.ReactNode;
   scroll?: boolean;
+  // Room for two columns on a computer, as on the Dashboard.
+  wide?: boolean;
   // Pull to refresh, when given.
   refreshing?: boolean;
   onRefresh?: () => void;
 }) {
-  const content = <View style={styles.content}>{children}</View>;
+  const content = <View style={[styles.content, wide && styles.wide]}>{children}</View>;
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
@@ -212,6 +222,9 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     padding: Spacing.md,
     gap: Spacing.md,
+  },
+  wide: {
+    maxWidth: WideContentWidth,
   },
   center: {
     flex: 1,
