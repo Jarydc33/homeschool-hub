@@ -12,7 +12,9 @@ A homeschool management app: parents manage students, subjects and assignments; 
 
 ## Current status
 
-### Start here next session (left off 2026-11-14)
+### Start here next session (left off 2026-11-16)
+
+Done 2026-11-16, all live: Inter and bolder headers, the redesigned Today screen and Parent Dashboard, the pricing model (free up to 12 students, Premium later), the 12-student limit, a Pricing section, privacy policy and terms, hours tracking (migration 0016 has run on Supabase), and account deletion. Left on the public launch checklist: finish the migration (from about 2026-11-20), SEO basics, the state report export, and the Termly review. `.env`'s `DATABASE_URL` is now Supabase's Session pooler, since this computer can't reach the IPv6-only direct address.
 
 1. **From about 2026-11-20, start migration step 6 (removing the Streamlit code).** The switch-over was finished on 2026-11-13: Supabase's Site URL and email links, the landing page's buttons and student invites all go to https://app.tallyhomeschool.com, `https://app.tallyhomeschool.com/**` is in Supabase's Redirect URLs, `APP_MOVED_TO` is set so the Streamlit app shows "tally has moved" (except `Complete_Account`), the live site passed Jaryd's tests (sign-up, invite, reset, Student Mode, pairing), and the sister's family was told. First, once the week is up and old email links have expired, remove the Streamlit addresses from Supabase's Redirect URLs. Optional design polish any time: the Inter font in the app, bolder page headers, the Dashboard and Today screens.
 2. **Remind Jaryd (asked 2026-11-16): review the privacy policy and terms with Termly**, in the next week or so and before the public launch. Raise it at the start of a session from about 2026-11-20 until it's done. Also, once Jaryd sets up an LLC, put its legal name in both (`landing/privacy.html`, `landing/terms.html`); they say "tally homeschool" for now.
