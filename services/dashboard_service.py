@@ -1,3 +1,4 @@
+from services.achievement_service import AchievementService
 from services.current_user import CurrentUser
 from services.occurrence_service import OccurrenceService
 from services.student_service import (
@@ -110,19 +111,41 @@ class DashboardService:
 
     @staticmethod
     def get_student_metrics(student):
+        """
+        Returns a student's totals for the Parent Dashboard: all work so far
+        (total, completed, percent), what's overdue, today's progress, their
+        streak, and the next piece of today's work (its title, or None).
+        """
+
+        today = CurrentUser.get_today()
+
+        rows = StudentService.get_student_occurrences(
+            student.id
+        )
 
         groups = OccurrenceService.group_for_student(
-            StudentService.get_student_occurrences(
-                student.id
-            ),
-            CurrentUser.get_today()
+            rows,
+            today
         )
 
         progress = OccurrenceService.progress(groups)
+
+        today_done, today_total = OccurrenceService.today_progress(
+            groups,
+            today
+        )
 
         return {
             "total": progress["total"],
             "completed": progress["completed"],
             "percent": progress["percent"],
             "overdue_count": len(groups["overdue"]),
+            "today_done": today_done,
+            "today_total": today_total,
+            "streak": AchievementService.summary(rows, today)["streak"],
+            "next_up": (
+                groups["today"][0].assignment.title
+                if groups["today"]
+                else None
+            ),
         }

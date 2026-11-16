@@ -29,6 +29,12 @@ class StudentMetrics(BaseModel):
     completed: int
     percent: float
     overdue_count: int
+    # Work dated today: done, and done plus still to do.
+    today_done: int
+    today_total: int
+    streak: int
+    # The title of the first unfinished piece of today's work.
+    next_up: str | None
 
 
 class DueWork(BaseModel):

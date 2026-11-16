@@ -210,7 +210,44 @@ def test_student_metrics_use_occurrences(parent):
 
     metrics = DashboardService.get_student_metrics(StudentService.get_student_by_id(w.cat))
 
-    assert metrics == {"total": 3, "completed": 0, "percent": 0, "overdue_count": 1}
+    assert metrics == {
+        "total": 3,
+        "completed": 0,
+        "percent": 0,
+        "overdue_count": 1,
+        "today_done": 0,
+        "today_total": 1,
+        "streak": 0,
+        "next_up": "Math",
+    }
+
+
+def test_student_metrics_count_today_and_the_streak(parent):
+    w = parent
+    math = daily(w, title="Math", start=YESTERDAY, end=TODAY, students=[w.cat])
+    one_time(w, "Spelling", TODAY, students=[w.cat])
+    rows = StudentService.get_student_occurrences(w.cat)
+    StudentService.update_occurrence_status(row_on(rows, math, YESTERDAY).id, True)
+    StudentService.update_occurrence_status(row_on(rows, math, TODAY).id, True)
+
+    metrics = DashboardService.get_student_metrics(StudentService.get_student_by_id(w.cat))
+
+    # Yesterday's Math counts toward the streak but not today.
+    assert (metrics["today_done"], metrics["today_total"]) == (1, 2)
+    assert metrics["streak"] == 1
+    assert metrics["next_up"] == "Spelling"
+
+
+def test_student_metrics_have_nothing_next_once_today_is_done(parent):
+    w = parent
+    work = one_time(w, "Spelling", TODAY, students=[w.cat])
+    rows = StudentService.get_student_occurrences(w.cat)
+    StudentService.update_occurrence_status(row_on(rows, work, TODAY).id, True)
+
+    metrics = DashboardService.get_student_metrics(StudentService.get_student_by_id(w.cat))
+
+    assert (metrics["today_done"], metrics["today_total"]) == (1, 1)
+    assert metrics["next_up"] is None
 
 
 # ----- Recently completed -----
