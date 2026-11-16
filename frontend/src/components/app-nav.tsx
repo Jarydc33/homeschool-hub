@@ -6,7 +6,7 @@
 import { Image } from 'expo-image';
 import { Link, router, usePathname } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
@@ -17,6 +17,7 @@ import {
   MORE_ITEM,
   navFor,
   type NavItem,
+  PRIVACY_URL,
 } from '@/lib/nav';
 import type { Student } from '@/lib/types';
 
@@ -180,6 +181,13 @@ export function AccountLinks({ dark = false }: { dark?: boolean }) {
         onPress={action.onPress}
         style={({ pressed, hovered }) => [styles.accountLink, (pressed || hovered) && tone.linkHover]}>
         <Text style={[styles.accountText, tone.strong]}>{action.label}</Text>
+      </Pressable>
+
+      <Pressable
+        accessibilityRole="link"
+        onPress={() => Linking.openURL(PRIVACY_URL)}
+        style={({ pressed, hovered }) => [styles.accountLink, (pressed || hovered) && tone.linkHover]}>
+        <Text style={[styles.small, tone.muted]}>Privacy Policy</Text>
       </Pressable>
     </View>
   );

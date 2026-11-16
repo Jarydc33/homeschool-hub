@@ -1,12 +1,13 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Linking, StyleSheet, Text, View } from 'react-native';
 
 import { AuthShell } from '@/components/auth-shell';
 import { deviceTimeZone, TimeZoneField } from '@/components/time-zone-field';
 import { Button, Card, ErrorMessage, Loading, TextField } from '@/components/ui';
 import { Colors, Fonts, Spacing } from '@/constants/theme';
 import { api, errorMessage } from '@/lib/api';
+import { PRIVACY_URL } from '@/lib/nav';
 import { supabase } from '@/lib/supabase';
 import type { TimeZoneChoice } from '@/lib/types';
 
@@ -175,6 +176,16 @@ export default function RegisterScreen() {
         {error ? <ErrorMessage message={error} /> : null}
 
         <Button title="Create Account" busy={busy} onPress={submit} />
+        <Text style={styles.muted}>
+          By creating an account, you agree to our{' '}
+          <Text
+            accessibilityRole="link"
+            style={styles.link}
+            onPress={() => Linking.openURL(PRIVACY_URL)}>
+            Privacy Policy
+          </Text>
+          .
+        </Text>
         <Button
           title="I already have an account"
           variant="secondary"
@@ -196,6 +207,11 @@ const styles = StyleSheet.create({
   },
   strong: {
     fontFamily: Fonts.bold,
+  },
+  link: {
+    color: Colors.orangeText,
+    fontFamily: Fonts.semibold,
+    textDecorationLine: 'underline',
   },
   muted: {
     color: Colors.textMuted,

@@ -115,6 +115,9 @@ export const MORE_ITEM: NavItem = { href: '/more', label: 'More', icon: '☰' };
 
 export const FEEDBACK_EMAIL = 'hello@tallyhomeschool.com';
 
+// On the landing site, so it can be read without signing in.
+export const PRIVACY_URL = 'https://tallyhomeschool.com/privacy.html';
+
 export function isActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
