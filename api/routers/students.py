@@ -31,7 +31,7 @@ from services.occurrence_service import OccurrenceService
 from services.pairing_service import PairingService
 from services.pe_service import PEService
 from services.reading_service import ReadingService
-from services.student_service import StudentService
+from services.student_service import StudentLimitReached, StudentService
 from services.user_service import UserService
 
 router = APIRouter(prefix="/students", tags=["students"])
@@ -103,11 +103,14 @@ def list_archived(user=Depends(require_parent)):
 @router.post("", response_model=StudentOut, status_code=201)
 def create_student(body: StudentIn, user=Depends(require_parent)):
 
-    student = StudentService.create_student(
-        name=body.name,
-        grade_level=body.grade_level,
-        birth_year=body.birth_year,
-    )
+    try:
+        student = StudentService.create_student(
+            name=body.name,
+            grade_level=body.grade_level,
+            birth_year=body.birth_year,
+        )
+    except StudentLimitReached as ex:
+        raise invalid(str(ex))
 
     if not student:
         raise could_not_save()
@@ -149,7 +152,10 @@ def archive_student(student_id: int, user=Depends(require_parent)):
 @router.post("/{student_id}/restore", response_model=StudentOut)
 def restore_student(student_id: int, user=Depends(require_parent)):
 
-    student = StudentService.restore_student(student_id)
+    try:
+        student = StudentService.restore_student(student_id)
+    except StudentLimitReached as ex:
+        raise invalid(str(ex))
 
     if not student:
         raise not_found(NOT_FOUND_MESSAGE)

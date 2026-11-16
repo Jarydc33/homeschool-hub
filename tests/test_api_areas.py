@@ -14,6 +14,7 @@ import pytest
 from api_support import as_
 from services.account_service import AccountService
 from services.auth_provider import AuthProvider
+from services.student_service import BASIC_STUDENT_LIMIT
 
 PIN = "2468"
 
@@ -77,6 +78,19 @@ def test_parent_manages_students(api, world):
 
     assert api.post(f"/students/{dee['id']}/restore", headers=SMITH).status_code == 200
     assert "Deedee" in {s["name"] for s in api.get("/students", headers=SMITH).json()}
+
+
+def test_the_student_limit_has_a_friendly_message(api, world):
+    # The Smiths start with three active students.
+    for number in range(BASIC_STUDENT_LIMIT - 3):
+        assert api.post("/students", json={"name": f"Extra {number}"}, headers=SMITH).status_code == 201
+
+    refused = api.post("/students", json={"name": "One too many"}, headers=SMITH)
+    assert refused.status_code == 400
+    assert "up to 12 active students" in refused.json()["detail"]
+
+    restored = api.post(f"/students/{world.gone}/restore", headers=SMITH)
+    assert restored.status_code == 400
 
 
 def test_a_blank_student_name_is_refused(api):

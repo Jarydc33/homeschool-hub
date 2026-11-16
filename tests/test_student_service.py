@@ -1,6 +1,12 @@
 from database.models import AssignmentOccurrence, Subject, UserRole
 from services.dashboard_service import DashboardService
-from services.student_service import StudentService
+import pytest
+
+from services.student_service import (
+    BASIC_STUDENT_LIMIT,
+    StudentLimitReached,
+    StudentService,
+)
 from services.subject_service import SubjectService
 
 
@@ -84,3 +90,51 @@ def test_archiving_keeps_the_row(smith_parent, fetch):
     SubjectService.archive_subject(w.math)
 
     assert fetch(Subject, w.math) is not None
+
+
+# ----- The free plan's student limit -----
+
+
+def _fill_to_the_limit():
+    # The Smiths start with three active students.
+    for number in range(BASIC_STUDENT_LIMIT - 3):
+        StudentService.create_student(f"Extra {number}")
+
+
+def test_a_family_can_add_students_up_to_the_limit(smith_parent):
+    _fill_to_the_limit()
+
+    assert len(StudentService.get_current_family_students()) == BASIC_STUDENT_LIMIT
+
+    with pytest.raises(StudentLimitReached):
+        StudentService.create_student("One too many")
+
+
+def test_archived_students_dont_count_toward_the_limit(smith_parent):
+    _fill_to_the_limit()
+
+    StudentService.archive_student(smith_parent.ann)
+
+    assert StudentService.create_student("Room again")
+
+
+def test_restoring_a_student_cant_pass_the_limit(smith_parent):
+    _fill_to_the_limit()
+
+    with pytest.raises(StudentLimitReached):
+        StudentService.restore_student(smith_parent.gone)
+
+
+def test_restoring_an_active_student_at_the_limit_is_fine(smith_parent):
+    _fill_to_the_limit()
+
+    assert StudentService.restore_student(smith_parent.ann)
+
+
+def test_another_familys_students_dont_count(world, login):
+    login(world.smith)
+    _fill_to_the_limit()
+
+    login(world.jones)
+
+    assert StudentService.create_student("Jones kid two")

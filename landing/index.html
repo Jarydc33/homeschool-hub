@@ -446,6 +446,75 @@
 
   .pin-card small { color: var(--on-navy-muted); font-size: 14px; }
 
+  /* ---------- Pricing ---------- */
+
+  .plans {
+    display: grid;
+    gap: 16px;
+  }
+
+  @media (min-width: 820px) {
+    .plans { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .plan {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    background: #FFFFFF;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+  }
+
+  .plan h3 {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    font-size: 22px;
+    margin: 0;
+  }
+
+  .plan-price {
+    font-size: 40px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    margin: 0;
+  }
+
+  .plan ul {
+    margin: 0;
+    padding-left: 20px;
+    color: var(--muted);
+    font-size: 16px;
+    display: grid;
+    gap: 8px;
+  }
+
+  /* Wraps on narrow phones rather than overflowing the card. */
+  .plan .btn {
+    align-self: flex-start;
+    white-space: normal;
+    text-align: center;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  .plan small { color: var(--muted); font-size: 14px; }
+
+  .plan-soon { background: var(--orange-soft); border-color: #F3C6A8; }
+
+  .soon {
+    background: var(--navy);
+    color: #FFFFFF;
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
   .cta {
     background: var(--navy);
     color: #FFFFFF;
@@ -634,10 +703,43 @@
     </div>
   </section>
 
+  <section class="steps-section" id="pricing" aria-labelledby="pricing-title">
+    <div class="wrap">
+      <h2 id="pricing-title">Free for your whole family</h2>
+      <p class="section-lede">Everything above is free, with no trial and no card needed. Premium will add extras for families who want more.</p>
+
+      <div class="plans">
+        <article class="plan">
+          <h3>Free</h3>
+          <p class="plan-price">$0</p>
+          <ul>
+            <li>Assignments, curricula and the calendar</li>
+            <li>Each child&rsquo;s own day, with streaks and badges</li>
+            <li>Grades, reading and P.E. logs</li>
+            <li>Student Mode, paired devices and student logins</li>
+          </ul>
+          <a class="btn btn-primary" data-link="signup" href="https://app.tallyhomeschool.com/register">Create Your Family Account</a>
+          <small>For up to 12 students per family.</small>
+        </article>
+
+        <article class="plan plan-soon">
+          <h3>Premium <span class="soon">Coming soon</span></h3>
+          <p class="plan-price">Extras</p>
+          <ul>
+            <li>High school transcripts, built from your grades</li>
+            <li>Charts and insights for each student</li>
+            <li>Next steps for 11th and 12th graders: college, trade school and beyond</li>
+          </ul>
+          <small>Everything in Free stays free.</small>
+        </article>
+      </div>
+    </div>
+  </section>
+
   <section class="cta" aria-labelledby="cta-title">
     <div class="wrap">
       <h2 id="cta-title">Spend your time teaching, not tracking.</h2>
-      <p>Set up your family in a few minutes and see your first school day planned out.</p>
+      <p>It&rsquo;s free. Set up your family in a few minutes and see your first school day planned out.</p>
       <div class="hero-actions">
         <a class="btn btn-primary" data-link="signup" href="https://app.tallyhomeschool.com/register">Create Your Family Account</a>
         <a class="btn btn-ghost" data-link="login" href="https://app.tallyhomeschool.com/login">Log In</a>

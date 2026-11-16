@@ -48,7 +48,7 @@ Jaryd chose to launch publicly without waiting for more beta feedback, since rec
 
 1. ~~**Design polish.**~~ Done 2026-11-16: Inter throughout the app (five weights loaded in `src/app/_layout.tsx`; set `fontFamily: Fonts.bold` etc. from `constants/theme.ts`, never `fontWeight`, which a custom font ignores on Android) and bolder page and section headers (`PageTitle`, `SectionTitle` in `components/ui.tsx`). Also done 2026-11-16 (Jaryd approved): the student day (`components/student-day.tsx`, shared by Today and a parent's look at one student) leads with a navy card (greeting, streak, one progress block per piece of work, green once all done), bigger rows with the subject colour down the left, "Catch Up" for overdue work, streaks and badges folded into pills, and new badges as a pop-up. The Parent Dashboard leads with an "on track" summary, student cards show today's progress, streak and next piece of work (new `today_done`, `today_total`, `streak`, `next_up` in `GET /dashboard`, from `DashboardService.get_student_metrics`), overdue and today's work are compact lists, and from 1100px wide events and recent activity move to a side column.
 2. **Finish the migration** (from about 2026-11-20): remove the Streamlit addresses from Supabase's Redirect URLs, then migration step 6.
-3. **Pricing:** the model is decided (see "Pricing" under "Where things stand"). For the launch: say "Free, with Premium coming" on the landing page, and add the 12-student limit. Payments come later, with the first premium feature.
+3. ~~**Pricing.**~~ Done 2026-11-16: the model is decided (see "Pricing" under "Where things stand"), the landing page says Free with Premium coming soon, and the free plan has the 12-student limit. Payments come later, with the first premium feature.
 4. **Landing page promise:** the banner says "homeschool hours and records that keep themselves", but only P.E. logs time. Build hours tracking (see "Deferred: hours tracking") or change the line.
 5. **Privacy policy and terms:** linked from the landing page, sign-up and the app. Children's data is involved; the app stores and Meta ads need them too.
 6. **Account deletion in the app**, for parents (the app stores require it).
@@ -75,12 +75,13 @@ Pricing is already under "Where things stand".
     - **Basic (free):** the whole current app, for up to **12 active students** (archived ones don't count). The limit is there so a teacher can't run a whole class on the free tier; it's high so large families never notice it. State reports and hours tracking stay free.
     - **Premium (paid):** extra features. Agreed so far: transcripts, a metrics page (charts and insights per student), and next-step guidance for grades 11 and 12. Candidates: weekly summary emails and a yearly wrap-up, the subject health score, a portfolio of creative work. Keep free: accessibility, reminders, Google sign-in, the importer and bulk creator, and sharing templates and the curriculum library.
     - **A third tier later,** probably Co-op or Classroom for groups with more students. Launch with only Basic and Premium.
-    - **Price:** not set. Suggested starting point to test: about $6 a month or $50 a year (the yearly price about two months free), under Homeschool Planet's roughly $70 a year.
+    - **Price:** $6 a month or $50 a year (agreed 2026-11-16), to come in under Homeschool Planet's roughly $70 a year. Not shown on the landing page until Premium can be bought.
     - **Stored on the family, not the user,** so both parents share it: plan (basic, premium), billing interval (monthly, yearly), status (active, cancelled, past due), the end of the paid period, and the payment provider's customer and subscription IDs. Schema change, so confirm with Jaryd before the migration.
     - **Payments:** Stripe Checkout and its customer portal on the web. Stripe's webhooks update the family's plan; the app never decides on its own that someone paid. Premium checks live in the services, like the parent checks, so the API can't reach a premium feature for a Basic family.
     - **App stores:** sell only on the web at first; the apps unlock Premium for families who have it but don't sell it. Check Apple's current rules on linking out to web payment before the app store release.
     - **Timing:** no premium features exist yet, so the public launch is free for everyone. Stripe comes with the first premium feature (probably transcripts).
-    - **Open:** do the beta families get Premium free (for life, or for a year)?
+    - **Beta families:** free Premium, decided case by case (none yet).
+    - **Done for the launch (2026-11-16):** the 12-student limit (`BASIC_STUDENT_LIMIT` and `StudentLimitReached` in `services/student_service.py`, checked on create and on restore), and a Pricing section on the landing page (Free, and Premium "Coming soon" with no price).
 - **Questions for the sister's feedback:** was the Grades page clear, is the sidebar easy to use on a phone, did she use Student Mode or only pairing, and does her state require an hours log.
 - Update this section when a phase or major item is finished.
 
@@ -209,5 +210,6 @@ tests/                  pytest suite for the services
 ## Working style
 
 - Make small, focused changes, one roadmap item at a time, and explain what changed and why.
+- **Premium features (Jaryd asked to be reminded):** before starting any premium feature (transcripts, the metrics page, grades 11 and 12 guidance, or any candidate listed under "Pricing"), remind Jaryd it's meant to be Premium, and build the plan on the family (schema change, so confirm first), the premium check in the services, and Stripe before or alongside it, so it never ships free by accident.
 - Before a schema change, a data migration, or anything destructive in Supabase, stop and confirm first.
 - Add or update pytest tests for service changes, including a check that one family can't read another family's data.

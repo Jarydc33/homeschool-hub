@@ -12,6 +12,22 @@ from datetime import datetime
 from services.current_user import CurrentUser
 
 
+# The most active students a family can have on the free (Basic) plan. High
+# enough that families never notice it; it stops a whole classroom using
+# the free plan. Archived students don't count.
+BASIC_STUDENT_LIMIT = 12
+
+
+class StudentLimitReached(Exception):
+    """Adding or restoring a student would pass the family's limit."""
+
+    def __init__(self):
+        super().__init__(
+            f"A family can have up to {BASIC_STUDENT_LIMIT} active students. "
+            "Archive one to make room."
+        )
+
+
 class StudentService:
 
     @staticmethod
@@ -260,11 +276,33 @@ class StudentService:
             if not student:
                 return None
 
+            if not student.active:
+                StudentService._check_limit(db)
+
             student.active = True
 
             db.commit()
 
             return student
+
+    @staticmethod
+    def _check_limit(db):
+        """
+        Raises StudentLimitReached when the current family already has
+        BASIC_STUDENT_LIMIT active students.
+        """
+
+        active = (
+            db.query(Student)
+            .filter(
+                Student.family_id == CurrentUser.get_family_id(),
+                Student.active.is_(True)
+            )
+            .count()
+        )
+
+        if active >= BASIC_STUDENT_LIMIT:
+            raise StudentLimitReached()
 
     @staticmethod
     def create_student(
@@ -273,7 +311,8 @@ class StudentService:
         birth_year=None
     ):
         """
-        Creates a new student.
+        Creates a new student. Raises StudentLimitReached when the family
+        already has BASIC_STUDENT_LIMIT active students.
         """
 
         # Only parents change this, even if a page guard is ever missed.
@@ -282,6 +321,8 @@ class StudentService:
             return None
 
         with get_session() as db:
+
+            StudentService._check_limit(db)
 
             student = Student(
                 family_id=CurrentUser.get_family_id(),
