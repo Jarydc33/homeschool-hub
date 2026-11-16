@@ -18,6 +18,7 @@ import {
   navFor,
   type NavItem,
   PRIVACY_URL,
+  TERMS_URL,
 } from '@/lib/nav';
 import type { Student } from '@/lib/types';
 
@@ -183,12 +184,21 @@ export function AccountLinks({ dark = false }: { dark?: boolean }) {
         <Text style={[styles.accountText, tone.strong]}>{action.label}</Text>
       </Pressable>
 
-      <Pressable
-        accessibilityRole="link"
-        onPress={() => Linking.openURL(PRIVACY_URL)}
-        style={({ pressed, hovered }) => [styles.accountLink, (pressed || hovered) && tone.linkHover]}>
-        <Text style={[styles.small, tone.muted]}>Privacy Policy</Text>
-      </Pressable>
+      <View style={styles.legal}>
+        <Text
+          accessibilityRole="link"
+          style={[styles.small, tone.muted]}
+          onPress={() => Linking.openURL(TERMS_URL)}>
+          Terms
+        </Text>
+        <Text style={[styles.small, tone.muted]}>·</Text>
+        <Text
+          accessibilityRole="link"
+          style={[styles.small, tone.muted]}
+          onPress={() => Linking.openURL(PRIVACY_URL)}>
+          Privacy Policy
+        </Text>
+      </View>
     </View>
   );
 }
@@ -330,6 +340,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
     borderRadius: Radius,
+  },
+  legal: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
   },
   accountText: {
     fontSize: 14,

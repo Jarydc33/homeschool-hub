@@ -7,7 +7,7 @@ import { deviceTimeZone, TimeZoneField } from '@/components/time-zone-field';
 import { Button, Card, ErrorMessage, Loading, TextField } from '@/components/ui';
 import { Colors, Fonts, Spacing } from '@/constants/theme';
 import { api, errorMessage } from '@/lib/api';
-import { PRIVACY_URL } from '@/lib/nav';
+import { PRIVACY_URL, TERMS_URL } from '@/lib/nav';
 import { supabase } from '@/lib/supabase';
 import type { TimeZoneChoice } from '@/lib/types';
 
@@ -178,6 +178,13 @@ export default function RegisterScreen() {
         <Button title="Create Account" busy={busy} onPress={submit} />
         <Text style={styles.muted}>
           By creating an account, you agree to our{' '}
+          <Text
+            accessibilityRole="link"
+            style={styles.link}
+            onPress={() => Linking.openURL(TERMS_URL)}>
+            Terms of Service
+          </Text>{' '}
+          and{' '}
           <Text
             accessibilityRole="link"
             style={styles.link}
