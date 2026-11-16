@@ -10,6 +10,7 @@ from api.schemas import LongText, Message, Progress, StudentOut, SubjectOut, Tit
 from database.models import AssignmentType
 from services.assignment_service import AssignmentService
 from services.current_user import CurrentUser
+from services.hours_service import MAX_MINUTES
 from services.occurrence_service import OccurrenceService
 from services.student_service import StudentService
 
@@ -42,6 +43,8 @@ class AssignmentOut(BaseModel):
     due_date: date
     end_date: date | None
     graded: bool
+    # A day's time for hours tracking, overriding the subject's usual time.
+    minutes: int | None
     active: bool
     students: list[StudentOut]
     progress: Progress | None
@@ -60,6 +63,9 @@ class AssignmentIn(BaseModel):
     end_date: date | None = None
     lesson_count: int | None = Field(default=None, ge=1, le=1000)
     graded: bool = False
+    # Left out: kept as it is on an update. Null: none, so the subject's
+    # usual time counts.
+    minutes: int | None = Field(default=None, ge=1, le=MAX_MINUTES)
 
 
 class NoteRow(BaseModel):
@@ -132,6 +138,7 @@ def _assignment_out(assignment, students_by_id, full=True):
         due_date=assignment.due_date,
         end_date=assignment.end_date,
         graded=bool(assignment.graded),
+        minutes=assignment.minutes,
         active=bool(assignment.active),
         students=[
             student_out(students_by_id[link.student_id])
@@ -182,7 +189,7 @@ def _schedule_error(body):
 
 def _fields(body):
 
-    return dict(
+    fields = dict(
         title=body.title,
         description=body.description or None,
         due_date=body.due_date,
@@ -194,6 +201,11 @@ def _fields(body):
         lesson_count=body.lesson_count,
         graded=body.graded,
     )
+
+    if "minutes" in body.model_fields_set:
+        fields["minutes"] = body.minutes
+
+    return fields
 
 
 # ----- Listing -----

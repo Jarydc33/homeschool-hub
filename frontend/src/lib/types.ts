@@ -171,6 +171,10 @@ export interface RecoveryStep {
 }
 
 export interface SubjectDetail extends Subject {
+  // Usual minutes a day of its work takes, for hours tracking.
+  default_minutes: number | null;
+  // Counted separately in hours, as some states require.
+  is_core: boolean;
   // Active assignments in this subject.
   assignment_count: number;
 }
@@ -190,6 +194,8 @@ export interface Assignment {
   due_date: string;
   end_date: string | null;
   graded: boolean;
+  // A day's time for hours tracking, overriding the subject's usual time.
+  minutes: number | null;
   active: boolean;
   // Active students only. Archived assignments list none.
   students: Student[];
@@ -344,4 +350,44 @@ export interface PairingCode {
   code: string;
   // UTC.
   expires_at: string;
+}
+
+// ----- Hours -----
+
+export interface HoursLine {
+  subject: Subject | null;
+  // The subject's name, or "P.E." for the P.E. log.
+  name: string;
+  is_core: boolean;
+  pe: boolean;
+  minutes: number;
+}
+
+export interface HoursWork {
+  occurrence_id: number;
+  title: string;
+  subject: Subject | null;
+  minutes: number;
+}
+
+export interface HoursDay {
+  date: string;
+  minutes: number;
+  work: HoursWork[];
+  pe: { activity: string; minutes: number }[];
+}
+
+export interface HoursReport {
+  start: string;
+  end: string;
+  total_minutes: number;
+  // Subjects marked core; P.E. logs aren't core.
+  core_minutes: number;
+  pe_minutes: number;
+  // Dates with any time counted.
+  school_days: number;
+  // Most time first.
+  subjects: HoursLine[];
+  // Newest first.
+  days: HoursDay[];
 }

@@ -13,8 +13,10 @@ import {
   SectionTitle,
   TextField,
 } from '@/components/ui';
+import { SwitchField } from '@/components/form';
 import { Colors, Fonts, Spacing } from '@/constants/theme';
 import { api, errorMessage } from '@/lib/api';
+import { formatMinutes, parseMinutes } from '@/lib/hours';
 import type { SubjectDetail } from '@/lib/types';
 
 // Colours to pick from. The first is the one the API uses when none is set.
@@ -182,9 +184,17 @@ export default function SubjectsScreen() {
                   <View style={styles.flex}>
                     <Text style={styles.name}>{subject.name}</Text>
                     <Text style={styles.muted}>
-                      {subject.assignment_count === 1
-                        ? '1 assignment'
-                        : `${subject.assignment_count} assignments`}
+                      {[
+                        subject.assignment_count === 1
+                          ? '1 assignment'
+                          : `${subject.assignment_count} assignments`,
+                        subject.default_minutes
+                          ? `${formatMinutes(subject.default_minutes)} a day`
+                          : null,
+                        subject.is_core ? 'Core' : null,
+                      ]
+                        .filter(Boolean)
+                        .join('  ·  ')}
                     </Text>
                   </View>
                 </View>
@@ -255,6 +265,8 @@ export default function SubjectsScreen() {
 interface SubjectValues {
   name: string;
   color: string;
+  default_minutes: number | null;
+  is_core: boolean;
 }
 
 function SubjectForm({
@@ -270,6 +282,10 @@ function SubjectForm({
 }) {
   const [name, setName] = useState(initial?.name ?? '');
   const [color, setColor] = useState(initial?.color ?? SUBJECT_COLORS[0]);
+  const [minutesText, setMinutesText] = useState(
+    initial?.default_minutes ? String(initial.default_minutes) : '',
+  );
+  const [isCore, setIsCore] = useState(initial?.is_core ?? false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -284,11 +300,23 @@ function SubjectForm({
       return;
     }
 
+    const parsed = parseMinutes(minutesText);
+
+    if ('error' in parsed) {
+      setError(parsed.error);
+      return;
+    }
+
     setBusy(true);
     setError(null);
 
     try {
-      await onSave({ name: trimmed, color });
+      await onSave({
+        name: trimmed,
+        color,
+        default_minutes: parsed.minutes,
+        is_core: isCore,
+      });
     } catch (ex) {
       setError(errorMessage(ex));
       setBusy(false);
@@ -328,6 +356,23 @@ function SubjectForm({
           ))}
         </View>
       </View>
+
+      <TextField
+        label="Usual Minutes a Day"
+        hint="For hours tracking: counted each time a day's work is checked off. Leave blank to count no time. An assignment can set its own."
+        value={minutesText}
+        onChangeText={setMinutesText}
+        keyboardType="number-pad"
+        inputMode="numeric"
+        maxLength={3}
+      />
+
+      <SwitchField
+        label="Core Subject"
+        hint="Some states count core subjects' hours separately."
+        value={isCore}
+        onChange={setIsCore}
+      />
 
       {error ? <ErrorMessage message={error} /> : null}
 

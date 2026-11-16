@@ -38,6 +38,7 @@ export const PARENT_NAV: NavGroup[] = [
     heading: 'Track',
     items: [
       { href: '/grades', label: 'Grades', icon: '📊' },
+      { href: '/hours', label: 'Hours', icon: '⏱️' },
       { href: '/reading', label: 'Reading', icon: '📖' },
       { href: '/pe', label: 'P.E.', icon: '🏃' },
     ],
@@ -71,6 +72,7 @@ export const STUDENT_NAV: NavGroup[] = [
     heading: 'Track',
     items: [
       { href: '/grades', label: 'Grades', icon: '📊' },
+      { href: '/hours', label: 'Hours', icon: '⏱️' },
       { href: '/reading', label: 'Reading', icon: '📖', tab: true },
       { href: '/pe', label: 'P.E.', icon: '🏃', tab: true },
     ],

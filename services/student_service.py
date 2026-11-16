@@ -10,6 +10,7 @@ from sqlalchemy import and_
 from sqlalchemy.orm import joinedload
 from datetime import datetime
 from services.current_user import CurrentUser
+from services.hours_service import HoursService
 
 
 # The most active students a family can have on the free (Basic) plan. High
@@ -102,6 +103,10 @@ class StudentService:
             if not occurrence:
                 return None
 
+            was_complete = (
+                occurrence.status == AssignmentStatus.COMPLETE.value
+            )
+
             if completed:
 
                 occurrence.status = (
@@ -119,6 +124,8 @@ class StudentService:
                 )
 
                 occurrence.completed_at = None
+
+            HoursService.apply_check_off(occurrence, was_complete)
 
             db.commit()
 

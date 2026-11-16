@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field
 from api.auth import require_parent, signed_in
 from api.errors import could_not_save, not_found
 from api.schemas import Name
+from services.hours_service import KEEP, MAX_MINUTES
 from services.subject_service import SubjectService
 
 router = APIRouter(prefix="/subjects", tags=["subjects"])
@@ -15,6 +16,10 @@ class SubjectDetail(BaseModel):
     id: int
     name: str
     color: str | None
+    # Usual minutes a day of its work takes, for hours tracking.
+    default_minutes: int | None
+    # Counted separately in hours, as some states require.
+    is_core: bool
     assignment_count: int
 
 
@@ -22,6 +27,9 @@ class SubjectIn(BaseModel):
     name: Name
     # A hex color such as "#4f8a8b". Anything else is saved as no color.
     color: str | None = Field(default=None, max_length=20)
+    # Left out: kept as they are on an update. Null minutes: none.
+    default_minutes: int | None = Field(default=None, ge=1, le=MAX_MINUTES)
+    is_core: bool | None = None
 
 
 def _detail(subject, count=None):
@@ -30,6 +38,8 @@ def _detail(subject, count=None):
         id=subject.id,
         name=subject.name,
         color=subject.color,
+        default_minutes=subject.default_minutes,
+        is_core=bool(subject.is_core),
         assignment_count=(
             count
             if count is not None
@@ -54,7 +64,12 @@ def list_archived(user=Depends(require_parent)):
 @router.post("", response_model=SubjectDetail, status_code=201)
 def create_subject(body: SubjectIn, user=Depends(require_parent)):
 
-    subject = SubjectService.create_subject(body.name, body.color)
+    subject = SubjectService.create_subject(
+        body.name,
+        body.color,
+        default_minutes=body.default_minutes,
+        is_core=bool(body.is_core),
+    )
 
     if not subject:
         raise could_not_save()
@@ -65,7 +80,15 @@ def create_subject(body: SubjectIn, user=Depends(require_parent)):
 @router.put("/{subject_id}", response_model=SubjectDetail)
 def update_subject(subject_id: int, body: SubjectIn, user=Depends(require_parent)):
 
-    subject = SubjectService.update_subject(subject_id, body.name, body.color)
+    subject = SubjectService.update_subject(
+        subject_id,
+        body.name,
+        body.color,
+        default_minutes=(
+            body.default_minutes if "default_minutes" in body.model_fields_set else KEEP
+        ),
+        is_core=body.is_core,
+    )
 
     if not subject:
         raise not_found(NOT_FOUND_MESSAGE)

@@ -18,6 +18,7 @@ from database.models import (
 )
 
 from services.current_user import CurrentUser
+from services.hours_service import KEEP, HoursService
 from services.occurrence_service import OccurrenceService
 
 logger = logging.getLogger(__name__)
@@ -148,7 +149,8 @@ class AssignmentService:
         recurrence_pattern=None,
         end_date=None,
         lesson_count=None,
-        graded=False
+        graded=False,
+        minutes=None
     ):
         """
         Returns the new assignment, or None if its schedule isn't valid or
@@ -156,12 +158,16 @@ class AssignmentService:
         Its student links and occurrences are saved in the same commit.
 
         A curriculum passes lesson_count, with its school days as
-        recurrence_pattern and its first day as due_date.
+        recurrence_pattern and its first day as due_date. minutes is a day's
+        time for hours tracking, overriding the subject's usual time.
         """
 
         # Only parents change this, even if a page guard is ever missed.
 
         if not CurrentUser.is_parent():
+            return None
+
+        if HoursService.minutes_error(minutes):
             return None
 
         if OccurrenceService.schedule_error(
@@ -226,6 +232,7 @@ class AssignmentService:
                 recurrence_pattern=recurrence_pattern,
                 end_date=end_date,
                 graded=graded,
+                minutes=minutes,
                 student_assignments=[
                     StudentAssignment(
                         student_id=student_id
@@ -262,7 +269,8 @@ class AssignmentService:
         recurrence_pattern,
         end_date=None,
         lesson_count=None,
-        graded=None
+        graded=None,
+        minutes=KEEP
     ):
         """
         Returns the updated assignment, or None if its schedule isn't valid
@@ -276,11 +284,17 @@ class AssignmentService:
         everyone else keeps their status, completion date, and notes.
         Links to archived students are left alone, since archived
         students aren't offered as choices on the edit form.
+
+        minutes is left alone unless given, and None clears it. Work already
+        checked off keeps the minutes it was saved with.
         """
 
         # Only parents change this, even if a page guard is ever missed.
 
         if not CurrentUser.is_parent():
+            return None
+
+        if minutes is not KEEP and HoursService.minutes_error(minutes):
             return None
 
         if OccurrenceService.schedule_error(
@@ -409,6 +423,9 @@ class AssignmentService:
             # counting but keeps them, in case it's turned back on.
             if graded is not None:
                 assignment.graded = graded
+
+            if minutes is not KEEP:
+                assignment.minutes = minutes
 
             # -------------------------
             # Apply Student Changes

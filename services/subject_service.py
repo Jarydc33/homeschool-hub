@@ -5,6 +5,7 @@ import re
 from database.db import get_session
 from database.models import Subject, Assignment
 from services.current_user import CurrentUser
+from services.hours_service import KEEP, HoursService
 
 DEFAULT_COLOR = "#2196F3"
 
@@ -85,12 +86,21 @@ class SubjectService:
     @staticmethod
     def create_subject(
         name,
-        color=None
+        color=None,
+        default_minutes=None,
+        is_core=False
     ):
+        """
+        Creates a subject. default_minutes is its usual time a day, for
+        hours tracking (None for none). Returns None for invalid minutes.
+        """
 
         # Only parents change this, even if a page guard is ever missed.
 
         if not CurrentUser.is_parent():
+            return None
+
+        if HoursService.minutes_error(default_minutes):
             return None
 
         with get_session() as db:
@@ -98,7 +108,9 @@ class SubjectService:
             subject = Subject(
                 family_id=CurrentUser.get_family_id(),
                 name=name,
-                color=SubjectService.display_color(color)
+                color=SubjectService.display_color(color),
+                default_minutes=default_minutes,
+                is_core=bool(is_core)
             )
 
             db.add(subject)
@@ -111,12 +123,22 @@ class SubjectService:
     def update_subject(
         subject_id,
         name=None,
-        color=None
+        color=None,
+        default_minutes=KEEP,
+        is_core=None
     ):
+        """
+        Changes what's given. None leaves name, color and is_core as they
+        are; default_minutes is left alone unless given, and None clears it.
+        Past hours keep the minutes saved when the work was checked off.
+        """
 
         # Only parents change this, even if a page guard is ever missed.
 
         if not CurrentUser.is_parent():
+            return None
+
+        if default_minutes is not KEEP and HoursService.minutes_error(default_minutes):
             return None
 
         with get_session() as db:
@@ -139,6 +161,12 @@ class SubjectService:
 
             if color is not None:
                 subject.color = SubjectService.display_color(color)
+
+            if default_minutes is not KEEP:
+                subject.default_minutes = default_minutes
+
+            if is_core is not None:
+                subject.is_core = bool(is_core)
 
             db.commit()
 

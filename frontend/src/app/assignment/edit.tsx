@@ -15,6 +15,7 @@ import { Colors, Fonts, Spacing } from '@/constants/theme';
 import { api, errorMessage } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { addDays, parseDate } from '@/lib/dates';
+import { formatMinutes, parseMinutes } from '@/lib/hours';
 import type { Assignment, AssignmentType, Student, SubjectDetail } from '@/lib/types';
 
 const FREQUENCIES = [
@@ -59,6 +60,8 @@ export default function AssignmentEditScreen() {
   const startStudent = student ? Number(student) : null;
 
   const [subjects, setSubjects] = useState<Choice<number>[] | null>(null);
+  // Each subject's usual minutes a day, by id.
+  const [subjectMinutes, setSubjectMinutes] = useState<Record<number, number | null>>({});
   const [students, setStudents] = useState<Student[] | null>(null);
   const [existing, setExisting] = useState<Assignment | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -90,6 +93,9 @@ export default function AssignmentEditScreen() {
         }
 
         setSubjects(choices);
+        setSubjectMinutes(
+          Object.fromEntries(subjectRows.map((s) => [s.id, s.default_minutes])),
+        );
         setStudents(studentRows);
         setExisting(assignment);
       } catch (ex) {
@@ -112,6 +118,7 @@ export default function AssignmentEditScreen() {
         <AssignmentForm
           today={today}
           subjects={subjects}
+          subjectMinutes={subjectMinutes}
           students={students}
           existing={existing}
           startDate={startDate}
@@ -125,6 +132,7 @@ export default function AssignmentEditScreen() {
 function AssignmentForm({
   today,
   subjects,
+  subjectMinutes,
   students,
   existing,
   startDate,
@@ -132,6 +140,7 @@ function AssignmentForm({
 }: {
   today: string;
   subjects: Choice<number>[];
+  subjectMinutes: Record<number, number | null>;
   students: Student[];
   existing: Assignment | null;
   // Where a new assignment starts: the day and student it was opened for.
@@ -172,6 +181,11 @@ function AssignmentForm({
   );
   const [lessons, setLessons] = useState(existing?.lesson_count ? String(existing.lesson_count) : '');
   const [graded, setGraded] = useState(existing?.graded ?? false);
+  const [minutesText, setMinutesText] = useState(
+    existing?.minutes ? String(existing.minutes) : '',
+  );
+  const subjectDefault = subjectId !== null ? subjectMinutes[subjectId] : null;
+  const minutes = parseMinutes(minutesText);
 
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -204,6 +218,10 @@ function AssignmentForm({
       return students.length === 0
         ? 'Add a student on the Students screen first.'
         : 'Please choose at least one student.';
+    }
+
+    if ('error' in minutes) {
+      return minutes.error;
     }
 
     if (type === 'Recurring' && endDate < dueDate) {
@@ -247,6 +265,7 @@ function AssignmentForm({
       end_date: type === 'Recurring' ? endDate : null,
       lesson_count: type === 'Curriculum' ? lessonCount : null,
       graded,
+      minutes: 'minutes' in minutes ? minutes.minutes : null,
     };
 
     setBusy(true);
@@ -372,6 +391,20 @@ function AssignmentForm({
         hint="Its scores count towards grades on the Grades page."
         value={graded}
         onChange={setGraded}
+      />
+
+      <TextField
+        label="Minutes a Day"
+        hint={
+          subjectDefault
+            ? `For hours tracking. Leave blank to use the subject's usual ${formatMinutes(subjectDefault)}.`
+            : "For hours tracking. Leave blank to use the subject's usual time, if it has one."
+        }
+        value={minutesText}
+        onChangeText={setMinutesText}
+        keyboardType="number-pad"
+        inputMode="numeric"
+        maxLength={3}
       />
 
       {error ? <ErrorMessage message={error} /> : null}

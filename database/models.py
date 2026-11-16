@@ -234,6 +234,19 @@ class Subject(Base):
 
     color = Column(String)
 
+    # Usual minutes a day of its work takes, for hours tracking. Empty means
+    # its work counts no time unless the assignment gives one.
+    default_minutes = Column(Integer)
+
+    # Core subjects, which some states count separately (Missouri: 600 of
+    # 1,000 hours).
+    is_core = Column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default=false()
+    )
+
     active = Column(
         Boolean,
         default=True
@@ -304,6 +317,9 @@ class Assignment(Base):
         default=False,
         server_default=false()
     )
+
+    # Minutes a day of this work takes, overriding its subject's usual time.
+    minutes = Column(Integer)
 
     created_at = Column(
         DateTime,
@@ -430,6 +446,12 @@ class AssignmentOccurrence(Base):
     # Which lesson this is, for curriculum work. It stays with the lesson when
     # the date moves.
     lesson_number = Column(Integer)
+
+    # Time spent, for hours tracking: saved when the work is checked off (the
+    # assignment's minutes, else its subject's), adjustable by parents, and
+    # cleared when it's unchecked. Stored, not worked out on read, so changing
+    # a subject's usual time later doesn't rewrite past hours.
+    minutes = Column(Integer)
 
     assignment = relationship(
         "Assignment",
