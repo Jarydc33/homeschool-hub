@@ -3,9 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>tally homeschool · Less logging, more learning.</title>
-<meta name="description" content="tally keeps your homeschool on track: plan assignments and curriculum once, let your kids check off their own day, and keep grades, reading and P.E. records without the busywork.">
+<title>tally · Free Homeschool Planner and Record Keeper</title>
+<meta name="description" content="tally is a free homeschool planner: plan assignments and curriculum once, let your kids check off their own day, and keep grades, hours, reading and P.E. records without the busywork.">
 <meta name="theme-color" content="#1B2540">
+<link rel="canonical" href="https://tallyhomeschool.com/">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta property="og:type" content="website">
@@ -14,7 +15,49 @@
 <meta property="og:description" content="Plan once, let your kids check off their own day, and keep the records without the busywork.">
 <meta property="og:url" content="https://tallyhomeschool.com/">
 <meta property="og:image" content="https://tallyhomeschool.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="626">
+<meta property="og:image:alt" content="tally homeschool: Less logging, more learning.">
 <meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://tallyhomeschool.com/#organization",
+      "name": "tally homeschool",
+      "alternateName": "Tally Homeschool",
+      "url": "https://tallyhomeschool.com/",
+      "logo": "https://tallyhomeschool.com/apple-touch-icon.png",
+      "email": "hello@tallyhomeschool.com"
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://tallyhomeschool.com/#website",
+      "name": "tally homeschool",
+      "url": "https://tallyhomeschool.com/",
+      "publisher": { "@id": "https://tallyhomeschool.com/#organization" }
+    },
+    {
+      "@type": "SoftwareApplication",
+      "name": "tally",
+      "alternateName": "Tally Homeschool",
+      "url": "https://app.tallyhomeschool.com/",
+      "applicationCategory": "EducationalApplication",
+      "operatingSystem": "Web browser",
+      "description": "A free homeschool planner and record keeper. Parents plan assignments and curriculum once; each child sees their day and checks off their own work; tally keeps grades, hours, reading and P.E. records.",
+      "publisher": { "@id": "https://tallyhomeschool.com/#organization" },
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD",
+        "description": "Free for up to 12 students per family."
+      }
+    }
+  ]
+}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -355,6 +398,26 @@
   .feature p { margin: 0; color: var(--muted); font-size: 16px; }
 
   .steps-section { background: var(--surface); }
+
+  /* ---------- Questions ---------- */
+
+  .faq {
+    display: grid;
+    gap: 28px 40px;
+    margin: 0;
+  }
+
+  @media (min-width: 820px) {
+    .faq { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .faq h3 {
+    font-size: 20px;
+    line-height: 1.3;
+    margin: 0 0 8px;
+  }
+
+  .faq p { margin: 0; color: var(--muted); font-size: 16px; }
 
   .steps {
     list-style: none;
@@ -732,6 +795,48 @@
           </ul>
           <small>Everything in Free stays free.</small>
         </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="questions" aria-labelledby="faq-title">
+    <div class="wrap">
+      <h2 id="faq-title">Questions parents ask</h2>
+      <p class="section-lede">Straight answers about what tally does and doesn&rsquo;t do.</p>
+
+      <div class="faq">
+        <div>
+          <h3>What is tally?</h3>
+          <p>tally is a homeschool planner and record keeper for families. Parents plan assignments and curricula once, each child sees their own day and checks off their work, and tally keeps the grades, hours, reading and P.E. records as you go.</p>
+        </div>
+        <div>
+          <h3>Is tally free?</h3>
+          <p>Yes. Everything on this page is free for up to 12 students per family, with no trial and no card needed. A paid Premium plan will add extras such as high school transcripts later. What&rsquo;s free now stays free.</p>
+        </div>
+        <div>
+          <h3>Can tally keep track of homeschool hours?</h3>
+          <p>Yes. Give each subject its usual time a day, and when your child checks off their work, tally logs the minutes. You can adjust any day, and see total hours, core subject hours and school days for each student.</p>
+        </div>
+        <div>
+          <h3>Do my kids need their own email address?</h3>
+          <p>No. Children can use your device in Student Mode, locked with your family PIN, or pair their own tablet or computer with a one-time code. Older students can have their own login if you want.</p>
+        </div>
+        <div>
+          <h3>What devices does tally work on?</h3>
+          <p>tally runs in the web browser on any computer, tablet or phone, so there&rsquo;s nothing to install.</p>
+        </div>
+        <div>
+          <h3>Does tally meet my state&rsquo;s homeschool requirements?</h3>
+          <p>Every state&rsquo;s rules are different, so check yours. tally keeps the kinds of records states often ask for (school days, hours, subjects and grades), all in one place.</p>
+        </div>
+        <div>
+          <h3>What happens to my family&rsquo;s information?</h3>
+          <p>It&rsquo;s used only to run tally: no ads, no selling your data, and no tracking. You can delete your whole family&rsquo;s account any time from Settings. Read the <a href="/privacy.html">privacy policy</a>.</p>
+        </div>
+        <div>
+          <h3>Who is tally for?</h3>
+          <p>Homeschooling families, whether you have one child or a houseful. The free plan is for one family; it isn&rsquo;t meant for running a school or classroom.</p>
+        </div>
       </div>
     </div>
   </section>

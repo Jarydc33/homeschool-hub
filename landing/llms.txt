@@ -1,0 +1,30 @@
+# tally homeschool
+
+> tally (Tally Homeschool) is a free homeschool planner and record keeper for families. Parents plan assignments and curricula once, each child sees their own day and checks off their work, and tally keeps grades, hours, reading and P.E. records. Tagline: "Less logging, more learning."
+
+- Website: https://tallyhomeschool.com/
+- App (runs in any web browser): https://app.tallyhomeschool.com/
+- Contact: hello@tallyhomeschool.com
+
+## What it does
+
+- Planning: one-time assignments, repeating assignments, and whole curricula laid out on the family's school days.
+- "Missed a Day?": moves every unfinished lesson forward for the chosen students.
+- Each child's day: today's work first, checked off by the child, with streaks and badges.
+- Grades: points entered as work is done; percentages and letter grades by subject and grading period.
+- Homeschool hours: each subject has a usual time a day; checking off work logs the minutes, parents can adjust any day, and tally totals hours, core subject hours and school days per student.
+- Reading log (books, pages, reading streaks) and P.E. log (activities and minutes).
+- Family calendar of work and events, by week or month.
+- Children don't need an email address: Student Mode on a parent's device (locked with a family PIN), a child's own paired device (one-time code), or an optional student login for older students.
+
+## Pricing
+
+- Free: everything above, for up to 12 students per family, with no trial and no card needed.
+- Premium: coming later, with extras such as high school transcripts, charts and insights per student, and next-step guidance for 11th and 12th graders. Free features stay free.
+
+## Privacy
+
+No ads, no selling data, no tracking. Parents can delete their whole family's account from Settings.
+
+- Privacy policy: https://tallyhomeschool.com/privacy.html
+- Terms of service: https://tallyhomeschool.com/terms.html
