@@ -1,3 +1,5 @@
+from database.db import get_session
+from database.models import DeviceSession, Family, User, UserRole
 from services.achievement_service import AchievementService
 from services.current_user import CurrentUser
 from services.occurrence_service import OccurrenceService
@@ -148,4 +150,46 @@ class DashboardService:
                 if groups["today"]
                 else None
             ),
+        }
+
+    @staticmethod
+    def get_setup_progress(data):
+        """
+        Which Getting Started steps the current family has done, for the
+        Parent Dashboard's checklist. data is get_dashboard_data()'s result,
+        so its lists aren't loaded twice. Kids have a way in once there's a
+        family PIN (Student Mode and unpairing need it), a device session of
+        either kind, or a student login.
+        """
+
+        family_id = CurrentUser.get_family_id()
+
+        kids = False
+
+        if family_id:
+
+            with get_session() as db:
+
+                family = db.get(Family, family_id)
+
+                kids = bool(family and family.parent_pin_hash) or (
+                    db.query(DeviceSession.id)
+                    .filter(DeviceSession.family_id == family_id)
+                    .first()
+                    is not None
+                ) or (
+                    db.query(User.id)
+                    .filter(
+                        User.family_id == family_id,
+                        User.role == UserRole.STUDENT.value,
+                    )
+                    .first()
+                    is not None
+                )
+
+        return {
+            "students": bool(data["students"]),
+            "subjects": bool(data["subjects"]),
+            "work": bool(data["assignments"]),
+            "kids": kids,
         }

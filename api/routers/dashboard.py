@@ -51,6 +51,16 @@ class ActivityDay(BaseModel):
     items: list[str]
 
 
+class SetupProgress(BaseModel):
+    """The Getting Started checklist: which steps the family has done."""
+
+    students: bool
+    subjects: bool
+    work: bool
+    # A family PIN, a paired device or Student Mode, or a student login.
+    kids: bool
+
+
 class ParentDashboard(BaseModel):
     today: date
     message: str
@@ -65,6 +75,7 @@ class ParentDashboard(BaseModel):
     has_curriculum: bool
     upcoming_events: list[EventEntry]
     banners: list[Banner]
+    setup: SetupProgress
 
 
 def _due_work(entry):
@@ -118,6 +129,7 @@ def parent_dashboard(user=Depends(require_parent)):
             event_entry(entry) for entry in EventService.get_upcoming(today)
         ],
         banners=[banner(row) for row in BannerService.get_active_banners()],
+        setup=SetupProgress(**DashboardService.get_setup_progress(data)),
     )
 
 

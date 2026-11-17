@@ -159,6 +159,16 @@ export interface ParentDashboard {
   has_curriculum: boolean;
   upcoming_events: EventEntry[];
   banners: Banner[];
+  setup: SetupProgress;
+}
+
+/** The Getting Started checklist: which steps the family has done. */
+export interface SetupProgress {
+  students: boolean;
+  subjects: boolean;
+  work: boolean;
+  // A family PIN, a paired device or Student Mode, or a student login.
+  kids: boolean;
 }
 
 export interface RecoveryStep {

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { ChoiceField } from '@/components/form';
+import { GettingStarted } from '@/components/getting-started';
 import { Button, Card, ErrorMessage, Loading, PageTitle, Screen, SectionTitle } from '@/components/ui';
 import { Colors, Fonts, Spacing } from '@/constants/theme';
 import { api, ApiError, errorMessage } from '@/lib/api';
@@ -170,6 +171,8 @@ function Dashboard({ data }: { data: ParentDashboard }) {
       </View>
 
       <Summary data={data} />
+
+      <GettingStarted setup={data.setup} />
 
       {data.banners.map((banner) => (
         <Card key={banner.id} style={styles.banner}>
